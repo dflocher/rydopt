@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from rydopt import pulses_qutip
+from rydopt.pulses import pulses_qutip
 
 
 plt.rcParams["font.sans-serif"] = "Helvetica"
@@ -648,5 +648,5 @@ if __name__ == "__main__":
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-    # pulse_postprocessing.postprocess_pulses(n_atoms, Vnn, Vnnn, theta, eps, lamb, delta, kappa, pulse, params_list, decay)
+    # pulses.postprocess_pulses(n_atoms, Vnn, Vnnn, theta, eps, lamb, delta, kappa, pulse, params_list, decay)
     plot_pulses(pulse, params_list_CZ)

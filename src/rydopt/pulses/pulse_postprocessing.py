@@ -1,5 +1,7 @@
 import numpy as np
-from rydopt import pulse_visualization, pulse_verification
+from rydopt.pulses.pulse_verification import verify
+from rydopt.pulses.pulse_visualization import visualize_subsystem_dynamics
+
 
 # utility functions to translate a detuning-pulse to a phase-pulse and vice versa;
 # function that analyzes gate fidelities etc. for sets of pulses
@@ -117,7 +119,7 @@ def postprocess_pulses(
     if Vnnn_list is None:
         Vnnn_list = Vnnn * np.ones(len(params_list))
     for params, vnnn in zip(params_list, Vnnn_list):
-        f_decay = pulse_visualization.visualize_subsystem_dynamics(
+        f_decay = visualize_subsystem_dynamics(
             n_atoms,
             Vnn,
             vnnn,
@@ -131,7 +133,7 @@ def postprocess_pulses(
             decay,
             plot=False,
         )
-        f_nodecay = pulse_visualization.visualize_subsystem_dynamics(
+        f_nodecay = visualize_subsystem_dynamics(
             n_atoms,
             Vnn,
             vnnn,
@@ -145,10 +147,10 @@ def postprocess_pulses(
             0.0,
             plot=False,
         )
-        f_decay_2, _ = pulse_verification.verify(
+        f_decay_2, _ = verify(
             n_atoms, Vnn, vnnn, theta, eps, lamb, delta, kappa, pulse, params, decay
         )
-        f_nodecay_2, tr = pulse_verification.verify(
+        f_nodecay_2, tr = verify(
             n_atoms, Vnn, vnnn, theta, eps, lamb, delta, kappa, pulse, params, 0.0
         )
 
@@ -213,12 +215,12 @@ if __name__ == "__main__":
 
     # params_detuning = translate_phase_to_detuning(params_p, sin_cos=False)
     # print('[' + ', '.join('{p:.8f}'.format(p=p) for p in params_detuning) + ']')
-    # pulse_visualization.visualize_pulse('pulse_detuning_cos_crab', params_detuning)
+    # visualize_pulse('pulse_detuning_cos_crab', params_detuning)
 
     # params_phase = translate_detuning_to_phase(params_d, sin_cos=False)
     # print('[' + ', '.join('{p:.8f}'.format(p=p) for p in params_phase) + ']')
-    # pulse_visualization.visualize_pulse('pulse_phase_sin_crab', params_phase)
+    # visualize_pulse('pulse_phase_sin_crab', params_phase)
 
     # params_phase_smooth = make_phase_pulse_smooth(params_p, sin_cos=False)
     # print('[' + ', '.join('{p:.8f}'.format(p=p) for p in params_phase_smooth) + ']')
-    # pulse_visualization.visualize_pulse('pulse_phase_sin_crab_smooth', params_phase_smooth)
+    # visualize_pulse('pulse_phase_sin_crab_smooth', params_phase_smooth)

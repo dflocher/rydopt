@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from rydopt import pulses_qutip
-from rydopt import pulse_verification
+from rydopt.pulses import pulses_qutip
+from rydopt import pulses
 from matplotlib.legend_handler import HandlerTuple
 
 
@@ -1344,7 +1344,7 @@ def postprocess_V_sensitivity(
 
     infidelities = []
     for Vnn_i, Vnnn_i in zip(Vnn_array, Vnnn_array):
-        f, _ = pulse_verification.verify(
+        f, _ = pulses.verify(
             n_atoms, Vnn_i, Vnnn_i, theta, eps, lamb, delta, kappa, pulse, params, decay
         )
         infidelities.append(1 - f)
@@ -1656,7 +1656,7 @@ if __name__ == "__main__":
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-    # pulse_postprocessing.postprocess_pulses(n_atoms, Vnn, Vnnn, theta, eps, lamb, delta, kappa, pulse, params_list, decay)
+    # pulses.postprocess_pulses(n_atoms, Vnn, Vnnn, theta, eps, lamb, delta, kappa, pulse, params_list, decay)
     # postprocess_V_sensitivity(n_atoms, Vnn, Vnnn, theta, eps, lamb, delta, kappa, pulse, params, decay, 0.99, 1.01, geometry)
 
     plots_combined_row1(

@@ -1,7 +1,8 @@
 import numpy as np
 import qutip as qt
 import matplotlib.pyplot as plt
-from rydopt import pulses_qutip, hamiltonians
+from rydopt import hamiltonians
+from rydopt.pulses import pulses_qutip
 
 # plot a pulse profile and the subsystem dynamics it creates
 
@@ -43,7 +44,7 @@ I6x7I_8LS = qt.basis(8, 6) * qt.basis(8, 7).dag()
 
 
 # given a number of atoms and the interaction strengths, choose the appropriate subsystems
-def get_subsystem_Hs(n_atoms, Vnn, Vnnn, Delta_of_t, Phi_of_t, decay):
+def _get_subsystem_Hs(n_atoms, Vnn, Vnnn, Delta_of_t, Phi_of_t, decay):
     def H_2LS_1(t):
         return (
             qt.basis(2, 1).proj() * (Delta_of_t(t) - 1j * 0.5 * decay)
@@ -246,7 +247,7 @@ def get_subsystem_Hs(n_atoms, Vnn, Vnnn, Delta_of_t, Phi_of_t, decay):
 
 
 # Hamiltonian time evolution, calculated using qutip. called internally
-def time_evolution(H, dim, T, decay):
+def _time_evolution(H, dim, T, decay):
     if decay == 0:
         normalize = True
     else:
@@ -273,7 +274,7 @@ def time_evolution(H, dim, T, decay):
 
 
 # plot the populations of a subsystem as a function of time
-def plot_populations(times, populations, system):
+def _plot_populations(times, populations, system):
     times_divided_by_pi = times / np.pi
     fig, ax = plt.subplots(layout="constrained")
     for i, pop in enumerate(populations):
@@ -317,16 +318,16 @@ def visualize_subsystem_dynamics(
     params = np.array(params)
     T = params[0]
     Delta_of_t, phi_of_t = pulse(params)
-    Hs = get_subsystem_Hs(n_atoms, Vnn, Vnnn, Delta_of_t, phi_of_t, decay)
+    Hs = _get_subsystem_Hs(n_atoms, Vnn, Vnnn, Delta_of_t, phi_of_t, decay)
     _, _, fidelity_fn = hamiltonians.get_subsystem_Hamiltonians(
         n_atoms, Vnn, Vnnn, theta, eps, lamb, delta, kappa, decay
     )
     # time-evolve all subsystems and plot the populations
     output_states = []
     for H, dim in Hs:
-        times, populations, psi_out = time_evolution(H, dim, T, decay)
+        times, populations, psi_out = _time_evolution(H, dim, T, decay)
         if plot:
-            plot_populations(times, populations, H.__name__)
+            _plot_populations(times, populations, H.__name__)
         output_states.append(psi_out)
     # calculate the fidelity from the different subsystems, as it is done during the training
     F = -1 * fidelity_fn(output_states)
