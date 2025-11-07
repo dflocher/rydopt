@@ -1,5 +1,5 @@
 import numpy as np
-
+from rydopt import pulse_visualization, pulse_verification
 
 # utility functions to translate a detuning-pulse to a phase-pulse and vice versa;
 # function that analyzes gate fidelities etc. for sets of pulses

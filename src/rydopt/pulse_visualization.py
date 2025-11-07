@@ -1,7 +1,7 @@
 import numpy as np
 import qutip as qt
 import matplotlib.pyplot as plt
-
+from rydopt import pulses_qutip, hamiltonians
 
 # plot a pulse profile and the subsystem dynamics it creates
 
