@@ -1,5 +1,5 @@
 import jax.numpy as jnp
-from rydopt import pulses, pulse_visualization, pulse_verification, train_single_gate
+from rydopt import pulses, pulse_visualization, pulse_verification, optimization
 
 
 # run pulse optimizations locally
@@ -41,7 +41,7 @@ if __name__ == "__main__":
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
     # uncomment one of the following two lines
-    params = train_single_gate(
+    params = optimization.train_single_gate(
         n_atoms,
         Vnn,
         Vnnn,
@@ -57,7 +57,7 @@ if __name__ == "__main__":
         T_penalty,
         decay,
     )
-    # params = gate_search(n_atoms, Vnn, Vnnn, theta, eps, lamb, delta, kappa, pulse, T_default, N_searches, N_params, N_epochs, learning_rate, T_penalty, decay)
+    # params = optimization.gate_search(n_atoms, Vnn, Vnnn, theta, eps, lamb, delta, kappa, pulse, T_default, N_searches, N_params, N_epochs, learning_rate, T_penalty, decay)
 
     # visualize the pulse and the dynamics in the subsystems (using qutip)
     pulse_visualization.visualize_pulse(pulse.__name__, params)

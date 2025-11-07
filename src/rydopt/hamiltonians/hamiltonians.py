@@ -334,52 +334,52 @@ def get_subsystem_Hamiltonians(
         return -F
 
     def fidelity_3qubits_3subsystems_Vinf(subsystem_states):
-        rA, rC, rD, pA, pC, pD = extract_3qubits_3subsystems(subsystem_states)
-        return three_qubit_fidelity(rA, rC, rC, rD, pA, pC, pC, pD, theta, eps, lamb)
+        rA, rC, rD, pA, pC, pD = _extract_3qubits_3subsystems(subsystem_states)
+        return _three_qubit_fidelity(rA, rC, rC, rD, pA, pC, pC, pD, theta, eps, lamb)
 
     def fidelity_3qubits_3subsystems_Vinf_ThetaArbitrary(subsystem_states):
-        rA, rC, rD, pA, pC, pD = extract_3qubits_3subsystems(subsystem_states)
-        return three_qubit_fidelity(
+        rA, rC, rD, pA, pC, pD = _extract_3qubits_3subsystems(subsystem_states)
+        return _three_qubit_fidelity(
             rA, rC, rC, rD, pA, pC, pC, pD, pC - 2 * pA, pC - 2 * pA, lamb
         )
 
     def fidelity_3qubits_3subsystems_VnnnZero(subsystem_states):
-        rA, rC, rD, pA, pC, pD = extract_3qubits_3subsystems(subsystem_states)
-        return three_qubit_fidelity(
+        rA, rC, rD, pA, pC, pD = _extract_3qubits_3subsystems(subsystem_states)
+        return _three_qubit_fidelity(
             rA, rA**2, rC, rD, pA, 2 * pA, pC, pD, theta, eps, lamb
         )
 
     def fidelity_3qubits_3subsystems_VnnnZero_ThetaArbitrary(subsystem_states):
-        rA, rC, rD, pA, pC, pD = extract_3qubits_3subsystems(subsystem_states)
-        return three_qubit_fidelity(
+        rA, rC, rD, pA, pC, pD = _extract_3qubits_3subsystems(subsystem_states)
+        return _three_qubit_fidelity(
             rA, rA**2, rC, rD, pA, 2 * pA, pC, pD, pC - 2 * pA, 0.0, lamb
         )
 
     def fidelity_3qubits_4subsystems(subsystem_states):
-        rA, rB, rC, rD, pA, pB, pC, pD = extract_3qubits_4subsystems(subsystem_states)
-        return three_qubit_fidelity(rA, rB, rC, rD, pA, pB, pC, pD, theta, eps, lamb)
+        rA, rB, rC, rD, pA, pB, pC, pD = _extract_3qubits_4subsystems(subsystem_states)
+        return _three_qubit_fidelity(rA, rB, rC, rD, pA, pB, pC, pD, theta, eps, lamb)
 
     def fidelity_3qubits_4subsystems_epsArbitrary(subsystem_states):
-        rA, rB, rC, rD, pA, pB, pC, pD = extract_3qubits_4subsystems(subsystem_states)
-        return three_qubit_fidelity(
+        rA, rB, rC, rD, pA, pB, pC, pD = _extract_3qubits_4subsystems(subsystem_states)
+        return _three_qubit_fidelity(
             rA, rB, rC, rD, pA, pB, pC, pD, theta, pB - 2 * pA, lamb
         )
 
     def fidelity_3qubits_4subsystems_epsArbitraryThetaLinked(subsystem_states):
-        rA, rB, rC, rD, pA, pB, pC, pD = extract_3qubits_4subsystems(subsystem_states)
-        return three_qubit_fidelity(
+        rA, rB, rC, rD, pA, pB, pC, pD = _extract_3qubits_4subsystems(subsystem_states)
+        return _three_qubit_fidelity(
             rA, rB, rC, rD, pA, pB, pC, pD, pB - 2 * pA, pB - 2 * pA, lamb
         )
 
     def fidelity_3qubits_4subsystems_epsThetaArbitrary(subsystem_states):
-        rA, rB, rC, rD, pA, pB, pC, pD = extract_3qubits_4subsystems(subsystem_states)
-        return three_qubit_fidelity(
+        rA, rB, rC, rD, pA, pB, pC, pD = _extract_3qubits_4subsystems(subsystem_states)
+        return _three_qubit_fidelity(
             rA, rB, rC, rD, pA, pB, pC, pD, pC - 2 * pA, pB - 2 * pA, lamb
         )
 
     def fidelity_4qubits_4subsystems_Vinf(subsystem_states):
-        rA, rB, rD, rF, pA, pB, pD, pF = extract_4qubits_4subsystems(subsystem_states)
-        return four_qubit_fidelity(
+        rA, rB, rD, rF, pA, pB, pD, pF = _extract_4qubits_4subsystems(subsystem_states)
+        return _four_qubit_fidelity(
             rA,
             rB,
             rB,
@@ -400,8 +400,8 @@ def get_subsystem_Hamiltonians(
         )
 
     def fidelity_4qubits_4subsystems_VnnnZero(subsystem_states):
-        rA, rB, rD, rF, pA, pB, pD, pF = extract_4qubits_4subsystems(subsystem_states)
-        return four_qubit_fidelity(
+        rA, rB, rD, rF, pA, pB, pD, pF = _extract_4qubits_4subsystems(subsystem_states)
+        return _four_qubit_fidelity(
             rA,
             rB,
             rA**2,
@@ -422,10 +422,10 @@ def get_subsystem_Hamiltonians(
         )
 
     def fidelity_4qubits_6subsystems(subsystem_states):
-        rA, rB, rC, rD, rE, rF, pA, pB, pC, pD, pE, pF = extract_4qubits_6subsystems(
+        rA, rB, rC, rD, rE, rF, pA, pB, pC, pD, pE, pF = _extract_4qubits_6subsystems(
             subsystem_states
         )
-        return four_qubit_fidelity(
+        return _four_qubit_fidelity(
             rA,
             rB,
             rC,
@@ -446,10 +446,10 @@ def get_subsystem_Hamiltonians(
         )
 
     def fidelity_4qubits_6subsystems_epsDeltaArbitrary(subsystem_states):
-        rA, rB, rC, rD, rE, rF, pA, pB, pC, pD, pE, pF = extract_4qubits_6subsystems(
+        rA, rB, rC, rD, rE, rF, pA, pB, pC, pD, pE, pF = _extract_4qubits_6subsystems(
             subsystem_states
         )
-        return four_qubit_fidelity(
+        return _four_qubit_fidelity(
             rA,
             rB,
             rC,
@@ -617,7 +617,7 @@ def get_subsystem_Hamiltonians(
     return Hamiltonians, input_states, fidelity_fn
 
 
-def extract_3qubits_3subsystems(subsystem_states):
+def _extract_3qubits_3subsystems(subsystem_states):
     # populations and phases of evolved states
     # |100>, |010>, |001>
     psi_A = subsystem_states[0]
@@ -634,7 +634,7 @@ def extract_3qubits_3subsystems(subsystem_states):
     return rA, rC, rD, pA, pC, pD
 
 
-def extract_3qubits_4subsystems(subsystem_states):
+def _extract_3qubits_4subsystems(subsystem_states):
     # population and phases of evolved states
     # |100>, |010>, |001>
     psi_A = subsystem_states[0]
@@ -655,7 +655,7 @@ def extract_3qubits_4subsystems(subsystem_states):
     return rA, rB, rC, rD, pA, pB, pC, pD
 
 
-def extract_4qubits_4subsystems(subsystem_states):
+def _extract_4qubits_4subsystems(subsystem_states):
     # population and phases of evolved states
     # |0001>, |0010>, |0100>, |1000>
     psi_A = subsystem_states[0]
@@ -676,7 +676,7 @@ def extract_4qubits_4subsystems(subsystem_states):
     return rA, rB, rD, rF, pA, pB, pD, pF
 
 
-def extract_4qubits_6subsystems(subsystem_states):
+def _extract_4qubits_6subsystems(subsystem_states):
     # population and phases of evolved states
     # |0001>, |0010>, |0100>, |1000>
     psi_A = subsystem_states[0]
@@ -705,7 +705,7 @@ def extract_4qubits_6subsystems(subsystem_states):
     return rA, rB, rC, rD, rE, rF, pA, pB, pC, pD, pE, pF
 
 
-def three_qubit_fidelity(rA, rB, rC, rD, pA, pB, pC, pD, theta, eps, lamb):
+def _three_qubit_fidelity(rA, rB, rC, rD, pA, pB, pC, pD, theta, eps, lamb):
     a_1 = pB - 2 * pA - eps
     a_2 = pC - 2 * pA - theta
     a_3 = pD - 3 * pA - lamb - 2 * theta - eps
@@ -726,7 +726,7 @@ def three_qubit_fidelity(rA, rB, rC, rD, pA, pB, pC, pD, theta, eps, lamb):
     return -F
 
 
-def four_qubit_fidelity(
+def _four_qubit_fidelity(
     rA, rB, rC, rD, rE, rF, pA, pB, pC, pD, pE, pF, theta, eps, lamb, delta, kappa
 ):
     a_1 = pB - 2 * pA - theta

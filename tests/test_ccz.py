@@ -30,7 +30,7 @@ def test_ccz() -> None:
     T_penalty = 0.0
 
     # run optimization
-    params = ro.train_single_gate(
+    params = ro.optimization.train_single_gate(
         n_atoms,
         Vnn,
         Vnnn,
