@@ -1,7 +1,6 @@
 import os
-import gate_optimization
 import numpy as np
-from rydopt import pulses
+from rydopt import pulses, gate_search_cluster
 
 
 # run pulse optimizations on a cluster
@@ -94,7 +93,7 @@ if __name__ == "__main__":
     T_default = float(T_default_str)
     T_penalty = float(T_penalty_str)
 
-    all_costs, all_params, runtime = gate_optimization.gate_search_cluster(
+    all_costs, all_params, runtime = gate_search_cluster(
         n_atoms,
         Vnn,
         Vnnn,
