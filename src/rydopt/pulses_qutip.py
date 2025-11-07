@@ -9,7 +9,14 @@ def pulse_detuning_cos_crab(params):
     def Delta_of_t(t):
         Delta = c0 * np.cos(0 * t)
         for j in range(len(coeffs)):
-            Delta += coeffs[j] * np.cos(2 * np.pi * (j + 1) * (1 + 0.5 * np.tanh(frequency_params[j])) / T * (t - T/2))
+            Delta += coeffs[j] * np.cos(
+                2
+                * np.pi
+                * (j + 1)
+                * (1 + 0.5 * np.tanh(frequency_params[j]))
+                / T
+                * (t - T / 2)
+            )
         return Delta
 
     def Phi_of_t(t):
@@ -27,9 +34,23 @@ def pulse_detuning_cos_sin_crab(params):
     def Delta_of_t(t):
         Delta = c0 * np.cos(0 * t)
         for j in range(len(coeffs_cos)):
-            Delta += coeffs_cos[j] * np.cos(2 * np.pi * (j + 1) * (1 + 0.5 * np.tanh(frequency_params_cos[j])) / T * (t - T/2))
+            Delta += coeffs_cos[j] * np.cos(
+                2
+                * np.pi
+                * (j + 1)
+                * (1 + 0.5 * np.tanh(frequency_params_cos[j]))
+                / T
+                * (t - T / 2)
+            )
         for k in range(len(coeffs_sin)):
-            Delta += coeffs_sin[k] * np.sin(2 * np.pi * (k + 1) * (1 + 0.5 * np.tanh(frequency_params_sin[k])) / T * (t - T/2))
+            Delta += coeffs_sin[k] * np.sin(
+                2
+                * np.pi
+                * (k + 1)
+                * (1 + 0.5 * np.tanh(frequency_params_sin[k]))
+                / T
+                * (t - T / 2)
+            )
         return Delta
 
     def Phi_of_t(t):
@@ -52,7 +73,14 @@ def pulse_phase_sin_crab(params):
     def Phi_of_t(t):
         phi = 0.0
         for j in range(len(coeffs)):
-            phi += coeffs[j] * np.sin(2 * np.pi * (j + 1) * (1 + 0.5 * np.tanh(frequency_params[j])) / T * (t - T/2))
+            phi += coeffs[j] * np.sin(
+                2
+                * np.pi
+                * (j + 1)
+                * (1 + 0.5 * np.tanh(frequency_params[j]))
+                / T
+                * (t - T / 2)
+            )
         return phi
 
     T = params[0]
@@ -69,9 +97,16 @@ def pulse_phase_sin_crab_smooth(params):
         return Delta + 0.0 * t
 
     def Phi_of_t(t):
-        phi = phi_linear * (t - T/2)
+        phi = phi_linear * (t - T / 2)
         for j in range(len(coeffs)):
-            phi += coeffs[j] * np.sin(2 * np.pi * (j + 1) * (1 + 0.5 * np.tanh(frequency_params[j])) / T * (t - T/2))
+            phi += coeffs[j] * np.sin(
+                2
+                * np.pi
+                * (j + 1)
+                * (1 + 0.5 * np.tanh(frequency_params[j]))
+                / T
+                * (t - T / 2)
+            )
         return phi
 
     T = params[0]
@@ -90,9 +125,23 @@ def pulse_phase_sin_cos_crab(params):
     def Phi_of_t(t):
         phi = 0.0
         for j in range(len(coeffs_cos)):
-            phi += coeffs_cos[j] * np.cos(2 * np.pi * (j + 1) * (1 + 0.5 * np.tanh(frequency_params_cos[j])) / T * (t - T/2))
+            phi += coeffs_cos[j] * np.cos(
+                2
+                * np.pi
+                * (j + 1)
+                * (1 + 0.5 * np.tanh(frequency_params_cos[j]))
+                / T
+                * (t - T / 2)
+            )
         for k in range(len(coeffs_sin)):
-            phi += coeffs_sin[k] * np.sin(2 * np.pi * (k + 1) * (1 + 0.5 * np.tanh(frequency_params_sin[k])) / T * (t - T/2))
+            phi += coeffs_sin[k] * np.sin(
+                2
+                * np.pi
+                * (k + 1)
+                * (1 + 0.5 * np.tanh(frequency_params_sin[k]))
+                / T
+                * (t - T / 2)
+            )
         return phi
 
     T = params[0]
@@ -111,11 +160,25 @@ def pulse_phase_sin_cos_crab_smooth(params):
         return Delta + 0.0 * t
 
     def Phi_of_t(t):
-        phi = phi_linear * (t - T/2)
+        phi = phi_linear * (t - T / 2)
         for j in range(len(coeffs_cos)):
-            phi += coeffs_cos[j] * np.cos(2 * np.pi * (j + 1) * (1 + 0.5 * np.tanh(frequency_params_cos[j])) / T * (t - T/2))
+            phi += coeffs_cos[j] * np.cos(
+                2
+                * np.pi
+                * (j + 1)
+                * (1 + 0.5 * np.tanh(frequency_params_cos[j]))
+                / T
+                * (t - T / 2)
+            )
         for k in range(len(coeffs_sin)):
-            phi += coeffs_sin[k] * np.sin(2 * np.pi * (k + 1) * (1 + 0.5 * np.tanh(frequency_params_sin[k])) / T * (t - T/2))
+            phi += coeffs_sin[k] * np.sin(
+                2
+                * np.pi
+                * (k + 1)
+                * (1 + 0.5 * np.tanh(frequency_params_sin[k]))
+                / T
+                * (t - T / 2)
+            )
         return phi
 
     T = params[0]
@@ -127,14 +190,17 @@ def pulse_phase_sin_cos_crab_smooth(params):
     coeffs_cos = params[6::4]
     return Delta_of_t, Phi_of_t
 
+
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
 
 def get_pulse(name):
-    pulse_dict = {'pulse_detuning_cos_crab': pulse_detuning_cos_crab,
-                  'pulse_detuning_cos_sin_crab': pulse_detuning_cos_sin_crab,
-                  'pulse_phase_sin_crab': pulse_phase_sin_crab,
-                  'pulse_phase_sin_crab_smooth': pulse_phase_sin_crab_smooth,
-                  'pulse_phase_sin_cos_crab': pulse_phase_sin_cos_crab,
-                  'pulse_phase_sin_cos_crab_smooth': pulse_phase_sin_cos_crab_smooth}
+    pulse_dict = {
+        "pulse_detuning_cos_crab": pulse_detuning_cos_crab,
+        "pulse_detuning_cos_sin_crab": pulse_detuning_cos_sin_crab,
+        "pulse_phase_sin_crab": pulse_phase_sin_crab,
+        "pulse_phase_sin_crab_smooth": pulse_phase_sin_crab_smooth,
+        "pulse_phase_sin_cos_crab": pulse_phase_sin_cos_crab,
+        "pulse_phase_sin_cos_crab_smooth": pulse_phase_sin_cos_crab_smooth,
+    }
     return pulse_dict[name]

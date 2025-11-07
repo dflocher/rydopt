@@ -1,6 +1,4 @@
 import numpy as np
-import rydopt.pulse_visualization
-import rydopt.pulse_verification
 
 
 # utility functions to translate a detuning-pulse to a phase-pulse and vice versa;
@@ -24,7 +22,9 @@ def translate_phase_to_detuning(params, sin_cos=False):
         m = 0
         for j in range(5, len(params), step):
             m += 1
-            params[j] = -params[j] * 2 * np.pi * m / T * (1 + 0.5 * np.tanh(params[j - 1]))
+            params[j] = (
+                -params[j] * 2 * np.pi * m / T * (1 + 0.5 * np.tanh(params[j - 1]))
+            )
     return params
 
 
@@ -45,7 +45,9 @@ def translate_detuning_to_phase(params, sin_cos=False):
         m = 0
         for j in range(5, len(params), step):
             m += 1
-            params[j] = -params[j] * T / (2 * np.pi * m * (1 + 0.5 * np.tanh(params[j - 1])))
+            params[j] = (
+                -params[j] * T / (2 * np.pi * m * (1 + 0.5 * np.tanh(params[j - 1])))
+            )
     return params
 
 
@@ -61,12 +63,28 @@ def make_phase_pulse_smooth(params, sin_cos=False):
     n = 0
     for i in range(3, len(params), step):
         n += 1
-        slope += params[i] * 2 * np.pi * n / T * (1 + 0.5 * np.tanh(params[i - 1])) * np.cos(np.pi * n * (1 + 0.5 * np.tanh(params[i - 1])))
+        slope += (
+            params[i]
+            * 2
+            * np.pi
+            * n
+            / T
+            * (1 + 0.5 * np.tanh(params[i - 1]))
+            * np.cos(np.pi * n * (1 + 0.5 * np.tanh(params[i - 1])))
+        )
     if sin_cos:
         m = 0
         for j in range(5, len(params), step):
             m += 1
-            slope += params[j] * 2 * np.pi * m / T * (1 + 0.5 * np.tanh(params[j - 1])) * np.sin(np.pi * m * (1 + 0.5 * np.tanh(params[j - 1])))
+            slope += (
+                params[j]
+                * 2
+                * np.pi
+                * m
+                / T
+                * (1 + 0.5 * np.tanh(params[j - 1]))
+                * np.sin(np.pi * m * (1 + 0.5 * np.tanh(params[j - 1])))
+            )
     params_new = np.zeros(len(params) + 1)
     params_new[0] = T
     params_new[1] = params[1] + slope
@@ -76,7 +94,20 @@ def make_phase_pulse_smooth(params, sin_cos=False):
 
 
 # takes a list of pulses and calculates important properties such as infidelities
-def postprocess_pulses(n_atoms, Vnn, Vnnn, theta, eps, lamb, delta, kappa, pulse, params_list, decay, Vnnn_list=None):
+def postprocess_pulses(
+    n_atoms,
+    Vnn,
+    Vnnn,
+    theta,
+    eps,
+    lamb,
+    delta,
+    kappa,
+    pulse,
+    params_list,
+    decay,
+    Vnnn_list=None,
+):
     infidelities_nodecay = []
     infidelities_nodecay_2 = []
     infidelities_decay = []
@@ -86,11 +117,40 @@ def postprocess_pulses(n_atoms, Vnn, Vnnn, theta, eps, lamb, delta, kappa, pulse
     if Vnnn_list is None:
         Vnnn_list = Vnnn * np.ones(len(params_list))
     for params, vnnn in zip(params_list, Vnnn_list):
-
-        f_decay = pulse_visualization.visualize_subsystem_dynamics(n_atoms, Vnn, vnnn, theta, eps, lamb, delta, kappa, pulse, params, decay, plot=False)
-        f_nodecay = pulse_visualization.visualize_subsystem_dynamics(n_atoms, Vnn, vnnn, theta, eps, lamb, delta, kappa, pulse, params, 0.0, plot=False)
-        f_decay_2, _ = pulse_verification.verify(n_atoms, Vnn, vnnn, theta, eps, lamb, delta, kappa, pulse, params, decay)
-        f_nodecay_2, tr = pulse_verification.verify(n_atoms, Vnn, vnnn, theta, eps, lamb, delta, kappa, pulse, params, 0.0)
+        f_decay = pulse_visualization.visualize_subsystem_dynamics(
+            n_atoms,
+            Vnn,
+            vnnn,
+            theta,
+            eps,
+            lamb,
+            delta,
+            kappa,
+            pulse,
+            params,
+            decay,
+            plot=False,
+        )
+        f_nodecay = pulse_visualization.visualize_subsystem_dynamics(
+            n_atoms,
+            Vnn,
+            vnnn,
+            theta,
+            eps,
+            lamb,
+            delta,
+            kappa,
+            pulse,
+            params,
+            0.0,
+            plot=False,
+        )
+        f_decay_2, _ = pulse_verification.verify(
+            n_atoms, Vnn, vnnn, theta, eps, lamb, delta, kappa, pulse, params, decay
+        )
+        f_nodecay_2, tr = pulse_verification.verify(
+            n_atoms, Vnn, vnnn, theta, eps, lamb, delta, kappa, pulse, params, 0.0
+        )
 
         infidelities_nodecay.append(1 - f_nodecay)
         infidelities_nodecay_2.append(1 - f_nodecay_2)
@@ -99,21 +159,55 @@ def postprocess_pulses(n_atoms, Vnn, Vnnn, theta, eps, lamb, delta, kappa, pulse
         TRs.append(tr)
         Ts.append(params[0])
 
-    print('\n')
-    print('Ts               : [' + ', '.join('{p:.6f}'.format(p=p) for p in Ts) + ']')
-    print('infids no decay  : [' + ', '.join('{p:.4e}'.format(p=p) for p in infidelities_nodecay) + ']')
-    print('infids no decay 2: [' + ', '.join('{p:.4e}'.format(p=p) for p in infidelities_nodecay_2) + ']')
-    print('infids w/ decay  : [' + ', '.join('{p:.4e}'.format(p=p) for p in infidelities_decay) + ']')
-    print('infids w/ decay 2: [' + ', '.join('{p:.4e}'.format(p=p) for p in infidelities_decay_2) + ']')
-    print('TRs              : [' + ', '.join('{p:.6f}'.format(p=p) for p in TRs) + ']')
+    print("\n")
+    print("Ts               : [" + ", ".join("{p:.6f}".format(p=p) for p in Ts) + "]")
+    print(
+        "infids no decay  : ["
+        + ", ".join("{p:.4e}".format(p=p) for p in infidelities_nodecay)
+        + "]"
+    )
+    print(
+        "infids no decay 2: ["
+        + ", ".join("{p:.4e}".format(p=p) for p in infidelities_nodecay_2)
+        + "]"
+    )
+    print(
+        "infids w/ decay  : ["
+        + ", ".join("{p:.4e}".format(p=p) for p in infidelities_decay)
+        + "]"
+    )
+    print(
+        "infids w/ decay 2: ["
+        + ", ".join("{p:.4e}".format(p=p) for p in infidelities_decay_2)
+        + "]"
+    )
+    print("TRs              : [" + ", ".join("{p:.6f}".format(p=p) for p in TRs) + "]")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     np.set_printoptions(linewidth=1000)
 
     # optimization parameters
-    params_p = [10.97094681, 0.19566367, 0.43131090, -1.16460209, 1.05669771, -0.70545851, 0.88054914, -0.22756692]
-    params_d = [10.97094681, 0.19566367, 0.43131090, -0.80251671, 1.05669771, -1.12496327, 0.88054914, -0.52914581]
+    params_p = [
+        10.97094681,
+        0.19566367,
+        0.43131090,
+        -1.16460209,
+        1.05669771,
+        -0.70545851,
+        0.88054914,
+        -0.22756692,
+    ]
+    params_d = [
+        10.97094681,
+        0.19566367,
+        0.43131090,
+        -0.80251671,
+        1.05669771,
+        -1.12496327,
+        0.88054914,
+        -0.52914581,
+    ]
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
