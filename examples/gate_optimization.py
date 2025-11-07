@@ -4,10 +4,7 @@ import optax
 import diffrax
 import time
 from functools import partial
-import hamiltonians
-import pulses
-import pulse_visualization
-import pulse_verification
+from rydopt import hamiltonians, pulses, pulse_visualization, pulse_verification
 jax.config.update("jax_enable_x64", True)
 
 

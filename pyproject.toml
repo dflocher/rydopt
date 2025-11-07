@@ -1,0 +1,19 @@
+[project]
+name = "rydopt"
+version = "0.1.0"
+description = "Multiqubit Rydberg Gate Optimizer"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "diffrax>=0.7.0",
+    "jax>=0.6.2",
+    "matplotlib>=3.10.7",
+    "numpy>=2.2.6",
+    "optax>=0.2.6",
+    "qutip>=5.2.2",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.4.2",
+]

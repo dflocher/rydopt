@@ -2,7 +2,7 @@ import os
 import sys
 import gate_optimization
 import numpy as np
-import pulses
+from rydopt import pulses
 
 
 # run pulse optimizations on a cluster

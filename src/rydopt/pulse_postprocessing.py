@@ -1,6 +1,6 @@
 import numpy as np
-import pulse_visualization
-import pulse_verification
+import rydopt.pulse_visualization
+import rydopt.pulse_verification
 
 
 # utility functions to translate a detuning-pulse to a phase-pulse and vice versa;

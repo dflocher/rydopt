@@ -1,8 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import pulses_qutip
-import pulse_verification
-import pulse_postprocessing
+from rydopt import pulses_qutip
+from rydopt import pulse_verification
+from rydopt import pulse_postprocessing
 from matplotlib.legend_handler import HandlerTuple
 
 

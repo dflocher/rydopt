@@ -1,0 +1,10 @@
+.vscode/
+.idea/
+__pycache__/
+*.pyc
+.venv/
+uv.lock
+.pytest_cache/
+build/
+dist/
+*.egg-info/

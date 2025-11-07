@@ -1,9 +1,9 @@
 import numpy as np
 import qutip as qt
 import matplotlib.pyplot as plt
-import pulses_qutip
-import hamiltonians
-import pulse_postprocessing
+import rydopt.pulses_qutip
+import rydopt.hamiltonians
+import rydopt.pulse_postprocessing
 
 
 # plot a pulse profile and the subsystem dynamics it creates
