@@ -32,3 +32,8 @@ To execute unit tests, run:
 ```bash
 pytest
 ```
+
+To build the documentation locally, run:
+```bash
+(cd docs && make livehtml)
+```
