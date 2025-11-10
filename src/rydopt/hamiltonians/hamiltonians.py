@@ -189,7 +189,10 @@ def get_subsystem_Hamiltonians(
         )
         fidelity_fn = fidelity_2qubits
     elif n_atoms == 2:
-        Hamiltonians = (partial(H_2LS_1, decay=decay), partial(H_3LS_Vnn, decay=decay))
+        Hamiltonians = (
+            partial(H_2LS_1, decay=decay),
+            partial(H_3LS_Vnn, decay=decay, V=Vnn),
+        )
         input_states = (
             jnp.array([1.0 + 0.0j, 0.0 + 0.0j]),
             jnp.array([1.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j]),
@@ -216,7 +219,7 @@ def get_subsystem_Hamiltonians(
         Hamiltonians = (
             partial(H_2LS_1, decay=decay),
             partial(H_2LS_sqrt2, decay=decay),
-            partial(H_4LS, decay=decay),
+            partial(H_4LS, decay=decay, Vnnn=Vnnn),
         )
         input_states = (
             jnp.array([1.0 + 0.0j, 0.0 + 0.0j]),
@@ -232,9 +235,9 @@ def get_subsystem_Hamiltonians(
     elif n_atoms == 3 and Vnn == float("inf"):
         Hamiltonians = (
             partial(H_2LS_1, decay=decay),
-            partial(H_3LS_Vnnn, decay=decay),
+            partial(H_3LS_Vnnn, decay=decay, V=Vnnn),
             partial(H_2LS_sqrt2, decay=decay),
-            partial(H_4LS, decay=decay),
+            partial(H_4LS, decay=decay, Vnnn=Vnnn),
         )
         input_states = (
             jnp.array([1.0 + 0.0j, 0.0 + 0.0j]),
@@ -253,9 +256,9 @@ def get_subsystem_Hamiltonians(
     elif n_atoms == 3:
         Hamiltonians = (
             partial(H_2LS_1, decay=decay),
-            partial(H_3LS_Vnnn, decay=decay),
-            partial(H_3LS_Vnn, decay=decay),
-            partial(H_6LS, decay=decay),
+            partial(H_3LS_Vnnn, decay=decay, V=Vnnn),
+            partial(H_3LS_Vnn, decay=decay, V=Vnn),
+            partial(H_6LS, decay=decay, Vnn=Vnn, Vnnn=Vnnn),
         )
         input_states = (
             jnp.array([1.0 + 0.0j, 0.0 + 0.0j]),
@@ -295,8 +298,8 @@ def get_subsystem_Hamiltonians(
         Hamiltonians = (
             partial(H_2LS_1, decay=decay),
             partial(H_2LS_sqrt2, decay=decay),
-            partial(H_4LS, decay=decay),
-            partial(H_5LS, decay=decay),
+            partial(H_4LS, decay=decay, Vnnn=Vnnn),
+            partial(H_5LS, decay=decay, Vnnn=Vnnn),
         )
         input_states = (
             jnp.array([1.0 + 0.0j, 0.0 + 0.0j]),
@@ -313,10 +316,10 @@ def get_subsystem_Hamiltonians(
         Hamiltonians = (
             partial(H_2LS_1, decay=decay),
             partial(H_2LS_sqrt2, decay=decay),
-            partial(H_3LS_Vnnn, decay=decay),
-            partial(H_4LS, decay=decay),
-            partial(H_4LS_Vnnn, decay=decay),
-            partial(H_5LS, decay=decay),
+            partial(H_3LS_Vnnn, decay=decay, V=Vnnn),
+            partial(H_4LS, decay=decay, Vnnn=Vnnn),
+            partial(H_4LS_Vnnn, decay=decay, Vnnn=Vnnn),
+            partial(H_5LS, decay=decay, Vnnn=Vnnn),
         )
         input_states = (
             jnp.array([1.0 + 0.0j, 0.0 + 0.0j]),
@@ -333,11 +336,11 @@ def get_subsystem_Hamiltonians(
     elif n_atoms == 4:
         Hamiltonians = (
             partial(H_2LS_1, decay=decay),
-            partial(H_3LS_Vnn, decay=decay),
-            partial(H_3LS_Vnnn, decay=decay),
-            partial(H_6LS, decay=decay),
-            partial(H_4LS_Vnnn, decay=decay),
-            partial(H_8LS, decay=decay),
+            partial(H_3LS_Vnn, decay=decay, V=Vnn),
+            partial(H_3LS_Vnnn, decay=decay, V=Vnnn),
+            partial(H_6LS, decay=decay, Vnn=Vnn, Vnnn=Vnnn),
+            partial(H_4LS_Vnnn, decay=decay, Vnnn=Vnnn),
+            partial(H_8LS, decay=decay, Vnn=Vnn, Vnnn=Vnnn),
         )
         input_states = (
             jnp.array([1.0 + 0.0j, 0.0 + 0.0j]),
