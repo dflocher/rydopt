@@ -1,7 +1,7 @@
 from functools import partial
 import jax.numpy as jnp
 from rydopt.gates.gate import Gate
-from rydopt.gates.subspace_hamiltonians import (
+from rydopt.gates.subsystem_hamiltonians import (
     H_2LS,
     H_3LS,
 )
@@ -14,7 +14,7 @@ class TwoQubitGate(Gate):
         self._Vnn = Vnn
         self._decay = decay
 
-    def _build_hamiltonian(self):
+    def subsystem_hamiltonians(self):
         if self._Vnn == float("inf"):
             return (
                 partial(H_2LS, decay=self._decay, k=1),
@@ -26,7 +26,7 @@ class TwoQubitGate(Gate):
                 partial(H_3LS, decay=self._decay, V=self._Vnn),
             )
 
-    def _build_initial_state(self):
+    def initial_states(self):
         if self._Vnn == float("inf"):
             return (
                 jnp.array([1.0 + 0.0j, 0.0 + 0.0j]),
@@ -38,6 +38,19 @@ class TwoQubitGate(Gate):
                 jnp.array([1.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0j]),
             )
 
-    def _build_target_state(self):
-        # TODO
-        return
+    def target_states(self):
+        if self._Vnn == float("inf"):
+            return (
+                jnp.array([jnp.exp(1j * self._phi), 0.0 + 0.0j]),
+                jnp.array([jnp.exp(1j * (2 * self._phi + self._theta)), 0.0 + 0.0j]),
+            )
+        else:
+            return (
+                jnp.array([jnp.exp(1j * self._phi), 0.0 + 0.0j]),
+                jnp.array(
+                    [jnp.exp(1j * (2 * self._phi + self._theta)), 0.0 + 0.0j, 0.0 + 0j]
+                ),
+            )
+
+    def multiplicities(self):
+        return jnp.array([2, 1])
