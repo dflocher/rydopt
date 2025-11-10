@@ -1,38 +1,33 @@
 from functools import partial
 import jax.numpy as jnp
+from rydopt.gates.gate import Gate
 from rydopt.gates.subspace_hamiltonians import (
     H_2LS,
-    H_3LS_Vnn,
+    H_3LS,
 )
 
 
-class TwoQubitGate:
-    def __init__(self, theta, Vnn, decay):
-        self.theta = theta
-        self.Vnn = Vnn
-        self.decay = decay
-
-    def build(self):
-        return (
-            self._build_hamiltonian(),
-            self._build_initial_state(),
-            self._build_target_state(),
-        )
+class TwoQubitGate(Gate):
+    def __init__(self, phi, theta, Vnn, decay):
+        self._phi = phi
+        self._theta = theta
+        self._Vnn = Vnn
+        self._decay = decay
 
     def _build_hamiltonian(self):
-        if self.Vnn == float("inf"):
+        if self._Vnn == float("inf"):
             return (
-                partial(H_2LS, decay=self.decay, k=1),
-                partial(H_2LS, decay=self.decay, k=2),
+                partial(H_2LS, decay=self._decay, k=1),
+                partial(H_2LS, decay=self._decay, k=2),
             )
         else:
             return (
-                partial(H_2LS, decay=self.decay, k=1),
-                partial(H_3LS_Vnn, decay=self.decay, V=self.Vnn),
+                partial(H_2LS, decay=self._decay, k=1),
+                partial(H_3LS, decay=self._decay, V=self._Vnn),
             )
 
     def _build_initial_state(self):
-        if self.Vnn == float("inf"):
+        if self._Vnn == float("inf"):
             return (
                 jnp.array([1.0 + 0.0j, 0.0 + 0.0j]),
                 jnp.array([1.0 + 0.0j, 0.0 + 0.0j]),
