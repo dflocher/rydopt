@@ -1,5 +1,8 @@
 import jax.numpy as jnp
+import jax
 from functools import partial
+from rydopt.gates.two_qubit_gate import TwoQubitGate
+from rydopt.gates.fidelity import process_fidelity_from_states
 from rydopt.gates.subsystem_hamiltonians import (
     H_2LS_1,
     H_2LS_sqrt2,
@@ -22,26 +25,6 @@ from rydopt.gates.subsystem_hamiltonians import (
 def get_subsystem_Hamiltonians(
     n_atoms, Vnn, Vnnn, theta, eps, lamb, delta, kappa, decay
 ):
-    def fidelity_2qubits(subsystem_states):
-        # populations and phases of evolved states
-        # |10>, |01>
-        psi_A = subsystem_states[0]
-        rA = jnp.absolute(psi_A[0, 0])
-        pA = jnp.angle(psi_A[0, 0])
-        # |11>
-        psi_B = subsystem_states[1]
-        rB = jnp.absolute(psi_B[0, 0])
-        pB = jnp.angle(psi_B[0, 0])
-        # calculate gate fidelity
-        F = (
-            1
-            + 4 * rA**2
-            + rB**2
-            + 4 * rA
-            + 2 * rB * (1 + 2 * rA) * jnp.cos(pB - 2 * pA - theta)
-        ) / 16
-        return -F
-
     def fidelity_3qubits_3subsystems_Vinf(subsystem_states):
         rA, rC, rD, pA, pC, pD = _extract_3qubits_3subsystems(subsystem_states)
         return _three_qubit_fidelity(rA, rC, rC, rD, pA, pC, pC, pD, theta, eps, lamb)
@@ -178,26 +161,21 @@ def get_subsystem_Hamiltonians(
             kappa,
         )
 
-    if n_atoms == 2 and Vnn == float("inf"):
-        Hamiltonians = (
-            partial(H_2LS_1, decay=decay),
-            partial(H_2LS_sqrt2, decay=decay),
+    if n_atoms == 2:
+        gate = TwoQubitGate(None, theta, Vnn, decay)
+
+        Hamiltonians = gate.subsystem_hamiltonians()
+
+        input_states = gate.initial_states()
+
+        target_states = gate.target_states()
+        multiplicities = gate.multiplicities()
+        eliminate = gate.phase_eliminator()
+        fidelity_fn = jax.jit(
+            lambda final_states: -process_fidelity_from_states(
+                final_states, target_states, multiplicities, eliminate
+            )
         )
-        input_states = (
-            jnp.array([1.0 + 0.0j, 0.0 + 0.0j]),
-            jnp.array([1.0 + 0.0j, 0.0 + 0.0j]),
-        )
-        fidelity_fn = fidelity_2qubits
-    elif n_atoms == 2:
-        Hamiltonians = (
-            partial(H_2LS_1, decay=decay),
-            partial(H_3LS_Vnn, decay=decay, V=Vnn),
-        )
-        input_states = (
-            jnp.array([1.0 + 0.0j, 0.0 + 0.0j]),
-            jnp.array([1.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j]),
-        )
-        fidelity_fn = fidelity_2qubits
     elif n_atoms == 3 and Vnn == float("inf") and Vnnn == float("inf"):
         Hamiltonians = (
             partial(H_2LS_1, decay=decay),

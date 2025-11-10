@@ -14,7 +14,7 @@ def test_two_qubit_gate_fidelity():
     target_states = gate.target_states()
     multiplicities = gate.multiplicities()
     fidelity_jit = jax.jit(
-        lambda final_states: ro.gates.process_fidelity(
+        lambda final_states: ro.gates.process_fidelity_from_states(
             final_states, target_states, multiplicities
         )
     )
@@ -55,7 +55,7 @@ def test_two_qubit_gate_fidelity_free_phi():
     multiplicities = gate.multiplicities()
     eliminate = gate.phase_eliminator()
     fidelity_jit = jax.jit(
-        lambda final_states: ro.gates.process_fidelity(
+        lambda final_states: ro.gates.process_fidelity_from_states(
             final_states, target_states, multiplicities, eliminate
         )
     )
@@ -81,7 +81,7 @@ def test_two_qubit_gate_fidelity_free_theta():
     multiplicities = gate.multiplicities()
     eliminate = gate.phase_eliminator()
     fidelity_jit = jax.jit(
-        lambda final_states: ro.gates.process_fidelity(
+        lambda final_states: ro.gates.process_fidelity_from_states(
             final_states, target_states, multiplicities, eliminate
         )
     )

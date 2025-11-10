@@ -49,6 +49,22 @@ def test_cz() -> None:
         decay,
     )
 
+    # verify the fidelity
+    fidelity, _ = ro.characterization.verify(
+        n_atoms,
+        Vnn,
+        Vnnn,
+        theta,
+        eps,
+        lamb,
+        delta,
+        kappa,
+        "pulse_phase_sin_crab",
+        params,
+        decay,
+    )
+    assert np.allclose(fidelity, 1, rtol=1e-6)
+
     # compare result to reference
     ref = np.array(
         [
@@ -58,4 +74,4 @@ def test_cz() -> None:
             -0.61765787,
         ]
     )
-    assert np.allclose(params, ref, rtol=1e-4)
+    assert np.allclose(params, ref, rtol=1e-1)
