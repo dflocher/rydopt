@@ -33,6 +33,11 @@ To execute unit tests, run:
 pytest
 ```
 
+To avoid that the costly optimization tests are executed, use:
+```bash
+pytest -m "not optimization"
+```
+
 To build the documentation locally, run:
 ```bash
 (cd docs && make livehtml)

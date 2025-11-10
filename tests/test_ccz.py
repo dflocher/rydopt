@@ -1,7 +1,9 @@
 import numpy as np
 import rydopt as ro
+import pytest
 
 
+@pytest.mark.optimization
 def test_ccz() -> None:
     # number of atoms participating in the gate (2, 3 or 4)
     n_atoms = 3
