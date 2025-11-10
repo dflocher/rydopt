@@ -13,3 +13,6 @@ class Gate(ABC):
 
     @abstractmethod
     def multiplicities(self): ...
+
+    @abstractmethod
+    def phase_eliminator(self): ...
