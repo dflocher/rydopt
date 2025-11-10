@@ -1,8 +1,8 @@
 import numpy as np
 import qutip as qt
 import matplotlib.pyplot as plt
-from rydopt import hamiltonians
-from rydopt.pulses import pulses_qutip
+from rydopt import gates
+from rydopt.characterization import pulses_qutip
 
 # plot a pulse profile and the subsystem dynamics it creates
 
@@ -319,7 +319,7 @@ def visualize_subsystem_dynamics(
     T = params[0]
     Delta_of_t, phi_of_t = pulse(params)
     Hs = _get_subsystem_Hs(n_atoms, Vnn, Vnnn, Delta_of_t, phi_of_t, decay)
-    _, _, fidelity_fn = hamiltonians.get_subsystem_Hamiltonians(
+    _, _, fidelity_fn = gates.get_subsystem_Hamiltonians(
         n_atoms, Vnn, Vnnn, theta, eps, lamb, delta, kappa, decay
     )
     # time-evolve all subsystems and plot the populations

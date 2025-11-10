@@ -1,6 +1,6 @@
 import numpy as np
 import qutip as qt
-from rydopt.pulses import pulses_qutip
+from rydopt.characterization import pulses_qutip
 
 # perform the dynamics created by a pulse in the full Hilbert space instead of the distinct subspaces (using qutip) --> serves as a cross-check
 

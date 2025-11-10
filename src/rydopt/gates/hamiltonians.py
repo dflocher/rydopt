@@ -1,6 +1,6 @@
 import jax.numpy as jnp
 from functools import partial
-from rydopt.hamiltonians.subspace_hamiltonians import (
+from rydopt.gates.subspace_hamiltonians import (
     H_2LS_1,
     H_2LS_sqrt2,
     H_2LS_sqrt3,

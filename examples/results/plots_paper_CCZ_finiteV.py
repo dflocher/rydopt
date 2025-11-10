@@ -1,7 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from rydopt.pulses import pulses_qutip
-from rydopt import pulses
+from rydopt import characterization
 from matplotlib.legend_handler import HandlerTuple
 
 
@@ -1344,7 +1343,7 @@ def postprocess_V_sensitivity(
 
     infidelities = []
     for Vnn_i, Vnnn_i in zip(Vnn_array, Vnnn_array):
-        f, _ = pulses.verify(
+        f, _ = characterization.verify(
             n_atoms, Vnn_i, Vnnn_i, theta, eps, lamb, delta, kappa, pulse, params, decay
         )
         infidelities.append(1 - f)
@@ -1648,7 +1647,7 @@ if __name__ == "__main__":
     kappa = 0
 
     # pulse type
-    pulse = pulses_qutip.pulse_phase_sin_cos_crab_smooth
+    pulse = characterization.pulses_qutip.pulse_phase_sin_cos_crab_smooth
 
     # optimization parameters
     params = params_CCZ_TR_10_32_32
@@ -1656,7 +1655,7 @@ if __name__ == "__main__":
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-    # pulses.postprocess_pulses(n_atoms, Vnn, Vnnn, theta, eps, lamb, delta, kappa, pulse, params_list, decay)
+    # characterization.postprocess_pulses(n_atoms, Vnn, Vnnn, theta, eps, lamb, delta, kappa, pulse, params_list, decay)
     # postprocess_V_sensitivity(n_atoms, Vnn, Vnnn, theta, eps, lamb, delta, kappa, pulse, params, decay, 0.99, 1.01, geometry)
 
     plots_combined_row1(

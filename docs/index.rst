@@ -10,6 +10,7 @@ documentation for details.
    :maxdepth: 2
    :caption: API Reference
 
-   api/hamiltonians
+   api/gates
    api/pulses
    api/optimization
+   api/characterization

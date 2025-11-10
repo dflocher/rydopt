@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from rydopt.pulses import pulses_qutip
+from rydopt.characterization import pulses_qutip
 from matplotlib.legend_handler import HandlerTuple
 
 
@@ -1014,7 +1014,7 @@ if __name__ == "__main__":
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-    # pulses.postprocess_pulses(n_atoms, Vnn, Vnnn, theta, eps, lamb, delta, kappa, pulse, params_list, decay)
+    # characterization.postprocess_pulses(n_atoms, Vnn, Vnnn, theta, eps, lamb, delta, kappa, pulse, params_list, decay)
     plots_combined(
         nParams_CCCZ_T,
         Ts_CCCZ_T,

@@ -4,7 +4,7 @@ import optax
 import diffrax
 import time
 from functools import partial
-from rydopt import hamiltonians
+from rydopt import gates
 
 
 # optmimization of a single pulse starting from given initial parameters
@@ -24,7 +24,7 @@ def train_single_gate(
     T_penalty,
     decay,
 ):
-    Hamiltonians, input_states, fidelity_fn = hamiltonians.get_subsystem_Hamiltonians(
+    Hamiltonians, input_states, fidelity_fn = gates.get_subsystem_Hamiltonians(
         n_atoms, Vnn, Vnnn, theta, eps, lamb, delta, kappa, decay
     )
     optimizer = optax.adam(learning_rate=learning_rate)
@@ -75,7 +75,7 @@ def gate_search(
     T_penalty,
     decay,
 ):
-    Hamiltonians, input_states, fidelity_fn = hamiltonians.get_subsystem_Hamiltonians(
+    Hamiltonians, input_states, fidelity_fn = gates.get_subsystem_Hamiltonians(
         n_atoms, Vnn, Vnnn, theta, eps, lamb, delta, kappa, decay
     )
     optimizer = optax.adam(learning_rate=learning_rate)
@@ -143,7 +143,7 @@ def gate_search_cluster(
     T_penalty,
     decay,
 ):
-    Hamiltonians, input_states, fidelity_fn = hamiltonians.get_subsystem_Hamiltonians(
+    Hamiltonians, input_states, fidelity_fn = gates.get_subsystem_Hamiltonians(
         n_atoms, Vnn, Vnnn, theta, eps, lamb, delta, kappa, decay
     )
     optimizer = optax.adam(learning_rate=learning_rate)

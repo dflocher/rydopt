@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from rydopt.pulses import pulses_qutip
+from rydopt.characterization import pulses_qutip
 from matplotlib.legend_handler import HandlerTuple
 
 
@@ -325,7 +325,7 @@ if __name__ == "__main__":
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-    # pulses.postprocess_pulses(n_atoms, Vnn, Vnnn, theta, eps, lamb, delta, kappa, pulse, params_list, decay, Vnnn_list)
+    # characterization.postprocess_pulses(n_atoms, Vnn, Vnnn, theta, eps, lamb, delta, kappa, pulse, params_list, decay, Vnnn_list)
     plot_TR_vs_Vnnn(
         Vnnns_CZCZCZ_TR_12_32,
         TRs_CZCZCZ_TR_12_32,

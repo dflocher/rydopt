@@ -1,5 +1,5 @@
 import jax.numpy as jnp
-from rydopt import pulses, optimization
+from rydopt import pulses, optimization, characterization
 
 
 # run pulse optimizations locally
@@ -60,8 +60,8 @@ if __name__ == "__main__":
     # params = optimization.gate_search(n_atoms, Vnn, Vnnn, theta, eps, lamb, delta, kappa, pulse, T_default, N_searches, N_params, N_epochs, learning_rate, T_penalty, decay)
 
     # visualize the pulse and the dynamics in the subsystems (using qutip)
-    pulses.visualize_pulse(pulse.__name__, params)
-    pulses.visualize_subsystem_dynamics(
+    characterization.visualize_pulse(pulse.__name__, params)
+    characterization.visualize_subsystem_dynamics(
         n_atoms,
         Vnn,
         Vnnn,
@@ -76,7 +76,7 @@ if __name__ == "__main__":
     )
 
     # verify the pulse using the full Hamiltonian (using qutip)
-    pulses.verify(
+    characterization.verify(
         n_atoms,
         Vnn,
         Vnnn,
