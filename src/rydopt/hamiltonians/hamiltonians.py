@@ -1,8 +1,18 @@
-import jax
 import jax.numpy as jnp
-
-jax.config.update("jax_enable_x64", True)
-
+from functools import partial
+from rydopt.hamiltonians.subspace_hamiltonians import (
+    H_2LS_1,
+    H_2LS_sqrt2,
+    H_2LS_sqrt3,
+    H_2LS_sqrt4,
+    H_3LS_Vnnn,
+    H_3LS_Vnn,
+    H_4LS,
+    H_6LS,
+    H_4LS_Vnnn,
+    H_5LS,
+    H_8LS,
+)
 
 # internal function that provides Hamiltonians and fidelity functions
 
@@ -12,307 +22,6 @@ jax.config.update("jax_enable_x64", True)
 def get_subsystem_Hamiltonians(
     n_atoms, Vnn, Vnnn, theta, eps, lamb, delta, kappa, decay
 ):
-    # Hamiltonian for subspace |001> -- |00r>
-    def H_2LS_1(Phi, Delta):
-        return jnp.array(
-            [
-                [0.0, 0.5 * (jnp.cos(Phi) - 1j * jnp.sin(Phi))],
-                [0.5 * (jnp.cos(Phi) + 1j * jnp.sin(Phi)), Delta - 1j * 0.5 * decay],
-            ]
-        )
-
-    # Hamiltonian for subspace |011> -- (|01r> + |0r1>)  (Vnn = infinity)
-    def H_2LS_sqrt2(Phi, Delta):
-        return jnp.array(
-            [
-                [0.0, 0.5 * jnp.sqrt(2) * (jnp.cos(Phi) - 1j * jnp.sin(Phi))],
-                [
-                    0.5 * jnp.sqrt(2) * (jnp.cos(Phi) + 1j * jnp.sin(Phi)),
-                    Delta - 1j * 0.5 * decay,
-                ],
-            ]
-        )
-
-    # Hamiltonian for subspace |111> -- |W>  (Vnn = Vnnn = infinity)
-    def H_2LS_sqrt3(Phi, Delta):
-        return jnp.array(
-            [
-                [0.0, 0.5 * jnp.sqrt(3) * (jnp.cos(Phi) - 1j * jnp.sin(Phi))],
-                [
-                    0.5 * jnp.sqrt(3) * (jnp.cos(Phi) + 1j * jnp.sin(Phi)),
-                    Delta - 1j * 0.5 * decay,
-                ],
-            ]
-        )
-
-    # Hamiltonian for subspace |1111> -- |W4>  (Vnn = Vnnn = infinity)
-    def H_2LS_sqrt4(Phi, Delta):
-        return jnp.array(
-            [
-                [0.0, (jnp.cos(Phi) - 1j * jnp.sin(Phi))],
-                [(jnp.cos(Phi) + 1j * jnp.sin(Phi)), Delta - 1j * 0.5 * decay],
-            ]
-        )
-
-    # Hamiltonian for subspace |101> -- (|10r> + |r01>) -- |r0r>
-    def H_3LS_Vnnn(Phi, Delta):
-        return jnp.array(
-            [
-                [0.0, 0.5 * jnp.sqrt(2) * (jnp.cos(Phi) - 1j * jnp.sin(Phi)), 0],
-                [
-                    0.5 * jnp.sqrt(2) * (jnp.cos(Phi) + 1j * jnp.sin(Phi)),
-                    Delta - 1j * 0.5 * decay,
-                    0.5 * jnp.sqrt(2) * (jnp.cos(Phi) - 1j * jnp.sin(Phi)),
-                ],
-                [
-                    0,
-                    0.5 * jnp.sqrt(2) * (jnp.cos(Phi) + 1j * jnp.sin(Phi)),
-                    2 * Delta + Vnnn - 1j * decay,
-                ],
-            ]
-        )
-
-    # Hamiltonian for subspace |011> -- (|01r> + |0r1>) -- |0rr>
-    def H_3LS_Vnn(Phi, Delta):
-        return jnp.array(
-            [
-                [0.0, 0.5 * jnp.sqrt(2) * (jnp.cos(Phi) - 1j * jnp.sin(Phi)), 0],
-                [
-                    0.5 * jnp.sqrt(2) * (jnp.cos(Phi) + 1j * jnp.sin(Phi)),
-                    Delta - 1j * 0.5 * decay,
-                    0.5 * jnp.sqrt(2) * (jnp.cos(Phi) - 1j * jnp.sin(Phi)),
-                ],
-                [
-                    0,
-                    0.5 * jnp.sqrt(2) * (jnp.cos(Phi) + 1j * jnp.sin(Phi)),
-                    2 * Delta + Vnn - 1j * decay,
-                ],
-            ]
-        )
-
-    # Hamiltonian for subspace |111> -- |W> -- |X> -- |r1r>  (Vnn = infinity)
-    def H_4LS(Phi, Delta):
-        return jnp.array(
-            [
-                [0.0, 0.5 * jnp.sqrt(3) * (jnp.cos(Phi) - 1j * jnp.sin(Phi)), 0.0, 0.0],
-                [
-                    0.5 * jnp.sqrt(3) * (jnp.cos(Phi) + 1j * jnp.sin(Phi)),
-                    Delta - 1j * 0.5 * decay,
-                    0.0,
-                    (1 / jnp.sqrt(3)) * (jnp.cos(Phi) - 1j * jnp.sin(Phi)),
-                ],
-                [
-                    0.0,
-                    0.0,
-                    Delta - 1j * 0.5 * decay,
-                    (1 / jnp.sqrt(6)) * (jnp.cos(Phi) - 1j * jnp.sin(Phi)),
-                ],
-                [
-                    0.0,
-                    (1 / jnp.sqrt(3)) * (jnp.cos(Phi) + 1j * jnp.sin(Phi)),
-                    (1 / jnp.sqrt(6)) * (jnp.cos(Phi) + 1j * jnp.sin(Phi)),
-                    2 * Delta + Vnnn - 1j * decay,
-                ],
-            ]
-        )
-
-    # Hamiltonian for subspace |111> -- |W> -- |X> -- |X'> -- |W'> -- |rrr>
-    def H_6LS(Phi, Delta):
-        return jnp.array(
-            [
-                [
-                    0.0,
-                    0.5 * jnp.sqrt(3) * (jnp.cos(Phi) - 1j * jnp.sin(Phi)),
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                ],
-                [
-                    0.5 * jnp.sqrt(3) * (jnp.cos(Phi) + 1j * jnp.sin(Phi)),
-                    Delta - 1j * 0.5 * decay,
-                    0.0,
-                    0.0,
-                    (jnp.cos(Phi) - 1j * jnp.sin(Phi)),
-                    0.0,
-                ],
-                [
-                    0.0,
-                    0.0,
-                    Delta - 1j * 0.5 * decay,
-                    -0.5 * (jnp.cos(Phi) - 1j * jnp.sin(Phi)),
-                    0.0,
-                    0.0,
-                ],
-                [
-                    0.0,
-                    0.0,
-                    -0.5 * (jnp.cos(Phi) + 1j * jnp.sin(Phi)),
-                    (1 / 3) * Vnn + (2 / 3) * Vnnn + 2 * Delta - 1j * decay,
-                    (1 / 3) * jnp.sqrt(2) * (Vnn - Vnnn),
-                    0.0,
-                ],
-                [
-                    0.0,
-                    (jnp.cos(Phi) + 1j * jnp.sin(Phi)),
-                    0.0,
-                    (1 / 3) * jnp.sqrt(2) * (Vnn - Vnnn),
-                    (2 / 3) * Vnn + (1 / 3) * Vnnn + 2 * Delta - 1j * decay,
-                    0.5 * jnp.sqrt(3) * (jnp.cos(Phi) - 1j * jnp.sin(Phi)),
-                ],
-                [
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.5 * jnp.sqrt(3) * (jnp.cos(Phi) + 1j * jnp.sin(Phi)),
-                    2 * Vnn + Vnnn + 3 * Delta - 1j * 1.5 * decay,
-                ],
-            ]
-        )
-
-    # Hamiltonian for subspace |1110> -- |W>|0> -- |W'>|0> -- |rrr0>
-    def H_4LS_Vnnn(Phi, Delta):
-        return jnp.array(
-            [
-                [0.0, 0.5 * jnp.sqrt(3) * (jnp.cos(Phi) - 1j * jnp.sin(Phi)), 0.0, 0.0],
-                [
-                    0.5 * jnp.sqrt(3) * (jnp.cos(Phi) + 1j * jnp.sin(Phi)),
-                    Delta - 1j * 0.5 * decay,
-                    (jnp.cos(Phi) - 1j * jnp.sin(Phi)),
-                    0.0,
-                ],
-                [
-                    0.0,
-                    (jnp.cos(Phi) + 1j * jnp.sin(Phi)),
-                    Vnnn + 2 * Delta - 1j * decay,
-                    0.5 * jnp.sqrt(3) * (jnp.cos(Phi) - 1j * jnp.sin(Phi)),
-                ],
-                [
-                    0.0,
-                    0.0,
-                    0.5 * jnp.sqrt(3) * (jnp.cos(Phi) + 1j * jnp.sin(Phi)),
-                    3 * Vnnn + 3 * Delta - 1j * 1.5 * decay,
-                ],
-            ]
-        )
-
-    # Hamiltonian for subspace |1111> -- |W> -- |Z> -- |S> -- |rrr1>  (Vnn = infinity)
-    # |Z> = sqrt(3)/2 * |111r> - 1/sqrt(12) * (|11r1> + |1r11> + |r111>)
-    # |S> = 1/sqrt(3) * (|1rr1> + |r1r1> + |rr11>)
-    def H_5LS(Phi, Delta):
-        return jnp.array(
-            [
-                [0.0, (jnp.cos(Phi) - 1j * jnp.sin(Phi)), 0.0, 0.0, 0.0],
-                [
-                    (jnp.cos(Phi) + 1j * jnp.sin(Phi)),
-                    Delta - 1j * 0.5 * decay,
-                    0.0,
-                    0.5 * jnp.sqrt(3) * (jnp.cos(Phi) - 1j * jnp.sin(Phi)),
-                    0.0,
-                ],
-                [
-                    0.0,
-                    0.0,
-                    Delta - 1j * 0.5 * decay,
-                    0.5 * (jnp.cos(Phi) - 1j * jnp.sin(Phi)),
-                    0.0,
-                ],
-                [
-                    0.0,
-                    0.5 * jnp.sqrt(3) * (jnp.cos(Phi) + 1j * jnp.sin(Phi)),
-                    0.5 * (jnp.cos(Phi) + 1j * jnp.sin(Phi)),
-                    Vnnn + 2 * Delta - 1j * decay,
-                    0.5 * jnp.sqrt(3) * (jnp.cos(Phi) - 1j * jnp.sin(Phi)),
-                ],
-                [
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.5 * jnp.sqrt(3) * (jnp.cos(Phi) + 1j * jnp.sin(Phi)),
-                    3 * Vnnn + 3 * Delta - 1j * 1.5 * decay,
-                ],
-            ]
-        )
-
-    # Hamiltonian for subspace |1111> -- |W> -- ... -- |rrrr>
-    def H_8LS(Phi, Delta):
-        return jnp.array(
-            [
-                [0.0, (jnp.cos(Phi) - 1j * jnp.sin(Phi)), 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-                [
-                    (jnp.cos(Phi) + 1j * jnp.sin(Phi)),
-                    Delta - 1j * 0.5 * decay,
-                    0.0,
-                    0.5 * jnp.sqrt(3) * (jnp.cos(Phi) - 1j * jnp.sin(Phi)),
-                    0.5 * jnp.sqrt(3) * (jnp.cos(Phi) - 1j * jnp.sin(Phi)),
-                    0.0,
-                    0.0,
-                    0.0,
-                ],
-                [
-                    0.0,
-                    0.0,
-                    Delta - 1j * 0.5 * decay,
-                    -0.5 * (jnp.cos(Phi) - 1j * jnp.sin(Phi)),
-                    0.5 * (jnp.cos(Phi) - 1j * jnp.sin(Phi)),
-                    0.0,
-                    0.0,
-                    0.0,
-                ],
-                [
-                    0.0,
-                    0.5 * jnp.sqrt(3) * (jnp.cos(Phi) + 1j * jnp.sin(Phi)),
-                    -0.5 * (jnp.cos(Phi) + 1j * jnp.sin(Phi)),
-                    2 * Delta - 1j * decay + Vnn,
-                    0.0,
-                    (jnp.cos(Phi) - 1j * jnp.sin(Phi)),
-                    0.0,
-                    0.0,
-                ],
-                [
-                    0.0,
-                    0.5 * jnp.sqrt(3) * (jnp.cos(Phi) + 1j * jnp.sin(Phi)),
-                    0.5 * (jnp.cos(Phi) + 1j * jnp.sin(Phi)),
-                    0.0,
-                    2 * Delta - 1j * decay + Vnnn,
-                    0.5 * (jnp.cos(Phi) - 1j * jnp.sin(Phi)),
-                    0.5 * jnp.sqrt(3) * (jnp.cos(Phi) - 1j * jnp.sin(Phi)),
-                    0.0,
-                ],
-                [
-                    0.0,
-                    0.0,
-                    0.0,
-                    (jnp.cos(Phi) + 1j * jnp.sin(Phi)),
-                    0.5 * (jnp.cos(Phi) + 1j * jnp.sin(Phi)),
-                    3 * Delta - 1j * 1.5 * decay + 2 * Vnn + Vnnn,
-                    0.0,
-                    0.5 * jnp.sqrt(3) * (jnp.cos(Phi) - 1j * jnp.sin(Phi)),
-                ],
-                [
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.5 * jnp.sqrt(3) * (jnp.cos(Phi) + 1j * jnp.sin(Phi)),
-                    0.0,
-                    3 * Delta - 1j * 1.5 * decay + 3 * Vnnn,
-                    0.5 * (jnp.cos(Phi) - 1j * jnp.sin(Phi)),
-                ],
-                [
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.5 * jnp.sqrt(3) * (jnp.cos(Phi) + 1j * jnp.sin(Phi)),
-                    0.5 * (jnp.cos(Phi) + 1j * jnp.sin(Phi)),
-                    4 * Delta - 1j * 2 * decay + 3 * Vnn + 3 * Vnnn,
-                ],
-            ]
-        )
-
     def fidelity_2qubits(subsystem_states):
         # populations and phases of evolved states
         # |10>, |01>
@@ -470,21 +179,28 @@ def get_subsystem_Hamiltonians(
         )
 
     if n_atoms == 2 and Vnn == float("inf"):
-        Hamiltonians = (H_2LS_1, H_2LS_sqrt2)
+        Hamiltonians = (
+            partial(H_2LS_1, decay=decay),
+            partial(H_2LS_sqrt2, decay=decay),
+        )
         input_states = (
             jnp.array([1.0 + 0.0j, 0.0 + 0.0j]),
             jnp.array([1.0 + 0.0j, 0.0 + 0.0j]),
         )
         fidelity_fn = fidelity_2qubits
     elif n_atoms == 2:
-        Hamiltonians = (H_2LS_1, H_3LS_Vnn)
+        Hamiltonians = (partial(H_2LS_1, decay=decay), partial(H_3LS_Vnn, decay=decay))
         input_states = (
             jnp.array([1.0 + 0.0j, 0.0 + 0.0j]),
             jnp.array([1.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j]),
         )
         fidelity_fn = fidelity_2qubits
     elif n_atoms == 3 and Vnn == float("inf") and Vnnn == float("inf"):
-        Hamiltonians = (H_2LS_1, H_2LS_sqrt2, H_2LS_sqrt3)
+        Hamiltonians = (
+            partial(H_2LS_1, decay=decay),
+            partial(H_2LS_sqrt2, decay=decay),
+            partial(H_2LS_sqrt3, decay=decay),
+        )
         input_states = (
             jnp.array([1.0 + 0.0j, 0.0 + 0.0j]),
             jnp.array([1.0 + 0.0j, 0.0 + 0.0j]),
@@ -497,7 +213,11 @@ def get_subsystem_Hamiltonians(
             if theta != eps:
                 raise IOError("for Vnn = Vnnn = infinity: eps must be equal to theta")
     elif n_atoms == 3 and Vnn == float("inf") and Vnnn == 0:
-        Hamiltonians = (H_2LS_1, H_2LS_sqrt2, H_4LS)
+        Hamiltonians = (
+            partial(H_2LS_1, decay=decay),
+            partial(H_2LS_sqrt2, decay=decay),
+            partial(H_4LS, decay=decay),
+        )
         input_states = (
             jnp.array([1.0 + 0.0j, 0.0 + 0.0j]),
             jnp.array([1.0 + 0.0j, 0.0 + 0.0j]),
@@ -510,7 +230,12 @@ def get_subsystem_Hamiltonians(
             if eps != 0:
                 raise IOError("for Vnnn = 0: eps must be equal to zero")
     elif n_atoms == 3 and Vnn == float("inf"):
-        Hamiltonians = (H_2LS_1, H_3LS_Vnnn, H_2LS_sqrt2, H_4LS)
+        Hamiltonians = (
+            partial(H_2LS_1, decay=decay),
+            partial(H_3LS_Vnnn, decay=decay),
+            partial(H_2LS_sqrt2, decay=decay),
+            partial(H_4LS, decay=decay),
+        )
         input_states = (
             jnp.array([1.0 + 0.0j, 0.0 + 0.0j]),
             jnp.array([1.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j]),
@@ -526,7 +251,12 @@ def get_subsystem_Hamiltonians(
         else:
             fidelity_fn = fidelity_3qubits_4subsystems
     elif n_atoms == 3:
-        Hamiltonians = (H_2LS_1, H_3LS_Vnnn, H_3LS_Vnn, H_6LS)
+        Hamiltonians = (
+            partial(H_2LS_1, decay=decay),
+            partial(H_3LS_Vnnn, decay=decay),
+            partial(H_3LS_Vnn, decay=decay),
+            partial(H_6LS, decay=decay),
+        )
         input_states = (
             jnp.array([1.0 + 0.0j, 0.0 + 0.0j]),
             jnp.array([1.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j]),
@@ -544,7 +274,12 @@ def get_subsystem_Hamiltonians(
         else:
             fidelity_fn = fidelity_3qubits_4subsystems
     elif n_atoms == 4 and Vnn == float("inf") and Vnnn == float("inf"):
-        Hamiltonians = (H_2LS_1, H_2LS_sqrt2, H_2LS_sqrt3, H_2LS_sqrt4)
+        Hamiltonians = (
+            partial(H_2LS_1, decay=decay),
+            partial(H_2LS_sqrt2, decay=decay),
+            partial(H_2LS_sqrt3, decay=decay),
+            partial(H_2LS_sqrt4, decay=decay),
+        )
         input_states = (
             jnp.array([1.0 + 0.0j, 0.0 + 0.0j]),
             jnp.array([1.0 + 0.0j, 0.0 + 0.0j]),
@@ -557,7 +292,12 @@ def get_subsystem_Hamiltonians(
                 "for Vnn = Vnnn = infinity: eps must be equal to theta and delta must be equal to lambda"
             )
     elif n_atoms == 4 and Vnn == float("inf") and Vnnn == 0:
-        Hamiltonians = (H_2LS_1, H_2LS_sqrt2, H_4LS, H_5LS)
+        Hamiltonians = (
+            partial(H_2LS_1, decay=decay),
+            partial(H_2LS_sqrt2, decay=decay),
+            partial(H_4LS, decay=decay),
+            partial(H_5LS, decay=decay),
+        )
         input_states = (
             jnp.array([1.0 + 0.0j, 0.0 + 0.0j]),
             jnp.array([1.0 + 0.0j, 0.0 + 0.0j]),
@@ -570,7 +310,14 @@ def get_subsystem_Hamiltonians(
                 "for Vnnn = 0: eps must be equal to zero and delta must be equal to 0"
             )
     elif n_atoms == 4 and Vnn == float("inf"):
-        Hamiltonians = (H_2LS_1, H_2LS_sqrt2, H_3LS_Vnnn, H_4LS, H_4LS_Vnnn, H_5LS)
+        Hamiltonians = (
+            partial(H_2LS_1, decay=decay),
+            partial(H_2LS_sqrt2, decay=decay),
+            partial(H_3LS_Vnnn, decay=decay),
+            partial(H_4LS, decay=decay),
+            partial(H_4LS_Vnnn, decay=decay),
+            partial(H_5LS, decay=decay),
+        )
         input_states = (
             jnp.array([1.0 + 0.0j, 0.0 + 0.0j]),
             jnp.array([1.0 + 0.0j, 0.0 + 0.0j]),
@@ -584,7 +331,14 @@ def get_subsystem_Hamiltonians(
         else:
             fidelity_fn = fidelity_4qubits_6subsystems
     elif n_atoms == 4:
-        Hamiltonians = (H_2LS_1, H_3LS_Vnn, H_3LS_Vnnn, H_6LS, H_4LS_Vnnn, H_8LS)
+        Hamiltonians = (
+            partial(H_2LS_1, decay=decay),
+            partial(H_3LS_Vnn, decay=decay),
+            partial(H_3LS_Vnnn, decay=decay),
+            partial(H_6LS, decay=decay),
+            partial(H_4LS_Vnnn, decay=decay),
+            partial(H_8LS, decay=decay),
+        )
         input_states = (
             jnp.array([1.0 + 0.0j, 0.0 + 0.0j]),
             jnp.array([1.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j]),

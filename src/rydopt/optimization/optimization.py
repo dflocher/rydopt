@@ -6,8 +6,6 @@ import time
 from functools import partial
 from rydopt import hamiltonians
 
-jax.config.update("jax_enable_x64", True)
-
 
 # optmimization of a single pulse starting from given initial parameters
 def train_single_gate(
