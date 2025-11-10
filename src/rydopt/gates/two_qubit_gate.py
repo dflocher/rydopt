@@ -5,6 +5,7 @@ from rydopt.gates.subsystem_hamiltonians import (
     H_2LS,
     H_3LS,
 )
+from math import isinf
 
 
 class TwoQubitGate(Gate):
@@ -15,43 +16,40 @@ class TwoQubitGate(Gate):
         self._decay = decay
 
     def subsystem_hamiltonians(self):
-        if self._Vnn == float("inf"):
+        if isinf(float(self._Vnn)):
             return (
                 partial(H_2LS, decay=self._decay, k=1),
                 partial(H_2LS, decay=self._decay, k=2),
             )
-        else:
-            return (
-                partial(H_2LS, decay=self._decay, k=1),
-                partial(H_3LS, decay=self._decay, V=self._Vnn),
-            )
+        return (
+            partial(H_2LS, decay=self._decay, k=1),
+            partial(H_3LS, decay=self._decay, V=self._Vnn),
+        )
 
     def initial_states(self):
-        if self._Vnn == float("inf"):
+        if isinf(float(self._Vnn)):
             return (
                 jnp.array([1.0 + 0.0j, 0.0 + 0.0j]),
                 jnp.array([1.0 + 0.0j, 0.0 + 0.0j]),
             )
-        else:
-            return (
-                jnp.array([1.0 + 0.0j, 0.0 + 0.0j]),
-                jnp.array([1.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0j]),
-            )
+        return (
+            jnp.array([1.0 + 0.0j, 0.0 + 0.0j]),
+            jnp.array([1.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0j]),
+        )
 
     def target_states(self):
         p = 0.0 if self._phi is None else self._phi
         t = 0.0 if self._theta is None else self._theta
 
-        if self._Vnn == float("inf"):
+        if isinf(float(self._Vnn)):
             return (
                 jnp.array([jnp.exp(1j * p), 0.0 + 0.0j]),
                 jnp.array([jnp.exp(1j * (2 * p + t)), 0.0 + 0.0j]),
             )
-        else:
-            return (
-                jnp.array([jnp.exp(1j * p), 0.0 + 0.0j]),
-                jnp.array([jnp.exp(1j * (2 * p + t)), 0.0 + 0.0j, 0.0 + 0j]),
-            )
+        return (
+            jnp.array([jnp.exp(1j * p), 0.0 + 0.0j]),
+            jnp.array([jnp.exp(1j * (2 * p + t)), 0.0 + 0.0j, 0.0 + 0j]),
+        )
 
     def multiplicities(self):
         return jnp.array([2, 1])
@@ -62,7 +60,7 @@ class TwoQubitGate(Gate):
         m10 = self.multiplicities()[0]
 
         def eliminate_phase(overlaps):
-            # Make use of phase-degree-of-freedoms so that abs(1+2*o10+o11) gets
+            # Make use of phase-degrees-of-freedom so that abs(1+2*o10+o11) gets
             # maximized, assuming that |o10|=|o11|=1
 
             o10, o11 = overlaps

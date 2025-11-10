@@ -22,3 +22,6 @@ dev = [
     "sphinx-autodoc-typehints>=3.0.1",
     "sphinxcontrib-napoleon>=0.7",
 ]
+
+[tool.ruff.lint]
+ignore = ["E741"]

@@ -4,6 +4,10 @@ import jax.numpy as jnp
 def process_fidelity_from_states(
     final_states, target_states, multiplicities, eliminate_phase=None
 ):
+    assert len(final_states) == len(target_states) == len(multiplicities), (
+        "Length mismatch between final_states, target_states, and multiplicities."
+    )
+
     overlaps = jnp.stack([jnp.vdot(t, f) for t, f in zip(target_states, final_states)])
 
     if eliminate_phase is not None:
