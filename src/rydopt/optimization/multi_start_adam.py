@@ -11,11 +11,11 @@ def multi_start_adam(
     gate,
     pulse,
     T_default,
+    T_penalty,
     N_searches,
     N_params,
     N_epochs,
     learning_rate,
-    T_penalty,
 ):
     Hamiltonians = gate.subsystem_hamiltonians()
 
