@@ -35,7 +35,7 @@ def H_3LS(Phi, Delta, decay, V):
     )
 
 
-# Hamiltonian for subspace |111> -- |W> -- |X> -- |r1r>  (Vnn = infinity)
+# Hamiltonian for subspace |111> -- (|r11>+|1r1>+|11r>) -- |r1r> -- (|11r>+|r11>-2|1r1>)  (Vnn = infinity)
 def H_4LS(Phi, Delta, decay, Vnnn):
     return jnp.array(
         [
@@ -43,26 +43,26 @@ def H_4LS(Phi, Delta, decay, Vnnn):
             [
                 0.5 * jnp.sqrt(3) * jnp.exp(1j * Phi),
                 Delta - 1j * 0.5 * decay,
-                0.0,
                 (1 / jnp.sqrt(3)) * jnp.exp(-1j * Phi),
-            ],
-            [
                 0.0,
-                0.0,
-                Delta - 1j * 0.5 * decay,
-                (1 / jnp.sqrt(6)) * jnp.exp(-1j * Phi),
             ],
             [
                 0.0,
                 (1 / jnp.sqrt(3)) * jnp.exp(1j * Phi),
+                Vnnn + 2 * Delta - 1j * decay,
                 (1 / jnp.sqrt(6)) * jnp.exp(1j * Phi),
-                2 * Delta + Vnnn - 1j * decay,
+            ],
+            [
+                0.0,
+                0.0,
+                (1 / jnp.sqrt(6)) * jnp.exp(-1j * Phi),
+                Delta - 1j * 0.5 * decay,
             ],
         ]
     )
 
 
-# Hamiltonian for subspace |1110> -- |W>|0> -- |W'>|0> -- |rrr0>
+# Hamiltonian for subspace |111> -- (|r11>+|1r1>+|11r>) -- (|1rr>+|r1r>+|rr1>) -- |rrr>  (Vnn = Vnnn)
 def H_4LS_Vnnn(Phi, Delta, decay, Vnnn):
     return jnp.array(
         [
