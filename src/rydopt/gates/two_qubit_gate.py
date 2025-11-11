@@ -57,27 +57,20 @@ class TwoQubitGate(Gate):
     def phase_eliminator(self):
         free_phi = self._phi is None
         free_theta = self._theta is None
-        m10 = self.multiplicities()[0]
 
         def eliminate_phase(overlaps):
-            # Make use of phase-degrees-of-freedom so that abs(1+2*o10+o11) gets
-            # maximized, assuming that |o10|=|o11|=1
+            # Make use of phase-degrees-of-freedom: for free_phi, o10 defines phi; for free_theta, o11 defines theta
 
             o10, o11 = overlaps
 
             if free_phi:
                 alpha = jnp.angle(o10)
-                beta = jnp.angle(o11)
-                s = jnp.where(jnp.cos(alpha - 0.5 * beta) >= 0.0, 1.0, -1.0)
-                z = s * jnp.exp(-1j * 0.5 * beta)
-                o10 *= z
-                o11 *= z**2
-
-            base = 1 + m10 * o10
+                o10 *= jnp.exp(-1j * alpha)
+                o11 *= jnp.exp(-1j * 2 * alpha)
 
             if free_theta:
-                t = jnp.angle(o11) - jnp.angle(base)
-                o11 *= jnp.exp(-1j * t)
+                beta = jnp.angle(o11)
+                o11 *= jnp.exp(-1j * beta)
 
             return jnp.stack([o10, o11])
 
