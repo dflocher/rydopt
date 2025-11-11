@@ -1,5 +1,4 @@
 import jax
-import jax.numpy as jnp
 import optax
 import time
 from rydopt.gates.fidelity import process_fidelity_from_states
@@ -10,12 +9,12 @@ from rydopt.optimization.opt_step import opt_step
 def multi_start_adam(
     gate,
     pulse,
-    T_default,
-    T_penalty,
+    min_params,
+    max_params,
     N_searches,
-    N_params,
     N_epochs,
     learning_rate,
+    T_penalty,
 ):
     Hamiltonians = gate.subsystem_hamiltonians()
 
@@ -37,10 +36,8 @@ def multi_start_adam(
     best_index = None
     for j in range(N_searches):
         key, subkey = jax.random.split(key)
-        r = jax.random.normal(subkey, (N_params,))
-        params = jnp.array(
-            [T_default + 0.3 * T_default * r[0]] + [r[i] for i in range(1, N_params)]
-        )
+        u = jax.random.uniform(subkey, shape=(len(min_params),), minval=0.0, maxval=1.0)
+        params = min_params + u * (max_params - min_params)
         opt_state = optimizer.init(params)
         loss_value = 0.0
         for i in range(N_epochs):

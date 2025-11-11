@@ -10,9 +10,9 @@ def adam(
     gate,
     pulse,
     params,
-    T_penalty,
     N_epochs,
     learning_rate,
+    T_penalty,
 ):
     Hamiltonians = gate.subsystem_hamiltonians()
 

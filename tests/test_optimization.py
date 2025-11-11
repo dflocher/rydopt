@@ -15,18 +15,18 @@ def test_adam() -> None:
     initial_params = np.array([7.6, -0.1, 1.8, -0.6])
 
     # optimization settings
-    T_penalty = 0.0
     N_epochs = 200
     learning_rate = 0.05
+    T_penalty = 0.0
 
     # run optimization
     params = ro.optimization.adam(
         gate,
         pulse,
         initial_params,
-        T_penalty,
         N_epochs,
         learning_rate,
+        T_penalty,
     )
 
     # compare result to reference
@@ -49,22 +49,24 @@ def test_multi_start_adam() -> None:
     # pulse type
     pulse = ro.pulses.pulse_phase_sin_crab
 
+    # parameter bounds for choosing random initial parameters
+    min_params = np.array([6, -1, -2, -2])
+    max_params = np.array([9, 1, 2, 2])
+
     # optimization settings
-    T_default = 11.0
-    T_penalty = 0.0
-    N_searches = 2
-    N_params = 4
+    N_searches = 5
     N_epochs = 200
     learning_rate = 0.05
+    T_penalty = 0.0
 
     # run optimization
     _ = ro.optimization.multi_start_adam(
         gate,
         pulse,
-        T_default,
-        T_penalty,
+        min_params,
+        max_params,
         N_searches,
-        N_params,
         N_epochs,
         learning_rate,
+        T_penalty,
     )
