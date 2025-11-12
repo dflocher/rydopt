@@ -63,6 +63,7 @@ def H_4LS(Phi, Delta, decay, Vnnn):
 
 
 # Hamiltonian for subspace |111> -- (|r11>+|1r1>+|11r>) -- (|1rr>+|r1r>+|rr1>) -- |rrr>  (Vnn = Vnnn)
+# TODO: rename or combine with other 4LS
 def H_4LS_Vnnn(Phi, Delta, decay, Vnnn):
     return jnp.array(
         [

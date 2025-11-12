@@ -8,14 +8,19 @@ from rydopt.gates.subsystem_hamiltonians import (
     H_2LS,
     H_3LS,
     H_4LS,
+    H_4LS_Vnnn,
     H_6LS,
 )
 from math import isinf
 
 
-# TODO: IOError handling for combination of (phi, theta, eps, lamb) and (Vnn, Vnnn)
 class ThreeQubitGateIsosceles(Gate):
     def __init__(self, phi, theta, eps, lamb, Vnn, Vnnn, decay):
+        # TODO: check error cases
+        if (Vnnn == Vnnn) and (theta != eps):
+            raise IOError("For Vnn=Vnnn, theta=eps is required")
+        if (Vnnn == 0) and (eps != 0.0):
+            raise IOError("For Vnnn=0, eps=0 is required")
         self._phi = phi
         self._theta = theta
         self._eps = eps
@@ -44,7 +49,12 @@ class ThreeQubitGateIsosceles(Gate):
                 partial(H_2LS, decay=self._decay, k=2),
                 partial(H_4LS, decay=self._decay, Vnnn=self._Vnnn),
             )
-        # TODO add case for Vnn=Vnnn: 2LS, 3LS, 3LS, 4LS_v2
+        if float(self._Vnn) == float(self._Vnnn):
+            return (
+                partial(H_2LS, decay=self._decay, k=1),
+                partial(H_3LS, decay=self._decay, V=self._Vnnn),
+                partial(H_4LS_Vnnn, decay=self._decay, Vnnn=self._Vnnn),
+            )
         return (
             partial(H_2LS, decay=self._decay, k=1),
             partial(H_3LS, decay=self._decay, V=self._Vnnn),
@@ -72,7 +82,12 @@ class ThreeQubitGateIsosceles(Gate):
                 jnp.array([1.0 + 0.0j, 0.0 + 0.0j]),
                 jnp.array([1.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j]),
             )
-        # TODO add case for Vnn=Vnnn
+        if float(self._Vnn) == float(self._Vnnn):
+            return (
+                jnp.array([1.0 + 0.0j, 0.0 + 0.0j]),
+                jnp.array([1.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j]),
+                jnp.array([1.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j]),
+            )
         return (
             jnp.array([1.0 + 0.0j, 0.0 + 0.0j]),
             jnp.array([1.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j]),
@@ -89,13 +104,13 @@ class ThreeQubitGateIsosceles(Gate):
         l = 0.0  # if self._lamb is None else self._lamb
 
         if isinf(float(self._Vnn)) and isinf(float(self._Vnnn)):
-            return (  # TODO: make sure that t=e
+            return (
                 jnp.array([jnp.exp(1j * p), 0.0 + 0.0j]),
                 jnp.array([jnp.exp(1j * (2 * p + t)), 0.0 + 0.0j]),
                 jnp.array([jnp.exp(1j * (3 * p + 2 * t + e + l)), 0.0 + 0.0j]),
             )
         if isinf(float(self._Vnn)) and float(self._Vnnn) == 0.0:
-            return (  # TODO: make sure that e=0
+            return (
                 jnp.array([jnp.exp(1j * p), 0.0 + 0.0j]),
                 jnp.array([jnp.exp(1j * (2 * p + t)), 0.0 + 0.0j]),
                 jnp.array(
@@ -121,7 +136,19 @@ class ThreeQubitGateIsosceles(Gate):
                     ]
                 ),
             )
-        # TODO add case for Vnn=Vnnn
+        if float(self._Vnn) == float(self._Vnnn):
+            return (
+                jnp.array([jnp.exp(1j * p), 0.0 + 0.0j]),
+                jnp.array([jnp.exp(1j * (2 * p + t)), 0.0 + 0.0j, 0.0 + 0.0j]),
+                jnp.array(
+                    [
+                        jnp.exp(1j * (3 * p + 2 * t + e + l)),
+                        0.0 + 0.0j,
+                        0.0 + 0.0j,
+                        0.0 + 0.0j,
+                    ]
+                ),
+            )
         return (
             jnp.array([jnp.exp(1j * p), 0.0 + 0.0j]),
             jnp.array([jnp.exp(1j * (2 * p + e)), 0.0 + 0.0j, 0.0 + 0.0j]),
@@ -146,7 +173,8 @@ class ThreeQubitGateIsosceles(Gate):
             return jnp.array([4, 2, 1])
         if isinf(float(self._Vnn)):
             return jnp.array([3, 1, 2, 1])
-        # TODO add case for Vnn=Vnnn
+        if float(self._Vnn) == float(self._Vnnn):
+            return jnp.array([3, 1, 2, 1])
         return jnp.array([3, 1, 2, 1])
 
     def phase_eliminator(self):
@@ -156,7 +184,7 @@ class ThreeQubitGateIsosceles(Gate):
         free_lamb = self._lamb is None
 
         def eliminate_phase(overlaps):
-            if isinf(float(self._Vnn)) and isinf(float(self._Vnnn)):
+            if float(self._Vnn) == float(self._Vnnn):
                 o100, o110, o111 = overlaps
                 o101 = o110
             elif isinf(float(self._Vnn)) and float(self._Vnnn) == 0.0:
@@ -195,8 +223,7 @@ class ThreeQubitGateIsosceles(Gate):
             o111 *= jnp.exp(-1j * (3 * phi + 2 * theta + eps + lamb))
 
             if (
-                isinf(float(self._Vnn))
-                and isinf(float(self._Vnnn))
+                float(self._Vnn) == float(self._Vnnn)
                 or isinf(float(self._Vnn))
                 and float(self._Vnnn) == 0.0
             ):
