@@ -38,8 +38,8 @@ class TwoQubitGate(Gate):
         )
 
     def target_states(self):
-        p = 0.0 if self._phi is None else self._phi
-        t = 0.0 if self._theta is None else self._theta
+        p = 0.0  # if self._phi is None else self._phi
+        t = 0.0  # if self._theta is None else self._theta
 
         if isinf(float(self._Vnn)):
             return (
@@ -63,14 +63,29 @@ class TwoQubitGate(Gate):
 
             o10, o11 = overlaps
 
+            # if free_phi:
+            #     alpha = jnp.angle(o10)
+            #     o10 *= jnp.exp(-1j * alpha)
+            #     o11 *= jnp.exp(-1j * 2 * alpha)
+            #
+            # if free_theta:
+            #     beta = jnp.angle(o11)
+            #     o11 *= jnp.exp(-1j * beta)
+
             if free_phi:
-                alpha = jnp.angle(o10)
-                o10 *= jnp.exp(-1j * alpha)
-                o11 *= jnp.exp(-1j * 2 * alpha)
+                alpha10 = jnp.angle(o10)
+                phi = alpha10
+            else:
+                phi = self._phi
 
             if free_theta:
-                beta = jnp.angle(o11)
-                o11 *= jnp.exp(-1j * beta)
+                alpha11 = jnp.angle(o11)
+                theta = alpha11 - 2 * phi
+            else:
+                theta = self._theta
+
+            o10 *= jnp.exp(-1j * phi)
+            o11 *= jnp.exp(-1j * (2 * phi + theta))
 
             return jnp.stack([o10, o11])
 
