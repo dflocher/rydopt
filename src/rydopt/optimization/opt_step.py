@@ -56,5 +56,5 @@ def _propagate(psi_initial, schroedinger_eq, args):
         stepsize_controller=stepsize_controller,
         max_steps=10000,
     )
-    psi = sol.ys[0].reshape(len(sol.ys[0]), 1)
+    psi = sol.ys[0].reshape(-1)
     return psi  # it would be enough to return just the 1st element of the vector

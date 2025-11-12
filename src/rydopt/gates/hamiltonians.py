@@ -2,7 +2,6 @@ import jax.numpy as jnp
 import jax
 from functools import partial
 from rydopt.gates.two_qubit_gate import TwoQubitGate
-from rydopt.gates.fidelity import process_fidelity_from_states
 from rydopt.gates.subsystem_hamiltonians import (
     H_2LS_1,
     H_2LS_sqrt2,
@@ -163,19 +162,9 @@ def get_subsystem_Hamiltonians(
 
     if n_atoms == 2:
         gate = TwoQubitGate(None, theta, Vnn, decay)
-
         Hamiltonians = gate.subsystem_hamiltonians()
-
         input_states = gate.initial_states()
-
-        target_states = gate.target_states()
-        multiplicities = gate.multiplicities()
-        eliminate = gate.phase_eliminator()
-        fidelity_fn = jax.jit(
-            lambda final_states: -process_fidelity_from_states(
-                final_states, target_states, multiplicities, eliminate
-            )
-        )
+        fidelity_fn = jax.jit(lambda final_states: -gate.process_fidelity(final_states))
     elif n_atoms == 3 and Vnn == float("inf") and Vnnn == float("inf"):
         Hamiltonians = (
             partial(H_2LS_1, decay=decay),
@@ -356,16 +345,16 @@ def _extract_3qubits_3subsystems(subsystem_states):
     # populations and phases of evolved states
     # |100>, |010>, |001>
     psi_A = subsystem_states[0]
-    rA = jnp.absolute(psi_A[0, 0])
-    pA = jnp.angle(psi_A[0, 0])
+    rA = jnp.absolute(psi_A[0])
+    pA = jnp.angle(psi_A[0])
     # |110>, |011>
     psi_C = subsystem_states[1]
-    rC = jnp.absolute(psi_C[0, 0])
-    pC = jnp.angle(psi_C[0, 0])
+    rC = jnp.absolute(psi_C[0])
+    pC = jnp.angle(psi_C[0])
     # |111>
     psi_D = subsystem_states[2]
-    rD = jnp.absolute(psi_D[0, 0])
-    pD = jnp.angle(psi_D[0, 0])
+    rD = jnp.absolute(psi_D[0])
+    pD = jnp.angle(psi_D[0])
     return rA, rC, rD, pA, pC, pD
 
 
@@ -373,20 +362,20 @@ def _extract_3qubits_4subsystems(subsystem_states):
     # population and phases of evolved states
     # |100>, |010>, |001>
     psi_A = subsystem_states[0]
-    rA = jnp.absolute(psi_A[0, 0])
-    pA = jnp.angle(psi_A[0, 0])
+    rA = jnp.absolute(psi_A[0])
+    pA = jnp.angle(psi_A[0])
     # |101>
     psi_B = subsystem_states[1]
-    rB = jnp.absolute(psi_B[0, 0])
-    pB = jnp.angle(psi_B[0, 0])
+    rB = jnp.absolute(psi_B[0])
+    pB = jnp.angle(psi_B[0])
     # |110>, |011>
     psi_C = subsystem_states[2]
-    rC = jnp.absolute(psi_C[0, 0])
-    pC = jnp.angle(psi_C[0, 0])
+    rC = jnp.absolute(psi_C[0])
+    pC = jnp.angle(psi_C[0])
     # |111>
     psi_D = subsystem_states[3]
-    rD = jnp.absolute(psi_D[0, 0])
-    pD = jnp.angle(psi_D[0, 0])
+    rD = jnp.absolute(psi_D[0])
+    pD = jnp.angle(psi_D[0])
     return rA, rB, rC, rD, pA, pB, pC, pD
 
 
@@ -394,20 +383,20 @@ def _extract_4qubits_4subsystems(subsystem_states):
     # population and phases of evolved states
     # |0001>, |0010>, |0100>, |1000>
     psi_A = subsystem_states[0]
-    rA = jnp.absolute(psi_A[0, 0])
-    pA = jnp.angle(psi_A[0, 0])
+    rA = jnp.absolute(psi_A[0])
+    pA = jnp.angle(psi_A[0])
     # |0011>, |0101>, |1001>
     psi_B = subsystem_states[1]
-    rB = jnp.absolute(psi_B[0, 0])
-    pB = jnp.angle(psi_B[0, 0])
+    rB = jnp.absolute(psi_B[0])
+    pB = jnp.angle(psi_B[0])
     # |0111>, |1011>, |1101>
     psi_D = subsystem_states[2]
-    rD = jnp.absolute(psi_D[0, 0])
-    pD = jnp.angle(psi_D[0, 0])
+    rD = jnp.absolute(psi_D[0])
+    pD = jnp.angle(psi_D[0])
     # |1111>
     psi_F = subsystem_states[3]
-    rF = jnp.absolute(psi_F[0, 0])
-    pF = jnp.angle(psi_F[0, 0])
+    rF = jnp.absolute(psi_F[0])
+    pF = jnp.angle(psi_F[0])
     return rA, rB, rD, rF, pA, pB, pD, pF
 
 
@@ -415,28 +404,28 @@ def _extract_4qubits_6subsystems(subsystem_states):
     # population and phases of evolved states
     # |0001>, |0010>, |0100>, |1000>
     psi_A = subsystem_states[0]
-    rA = jnp.absolute(psi_A[0, 0])
-    pA = jnp.angle(psi_A[0, 0])
+    rA = jnp.absolute(psi_A[0])
+    pA = jnp.angle(psi_A[0])
     # |0011>, |0101>, |1001>
     psi_B = subsystem_states[1]
-    rB = jnp.absolute(psi_B[0, 0])
-    pB = jnp.angle(psi_B[0, 0])
+    rB = jnp.absolute(psi_B[0])
+    pB = jnp.angle(psi_B[0])
     # |0110>, |1010>, |1100>
     psi_C = subsystem_states[2]
-    rC = jnp.absolute(psi_C[0, 0])
-    pC = jnp.angle(psi_C[0, 0])
+    rC = jnp.absolute(psi_C[0])
+    pC = jnp.angle(psi_C[0])
     # |0111>, |1011>, |1101>
     psi_D = subsystem_states[3]
-    rD = jnp.absolute(psi_D[0, 0])
-    pD = jnp.angle(psi_D[0, 0])
+    rD = jnp.absolute(psi_D[0])
+    pD = jnp.angle(psi_D[0])
     # |1110>
     psi_E = subsystem_states[4]
-    rE = jnp.absolute(psi_E[0, 0])
-    pE = jnp.angle(psi_E[0, 0])
+    rE = jnp.absolute(psi_E[0])
+    pE = jnp.angle(psi_E[0])
     # |1111>
     psi_F = subsystem_states[5]
-    rF = jnp.absolute(psi_F[0, 0])
-    pF = jnp.angle(psi_F[0, 0])
+    rF = jnp.absolute(psi_F[0])
+    pF = jnp.angle(psi_F[0])
     return rA, rB, rC, rD, rE, rF, pA, pB, pC, pD, pE, pF
 
 

@@ -1,7 +1,6 @@
 import jax
 import optax
 import time
-from rydopt.gates.fidelity import process_fidelity_from_states
 from rydopt.optimization.opt_step import opt_step, loss_fn
 
 
@@ -15,17 +14,8 @@ def adam(
     T_penalty,
 ):
     Hamiltonians = gate.subsystem_hamiltonians()
-
     input_states = gate.initial_states()
-
-    target_states = gate.target_states()
-    multiplicities = gate.multiplicities()
-    eliminate = gate.phase_eliminator()
-    fidelity_fn = jax.jit(
-        lambda final_states: -process_fidelity_from_states(
-            final_states, target_states, multiplicities, eliminate
-        )
-    )
+    fidelity_fn = jax.jit(lambda final_states: -gate.process_fidelity(final_states))
 
     optimizer = optax.adam(learning_rate=learning_rate)
     opt_state = optimizer.init(params)

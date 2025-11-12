@@ -15,6 +15,9 @@ class TwoQubitGate(Gate):
         self._Vnn = Vnn
         self._decay = decay
 
+    def dim(self):
+        return 4
+
     def subsystem_hamiltonians(self):
         if isinf(float(self._Vnn)):
             return (
@@ -37,56 +40,31 @@ class TwoQubitGate(Gate):
             jnp.array([1.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0j]),
         )
 
-    def target_states(self):
-        p = 0.0  # if self._phi is None else self._phi
-        t = 0.0  # if self._theta is None else self._theta
-
-        if isinf(float(self._Vnn)):
-            return (
-                jnp.array([jnp.exp(1j * p), 0.0 + 0.0j]),
-                jnp.array([jnp.exp(1j * (2 * p + t)), 0.0 + 0.0j]),
-            )
-        return (
-            jnp.array([jnp.exp(1j * p), 0.0 + 0.0j]),
-            jnp.array([jnp.exp(1j * (2 * p + t)), 0.0 + 0.0j, 0.0 + 0j]),
+    def process_fidelity(self, final_states):
+        # Obtained diagonal gate matrix
+        obtained_gate = jnp.array(
+            [
+                1,
+                final_states[0][0],
+                final_states[0][0],
+                final_states[1][0],
+            ]
         )
 
-    def multiplicities(self):
-        return jnp.array([2, 1])
+        # Targeted diagonal gate matrix
+        p = jnp.angle(obtained_gate[1]) if self._phi is None else self._phi
+        t = jnp.angle(obtained_gate[3]) - 2 * p if self._theta is None else self._theta
 
-    def phase_eliminator(self):
-        free_phi = self._phi is None
-        free_theta = self._theta is None
+        targeted_gate = jnp.stack(
+            [
+                1,
+                jnp.exp(1j * p),
+                jnp.exp(1j * p),
+                jnp.exp(1j * (2 * p + t)),
+            ]
+        )
 
-        def eliminate_phase(overlaps):
-            # Make use of phase-degrees-of-freedom: for free_phi, o10 defines phi; for free_theta, o11 defines theta
-
-            o10, o11 = overlaps
-
-            # if free_phi:
-            #     alpha = jnp.angle(o10)
-            #     o10 *= jnp.exp(-1j * alpha)
-            #     o11 *= jnp.exp(-1j * 2 * alpha)
-            #
-            # if free_theta:
-            #     beta = jnp.angle(o11)
-            #     o11 *= jnp.exp(-1j * beta)
-
-            if free_phi:
-                alpha10 = jnp.angle(o10)
-                phi = alpha10
-            else:
-                phi = self._phi
-
-            if free_theta:
-                alpha11 = jnp.angle(o11)
-                theta = alpha11 - 2 * phi
-            else:
-                theta = self._theta
-
-            o10 *= jnp.exp(-1j * phi)
-            o11 *= jnp.exp(-1j * (2 * phi + theta))
-
-            return jnp.stack([o10, o11])
-
-        return eliminate_phase
+        return (
+            jnp.abs(jnp.vdot(targeted_gate, obtained_gate)) ** 2
+            / len(targeted_gate) ** 2
+        )

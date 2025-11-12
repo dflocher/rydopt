@@ -11,12 +11,12 @@ def test_two_qubit_gate_fidelity():
     gate = ro.gates.TwoQubitGate(phi=phi, theta=theta, Vnn=float("inf"), decay=0)
 
     # Create a jitted process fidelity function for the created gate
-    target_states = gate.target_states()
-    multiplicities = gate.multiplicities()
-    fidelity_jit = jax.jit(
-        lambda final_states: ro.gates.process_fidelity_from_states(
-            final_states, target_states, multiplicities
-        )
+    fidelity_jit = jax.jit(lambda final_states: gate.process_fidelity(final_states))
+
+    # Create the expected final states
+    target_states = (
+        jnp.array([jnp.exp(1j * phi), 0.0 + 0.0j]),
+        jnp.array([jnp.exp(1j * (2 * phi + theta)), 0.0 + 0.0j]),
     )
 
     # --- Perfect implementation ---
@@ -51,13 +51,12 @@ def test_two_qubit_gate_fidelity_free_phi():
     gate = ro.gates.TwoQubitGate(phi=phi, theta=theta, Vnn=float("inf"), decay=0)
 
     # Create a jitted process fidelity function for the created gate
-    target_states = gate.target_states()
-    multiplicities = gate.multiplicities()
-    eliminate = gate.phase_eliminator()
-    fidelity_jit = jax.jit(
-        lambda final_states: ro.gates.process_fidelity_from_states(
-            final_states, target_states, multiplicities, eliminate
-        )
+    fidelity_jit = jax.jit(lambda final_states: gate.process_fidelity(final_states))
+
+    # Create the expected final states
+    target_states = (
+        jnp.array([jnp.exp(1j * 0), 0.0 + 0.0j]),
+        jnp.array([jnp.exp(1j * (2 * 0 + theta)), 0.0 + 0.0j]),
     )
 
     # --- Single-qubit Z phase on all atoms ---
@@ -77,13 +76,12 @@ def test_two_qubit_gate_fidelity_free_theta():
     gate = ro.gates.TwoQubitGate(phi=phi, theta=theta, Vnn=float("inf"), decay=0)
 
     # Create a jitted process fidelity function for the created gate
-    target_states = gate.target_states()
-    multiplicities = gate.multiplicities()
-    eliminate = gate.phase_eliminator()
-    fidelity_jit = jax.jit(
-        lambda final_states: ro.gates.process_fidelity_from_states(
-            final_states, target_states, multiplicities, eliminate
-        )
+    fidelity_jit = jax.jit(lambda final_states: gate.process_fidelity(final_states))
+
+    # Create the expected final states
+    target_states = (
+        jnp.array([jnp.exp(1j * phi), 0.0 + 0.0j]),
+        jnp.array([jnp.exp(1j * (2 * phi + 0)), 0.0 + 0.0j]),
     )
 
     # --- Controlled-phase shift on |11> ---
