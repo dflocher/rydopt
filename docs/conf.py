@@ -17,6 +17,7 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
     "sphinx.ext.napoleon",
+    "sphinx.ext.mathjax",
     "sphinx_autodoc_typehints",
 ]
 
@@ -26,8 +27,8 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 autosummary_ignore_module_all = False
 
 add_module_names = False
-autodoc_class_signature = "separated"
-autodoc_typehints = "both"
+autodoc_class_signature = "mixed"
+autodoc_typehints = "signature"
 autodoc_default_options = {
     "members": True,
     "member-order": "bysource",
