@@ -29,12 +29,21 @@ class ThreeQubitGateIsosceles(Gate):
         self._Vnnn = Vnnn
         self._decay = decay
 
+    def dim(self):
+        return 8
+
     def subsystem_hamiltonians(self):
         if isinf(float(self._Vnn)) and isinf(float(self._Vnnn)):
             return (
                 partial(H_2LS, decay=self._decay, k=1),
                 partial(H_2LS, decay=self._decay, k=2),
                 partial(H_2LS, decay=self._decay, k=3),
+            )
+        if float(self._Vnn) == float(self._Vnnn):
+            return (
+                partial(H_2LS, decay=self._decay, k=1),
+                partial(H_3LS, decay=self._decay, V=self._Vnn),
+                partial(H_4LS_Vnnn, decay=self._decay, Vnnn=self._Vnn),
             )
         if isinf(float(self._Vnn)) and float(self._Vnnn) == 0.0:
             return (
@@ -45,20 +54,14 @@ class ThreeQubitGateIsosceles(Gate):
         if isinf(float(self._Vnn)):
             return (
                 partial(H_2LS, decay=self._decay, k=1),
-                partial(H_3LS, decay=self._decay, V=self._Vnnn),
                 partial(H_2LS, decay=self._decay, k=2),
-                partial(H_4LS, decay=self._decay, Vnnn=self._Vnnn),
-            )
-        if float(self._Vnn) == float(self._Vnnn):
-            return (
-                partial(H_2LS, decay=self._decay, k=1),
                 partial(H_3LS, decay=self._decay, V=self._Vnnn),
-                partial(H_4LS_Vnnn, decay=self._decay, Vnnn=self._Vnnn),
+                partial(H_4LS, decay=self._decay, Vnnn=self._Vnnn),
             )
         return (
             partial(H_2LS, decay=self._decay, k=1),
-            partial(H_3LS, decay=self._decay, V=self._Vnnn),
             partial(H_3LS, decay=self._decay, V=self._Vnn),
+            partial(H_3LS, decay=self._decay, V=self._Vnnn),
             partial(H_6LS, decay=self._decay, Vnn=self._Vnn, Vnnn=self._Vnnn),
         )
 
@@ -69,6 +72,12 @@ class ThreeQubitGateIsosceles(Gate):
                 jnp.array([1.0 + 0.0j, 0.0 + 0.0j]),
                 jnp.array([1.0 + 0.0j, 0.0 + 0.0j]),
             )
+        if float(self._Vnn) == float(self._Vnnn):
+            return (
+                jnp.array([1.0 + 0.0j, 0.0 + 0.0j]),
+                jnp.array([1.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j]),
+                jnp.array([1.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j]),
+            )
         if isinf(float(self._Vnn)) and float(self._Vnnn) == 0.0:
             return (
                 jnp.array([1.0 + 0.0j, 0.0 + 0.0j]),
@@ -78,12 +87,6 @@ class ThreeQubitGateIsosceles(Gate):
         if isinf(float(self._Vnn)):
             return (
                 jnp.array([1.0 + 0.0j, 0.0 + 0.0j]),
-                jnp.array([1.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j]),
-                jnp.array([1.0 + 0.0j, 0.0 + 0.0j]),
-                jnp.array([1.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j]),
-            )
-        if float(self._Vnn) == float(self._Vnnn):
-            return (
                 jnp.array([1.0 + 0.0j, 0.0 + 0.0j]),
                 jnp.array([1.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j]),
                 jnp.array([1.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j]),
@@ -97,137 +100,72 @@ class ThreeQubitGateIsosceles(Gate):
             ),
         )
 
-    def target_states(self):
-        p = 0.0  # if self._phi is None else self._phi
-        t = 0.0  # if self._theta is None else self._theta
-        e = 0.0  # if self._eps is None else self._eps
-        l = 0.0  # if self._lamb is None else self._lamb
-
-        if isinf(float(self._Vnn)) and isinf(float(self._Vnnn)):
-            return (
-                jnp.array([jnp.exp(1j * p), 0.0 + 0.0j]),
-                jnp.array([jnp.exp(1j * (2 * p + t)), 0.0 + 0.0j]),
-                jnp.array([jnp.exp(1j * (3 * p + 2 * t + e + l)), 0.0 + 0.0j]),
-            )
-        if isinf(float(self._Vnn)) and float(self._Vnnn) == 0.0:
-            return (
-                jnp.array([jnp.exp(1j * p), 0.0 + 0.0j]),
-                jnp.array([jnp.exp(1j * (2 * p + t)), 0.0 + 0.0j]),
-                jnp.array(
-                    [
-                        jnp.exp(1j * (3 * p + 2 * t + e + l)),
-                        0.0 + 0.0j,
-                        0.0 + 0.0j,
-                        0.0 + 0.0j,
-                    ]
-                ),
-            )
-        if isinf(float(self._Vnn)):
-            return (
-                jnp.array([jnp.exp(1j * p), 0.0 + 0.0j]),
-                jnp.array([jnp.exp(1j * (2 * p + e)), 0.0 + 0.0j, 0.0 + 0.0j]),
-                jnp.array([jnp.exp(1j * (2 * p + t)), 0.0 + 0.0j]),
-                jnp.array(
-                    [
-                        jnp.exp(1j * (3 * p + 2 * t + e + l)),
-                        0.0 + 0.0j,
-                        0.0 + 0.0j,
-                        0.0 + 0.0j,
-                    ]
-                ),
-            )
+    def process_fidelity(self, final_states):
+        # Obtained diagonal gate matrix
         if float(self._Vnn) == float(self._Vnnn):
-            return (
-                jnp.array([jnp.exp(1j * p), 0.0 + 0.0j]),
-                jnp.array([jnp.exp(1j * (2 * p + t)), 0.0 + 0.0j, 0.0 + 0.0j]),
-                jnp.array(
-                    [
-                        jnp.exp(1j * (3 * p + 2 * t + e + l)),
-                        0.0 + 0.0j,
-                        0.0 + 0.0j,
-                        0.0 + 0.0j,
-                    ]
-                ),
-            )
-        return (
-            jnp.array([jnp.exp(1j * p), 0.0 + 0.0j]),
-            jnp.array([jnp.exp(1j * (2 * p + e)), 0.0 + 0.0j, 0.0 + 0.0j]),
-            jnp.array([jnp.exp(1j * (2 * p + t)), 0.0 + 0.0j, 0.0 + 0.0j]),
-            jnp.array(
+            obtained_gate = jnp.array(
                 [
-                    jnp.exp(1j * (3 * p + 2 * t + e + l)),
-                    0.0 + 0.0j,
-                    0.0 + 0.0j,
-                    0.0 + 0.0j,
-                    0.0 + 0.0j,
-                    0.0 + 0.0j,
+                    1,
+                    final_states[0][0],
+                    final_states[0][0],
+                    final_states[1][0],
+                    final_states[0][0],
+                    final_states[1][0],
+                    final_states[1][0],
+                    final_states[2][0],
                 ]
-            ),
+            )
+        elif isinf(float(self._Vnn)) and float(self._Vnnn) == 0.0:
+            obtained_gate = jnp.array(
+                [
+                    1,
+                    final_states[0][0],
+                    final_states[0][0],
+                    final_states[1][0],
+                    final_states[0][0],
+                    final_states[0][0] ** 2,
+                    final_states[1][0],
+                    final_states[2][0],
+                ]
+            )
+        else:
+            obtained_gate = jnp.array(
+                [
+                    1,
+                    final_states[0][0],
+                    final_states[0][0],
+                    final_states[1][0],
+                    final_states[0][0],
+                    final_states[2][0],
+                    final_states[1][0],
+                    final_states[3][0],
+                ]
+            )
+
+        # Targeted diagonal gate matrix
+        p = jnp.angle(obtained_gate[1]) if self._phi is None else self._phi
+        t = jnp.angle(obtained_gate[3]) - 2 * p if self._theta is None else self._theta
+        e = jnp.angle(obtained_gate[5]) - 2 * p if self._eps is None else self._eps
+        l = (
+            jnp.angle(obtained_gate[7]) - 3 * p - 2 * t - e
+            if self._lamb is None
+            else self._lamb
         )
 
-    def multiplicities(self):
-        if isinf(float(self._Vnn)) and isinf(float(self._Vnnn)):
-            return jnp.array([3, 3, 1])
-        if isinf(float(self._Vnn)) and float(self._Vnnn) == 0.0:
-            # TODO: not quite correct: one of the first 4 overlaps must be squared to obtain the correct fidelity
-            return jnp.array([4, 2, 1])
-        if isinf(float(self._Vnn)):
-            return jnp.array([3, 1, 2, 1])
-        if float(self._Vnn) == float(self._Vnnn):
-            return jnp.array([3, 1, 2, 1])
-        return jnp.array([3, 1, 2, 1])
+        targeted_gate = jnp.stack(
+            [
+                1,
+                jnp.exp(1j * p),
+                jnp.exp(1j * p),
+                jnp.exp(1j * (2 * p + t)),
+                jnp.exp(1j * p),
+                jnp.exp(1j * (2 * p + e)),
+                jnp.exp(1j * (2 * p + t)),
+                jnp.exp(1j * (3 * p + 2 * t + e + l)),
+            ]
+        )
 
-    def phase_eliminator(self):
-        free_phi = self._phi is None
-        free_theta = self._theta is None
-        free_eps = self._eps is None
-        free_lamb = self._lamb is None
-
-        def eliminate_phase(overlaps):
-            if float(self._Vnn) == float(self._Vnnn):
-                o100, o110, o111 = overlaps
-                o101 = o110
-            elif isinf(float(self._Vnn)) and float(self._Vnnn) == 0.0:
-                o100, o110, o111 = overlaps
-                o101 = o100**2
-            else:
-                o100, o101, o110, o111 = overlaps
-
-            if free_phi:
-                alpha100 = jnp.angle(o100)
-                phi = alpha100
-            else:
-                phi = self._phi
-
-            if free_theta:
-                alpha110 = jnp.angle(o110)
-                theta = alpha110 - 2 * phi
-            else:
-                theta = self._theta
-
-            if free_eps:
-                alpha101 = jnp.angle(o101)
-                eps = alpha101 - 2 * phi
-            else:
-                eps = self._eps
-
-            if free_lamb:
-                alpha111 = jnp.angle(o111)
-                lamb = alpha111 - 3 * phi - 2 * theta - eps
-            else:
-                lamb = self._lamb
-
-            o100 *= jnp.exp(-1j * phi)
-            o110 *= jnp.exp(-1j * (2 * phi + theta))
-            o101 *= jnp.exp(-1j * (2 * phi + eps))
-            o111 *= jnp.exp(-1j * (3 * phi + 2 * theta + eps + lamb))
-
-            if (
-                float(self._Vnn) == float(self._Vnnn)
-                or isinf(float(self._Vnn))
-                and float(self._Vnnn) == 0.0
-            ):
-                return jnp.stack([o100, o110, o111])
-            return jnp.stack([o100, o101, o110, o111])
-
-        return eliminate_phase
+        return (
+            jnp.abs(jnp.vdot(targeted_gate, obtained_gate)) ** 2
+            / len(targeted_gate) ** 2
+        )
