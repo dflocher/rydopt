@@ -38,6 +38,11 @@ To avoid that the costly optimization tests are executed, use:
 pytest -m "not optimization"
 ```
 
+To test the example code within the documentation, run:
+```bash
+pytest --ignore=tests --doctest-modules
+```
+
 To build the documentation locally, run:
 ```bash
 (cd docs && make livehtml)

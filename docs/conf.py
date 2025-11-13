@@ -19,6 +19,7 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx.ext.mathjax",
     "sphinx_autodoc_typehints",
+    "sphinx.ext.viewcode",
 ]
 
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]

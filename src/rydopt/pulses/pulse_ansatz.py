@@ -4,9 +4,18 @@ from rydopt.pulses.pulse_ansatz_functions import PulseAnsatzFunction
 
 @dataclass
 class PulseAnsatz:
-    r"""Object that stores ansatz functions for the laser pulse that couples the qubit state :math:`|1\rangle` to the Rydberg state :math:`|r\rangle`.
+    r"""Data class that stores ansatz functions for the laser pulse that couples the qubit state :math:`|1\rangle` to the Rydberg state :math:`|r\rangle`.
 
     For available ansatz functions, see below. The parameters of the ansatz functions and duration of the laser pulse will be optimized to maximize the gate fidelity.
+
+
+    Usage example:
+
+    >>> import rydopt as ro
+    >>> pulse = ro.pulses.PulseAnsatz(
+    ...     detuning_ansatz=ro.pulses.const,
+    ...     phase_ansatz=ro.pulses.sin_crab,
+    ... )
     """
 
     detuning_ansatz: PulseAnsatzFunction | None = None
