@@ -26,7 +26,7 @@ def sin_crab(
     Args:
         t: Time samples at which :math:`\xi(t)` is evaluated.
         duration: Pulse duration :math:`T`.
-        params: Array of length :math:`2N` with entries
+        params: Array with :math:`2N` entries
             :math:`(A_1, \alpha_1, \dots, A_N, \alpha_N)`.
 
     Returns:
@@ -61,7 +61,7 @@ def cos_crab(
     Args:
         t: Time samples at which :math:`\xi(t)` is evaluated.
         duration: Pulse duration :math:`T`.
-        params: Array of length :math:`2N` with entries
+        params: Array with :math:`2N` entries
             :math:`(B_1, \beta_1, \dots, B_N, \beta_N)`.
 
     Returns:
@@ -104,7 +104,7 @@ def sin_cos_crab(
     Args:
         t: Time samples at which :math:`\xi(t)` is evaluated.
         duration: Pulse duration :math:`T`.
-        params: Array of length :math:`4N` with entries
+        params: Array with :math:`4N` entries
             :math:`(A_1, \alpha_1, B_1, \beta_1, \dots, A_N, \alpha_N, B_N, \beta_N)`.
 
     Returns:
@@ -162,7 +162,7 @@ def const_sin_crab(
     Args:
         t: Time samples at which :math:`\xi(t)` is evaluated.
         duration: Pulse duration :math:`T`.
-        params: Array of length :math:`2N+1` with entries
+        params: Array with :math:`2N+1` entries
             :math:`(c_0, A_1, \alpha_1, \dots, A_N, \alpha_N)`.
 
     Returns:
@@ -192,7 +192,7 @@ def const_cos_crab(
     Args:
         t: Time samples at which :math:`\xi(t)` is evaluated.
         duration: Pulse duration :math:`T`.
-        params: Array of length :math:`2N+1` with entries
+        params: Array with :math:`2N+1` entries
             :math:`(c_0, B_1, \beta_1, \dots, B_N, \beta_N)`.
 
     Returns:
@@ -230,7 +230,7 @@ def const_sin_cos_crab(
     Args:
         t: Time samples at which :math:`\xi(t)` is evaluated.
         duration: Pulse duration :math:`T`.
-        params: Array of length :math:`4N+1` with entries
+        params: Array with :math:`4N+1` entries
             :math:`(c_0, A_1, \alpha_1, B_1, \beta_1, \dots, A_N, \alpha_N, B_N, \beta_N)`.
 
     Returns:

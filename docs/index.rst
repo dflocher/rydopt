@@ -12,5 +12,6 @@ documentation for details.
 
    api/gates
    api/pulses
+   api/simulation
    api/optimization
    api/characterization
