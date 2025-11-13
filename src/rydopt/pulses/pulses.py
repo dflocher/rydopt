@@ -18,7 +18,7 @@ def pulse_detuning_cos_crab(H, params):
                 / T
                 * (t - T / 2)
             )
-        return -1j * H(0.0, Delta_of_t) @ y
+        return -1j * H(Delta_of_t, 0.0, 1) @ y
 
     T = params[0]
     times = jnp.array([T])
@@ -60,7 +60,7 @@ def pulse_detuning_cos_sin_crab(H, params):
                 / T
                 * (t - T / 2)
             )
-        return -1j * H(0.0, Delta_of_t) @ y
+        return -1j * H(Delta_of_t, 0.0, 1) @ y
 
     T = params[0]
     times = jnp.array([T])
@@ -95,7 +95,7 @@ def pulse_phase_sin_crab(H, params):
                 / T
                 * (t - T / 2)
             )
-        return -1j * H(phi_of_t, Delta) @ y
+        return -1j * H(Delta, phi_of_t, 1) @ y
 
     T = params[0]
     times = jnp.array([T])
@@ -137,7 +137,7 @@ def pulse_phase_sin_cos_crab(H, params):
                 / T
                 * (t - T / 2)
             )
-        return -1j * H(phi_of_t, Delta) @ y
+        return -1j * H(Delta, phi_of_t, 1) @ y
 
     T = params[0]
     times = jnp.array([T])

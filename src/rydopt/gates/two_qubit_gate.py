@@ -25,7 +25,7 @@ class TwoQubitGate(Gate):
                 partial(H_2LS, decay=self._decay, k=2),
             )
         return (
-            partial(H_2LS, decay=self._decay, k=1),
+            partial(H_3LS, decay=self._decay, k=1),
             partial(H_3LS, decay=self._decay, V=self._Vnn),
         )
 

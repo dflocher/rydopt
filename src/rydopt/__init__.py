@@ -1,5 +1,6 @@
 import rydopt.gates as gates
 import rydopt.pulses as pulses
+import rydopt.simulation as simulation
 import rydopt.optimization as optimization
 import rydopt.characterization as characterization
 import jax
@@ -9,6 +10,7 @@ jax.config.update("jax_enable_x64", True)
 __all__ = [
     "gates",
     "pulses",
+    "simulation",
     "optimization",
     "characterization",
 ]

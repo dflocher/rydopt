@@ -38,7 +38,7 @@ def test_adam() -> None:
             -0.61765787,
         ]
     )
-    assert np.allclose(params, ref, rtol=1e-1)
+    assert np.allclose(params, ref, rtol=1e-4)
 
 
 @pytest.mark.optimization
@@ -50,8 +50,8 @@ def test_multi_start_adam() -> None:
     pulse = ro.pulses.pulse_phase_sin_crab
 
     # parameter bounds for choosing random initial parameters
-    min_params = np.array([6, -1, -2, -2])
-    max_params = np.array([9, 1, 2, 2])
+    min_initial_params = np.array([6, -1, -2, -2])
+    max_initial_params = np.array([9, 1, 2, 2])
 
     # optimization settings
     N_searches = 5
@@ -63,8 +63,8 @@ def test_multi_start_adam() -> None:
     _ = ro.optimization.multi_start_adam(
         gate,
         pulse,
-        min_params,
-        max_params,
+        min_initial_params,
+        max_initial_params,
         N_searches,
         N_epochs,
         learning_rate,

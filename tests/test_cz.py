@@ -74,4 +74,4 @@ def test_cz() -> None:
             -0.61765787,
         ]
     )
-    assert np.allclose(params, ref, rtol=1e-1)
+    assert np.allclose(params, ref, rtol=1e-4)
