@@ -5,68 +5,54 @@ import pytest
 
 @pytest.mark.optimization
 def test_adam() -> None:
-    # gate
+    # Gate
     gate = ro.gates.TwoQubitGate(phi=None, theta=np.pi, Vnn=float("inf"), decay=0)
 
-    # pulse type
-    pulse = ro.pulses.pulse_phase_sin_crab
-
-    # initial parameters
-    initial_params = np.array([7.6, -0.1, 1.8, -0.6])
-
-    # optimization settings
-    N_epochs = 200
-    learning_rate = 0.05
-    T_penalty = 0.0
-
-    # run optimization
-    params = ro.optimization.adam(
-        gate,
-        pulse,
-        initial_params,
-        N_epochs,
-        learning_rate,
-        T_penalty,
+    # Pulse
+    pulse = ro.pulses.PulseAnsatz(
+        detuning_ansatz=ro.pulses.const,
+        phase_ansatz=ro.pulses.sin_crab,
+        rabi_ansatz=None,
     )
 
-    # compare result to reference
-    ref = np.array(
-        [
-            7.61141034,
-            -0.07884777,
-            1.83253308,
-            -0.61765787,
-        ]
-    )
-    assert np.allclose(params, ref, rtol=1e-4)
+    # Initial parameters
+    initial_params = (7.6, (-0.1,), (1.8, -0.6), ())
+
+    # Run optimization
+    params = ro.optimization.adam(gate, pulse, initial_params, num_steps=200)
+
+    # Verify the fidelity
+    fidelity = ro.simulation.process_fidelity(gate, pulse, params)
+    assert np.allclose(fidelity, 1, rtol=1e-7)
 
 
 @pytest.mark.optimization
 def test_multi_start_adam() -> None:
-    # gate
-    gate = ro.gates.TwoQubitGate(phi=None, theta=np.pi, Vnn=float("inf"), decay=0)
+    tol = 1e-7
 
-    # pulse type
-    pulse = ro.pulses.pulse_phase_sin_crab
+    # Gate
+    gate = ro.gates.TwoQubitGate(phi=None, theta=np.pi, Vnn=2.0, decay=0)
 
-    # parameter bounds for choosing random initial parameters
-    min_initial_params = np.array([6, -1, -2, -2])
-    max_initial_params = np.array([9, 1, 2, 2])
+    # Pulse
+    pulse = ro.pulses.PulseAnsatz(
+        detuning_ansatz=ro.pulses.const_cos_crab, phase_ansatz=None, rabi_ansatz=None
+    )
 
-    # optimization settings
-    N_searches = 5
-    N_epochs = 200
-    learning_rate = 0.05
-    T_penalty = 0.0
+    # Parameter bounds for choosing random initial parameters
+    min_initial_params = (6, (-2, -2, -2), (), ())
+    max_initial_params = (9, (2, 2, 2), (), ())
 
     # run optimization
-    _ = ro.optimization.multi_start_adam(
+    params = ro.optimization.multi_start_adam(
         gate,
         pulse,
         min_initial_params,
         max_initial_params,
-        N_searches,
-        N_epochs,
-        learning_rate,
-        T_penalty,
+        num_starts=10,
+        num_steps=200,
+        tol=tol,
     )
+
+    # Verify the fidelity
+    fidelity = ro.simulation.process_fidelity(gate, pulse, params, tol=tol)
+    assert np.allclose(fidelity, 1, rtol=tol)

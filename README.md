@@ -6,6 +6,22 @@ You can install the software using pip (requires Python ≥ 3.10) by first cloni
 pip install -e .
 ```
 
+GPU Support
+-----------
+
+If you have an NVIDIA GPU, you can install the software with GPU support:
+```bash
+pip install -e .[cuda12]
+```
+
+To enable GPU execution in your scripts, add at the very top:
+```python
+import jax
+jax.config.update("jax_platforms", "cuda,cpu")
+```
+
+**Note:** While GPUs can provide orders-of-magnitude speed-ups for large and challenging optimization problems, they may slow down smaller tasks that would complete in a few seconds on a CPU.
+
 Development
 -----------
 

@@ -22,6 +22,9 @@ dev = [
     "sphinx-autodoc-typehints>=3.0.1",
     "sphinxcontrib-napoleon>=0.7",
 ]
+cuda12 = [
+    "jax[cuda12]>=0.4.38",
+]
 
 [tool.ruff.lint]
 ignore = ["E741"]

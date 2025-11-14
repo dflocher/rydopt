@@ -1,7 +1,7 @@
 import numpy as np
 import rydopt as ro
-import jax
 import time
+import jax
 
 
 def test_fidelity_calculation() -> None:

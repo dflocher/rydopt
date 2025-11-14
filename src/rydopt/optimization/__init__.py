@@ -3,8 +3,7 @@ from rydopt.optimization.optimization import (
     gate_search,
     gate_search_cluster,
 )
-from rydopt.optimization.adam import adam
-from rydopt.optimization.multi_start_adam import multi_start_adam
+from rydopt.optimization.adam import adam, multi_start_adam
 
 __all__ = [
     "adam",

@@ -17,10 +17,11 @@ def _propagate(
     detuning_params,
     phase_params,
     rabi_params,
+    tol,
 ) -> jnp.ndarray:
     term = diffrax.ODETerm(eq)
     solver = diffrax.Tsit5()
-    stepsize_controller = diffrax.PIDController(rtol=1e-8, atol=1e-8)
+    stepsize_controller = diffrax.PIDController(rtol=0.1 * tol, atol=0.1 * tol)
 
     sol = diffrax.diffeqsolve(
         term,
@@ -38,7 +39,7 @@ def _propagate(
     return sol.ys[0]
 
 
-def evolve(gate: Gate, pulse: PulseAnsatz, params: tuple):
+def evolve(gate: Gate, pulse: PulseAnsatz, params: tuple, tol: float = 1e-7):
     duration, detuning_params, phase_params, rabi_params = params
 
     detuning_params = jnp.asarray(detuning_params)
@@ -66,6 +67,7 @@ def evolve(gate: Gate, pulse: PulseAnsatz, params: tuple):
             detuning_params,
             phase_params,
             rabi_params,
+            tol,
         )
         for hamiltonian, psi_initial in zip(
             gate.subsystem_hamiltonians(), gate.initial_states()
