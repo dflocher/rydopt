@@ -6,6 +6,7 @@ import jax.numpy as jnp
 import jax
 import time
 import optax
+import numpy as np
 
 
 def _infidelity(params, gate: Gate, pulse: PulseAnsatz, tol: float):
@@ -19,6 +20,7 @@ def _infidelity(params, gate: Gate, pulse: PulseAnsatz, tol: float):
         "infidelity_and_grad",
         "optimizer",
         "num_steps",
+        "min_converged_initializations",
     ],
     donate_argnames=["initial_params"],
 )
@@ -27,16 +29,17 @@ def _adam_runner(
     optimizer: optax.GradientTransformation,
     initial_params,
     num_steps: int,
+    min_converged_initializations: int,
     tol,
 ):
     opt_state0 = optimizer.init(initial_params)
 
     def body(carry, step):
-        params, opt_state, was_done, steps_taken = carry
+        params, opt_state, prev_converged_starts, steps_taken = carry
 
         def do_step(_):
             infidelity, grads = infidelity_and_grad(params)
-            done = jnp.any(was_done | (infidelity <= tol))
+            new_converged_starts = jnp.sum(infidelity <= tol)
             new_steps_taken = steps_taken + 1
 
             def apply_update(_):
@@ -48,43 +51,51 @@ def _adam_runner(
                 return params, opt_state
 
             new_params, new_opt_state = jax.lax.cond(
-                done,
+                new_converged_starts >= min_converged_initializations,
                 keep_params,
                 apply_update,
                 operand=None,
             )
 
-            return (new_params, new_opt_state, done, new_steps_taken), infidelity
+            return (
+                new_params,
+                new_opt_state,
+                new_converged_starts,
+                new_steps_taken,
+            ), infidelity
 
         def do_no_step(_):
             return carry, jnp.zeros_like(tol)
 
-        (params, opt_state, done, steps_taken), infidelity = jax.lax.cond(
-            was_done,
+        (params, opt_state, converged_starts, steps_taken), infidelity = jax.lax.cond(
+            prev_converged_starts >= min_converged_initializations,
             do_no_step,
             do_step,
             operand=None,
         )
 
         is_periodic = (step % 10 == 0) | (step == num_steps - 1)
-        log_step = (~was_done) & (is_periodic | done)
+        log_step = (prev_converged_starts < min_converged_initializations) & (
+            is_periodic | (converged_starts >= min_converged_initializations)
+        )
 
         jax.lax.cond(
             jnp.any(log_step),
             lambda _: jax.debug.print(
-                "Step {step:05d}: infidelity = {infidelity:13.6e}",
+                "Step {step:05d}: min infidelity = {infidelity:13.6e}, converged = {converged}",
                 step=step,
                 infidelity=jnp.min(infidelity),
+                converged=converged_starts,
             ),
             lambda _: None,
             operand=None,
         )
 
-        return (params, opt_state, done, steps_taken), infidelity
+        return (params, opt_state, converged_starts, steps_taken), infidelity
 
     (final_params, _, _, steps_taken), infidelity_history = jax.lax.scan(
         body,
-        (initial_params, opt_state0, False, 0),
+        (initial_params, opt_state0, 0, 0),
         jnp.arange(num_steps),
     )
 
@@ -101,8 +112,9 @@ def adam(
 ):
     initial_params = tuple(jnp.asarray(p) for p in initial_params)
 
-    # Optimize parameters
-    infidelity = partial(_infidelity, gate=gate, pulse=pulse, tol=0.1 * tol)
+    # --- Optimize parameters ---
+
+    infidelity = partial(_infidelity, gate=gate, pulse=pulse, tol=tol)
     infidelity_and_grad = jax.value_and_grad(infidelity)
 
     optimizer = optax.adam(learning_rate)
@@ -115,16 +127,27 @@ def adam(
         optimizer=optimizer,
         initial_params=initial_params,
         num_steps=num_steps,
+        min_converged_initializations=1,
         tol=tol,
     )
     duration = time.perf_counter() - t0
 
-    # Show results
+    # --- Logging ---
+
     print("\n=== Optimization finished using Adam ===")
     print(f"Duration: {duration:.3f} seconds")
     print(f"Steps taken: {steps_taken}")
-    print(f"Final parameters: ({', '.join(str(p) for p in final_params)})")
-    print(f"Final infidelity: {infidelity_history[steps_taken - 1]:.6e}")
+
+    # Show converged gate
+    infidelity = infidelity_history[steps_taken - 1]
+
+    print("Converged gate:")
+    print(f"> duration = {final_params[0]}")
+    print(f"> parameters = ({', '.join(str(p) for p in final_params)})")
+    if float(infidelity) < 0:
+        print("> infidelity <= numerical precision")
+    else:
+        print(f"> infidelity = {infidelity:.6e}")
 
     return final_params
 
@@ -134,16 +157,19 @@ def multi_start_adam(
     pulse: PulseAnsatz,
     min_initial_params,
     max_initial_params,
-    num_starts: int,
     num_steps: int,
+    num_initializations: int,
+    min_converged_initializations: int = 1,
     learning_rate: float = 0.05,
     tol: float = 1e-7,
     seed: int = 0,
+    return_all_converged: bool = False,
 ):
     min_initial_params = tuple(jnp.asarray(p) for p in min_initial_params)
     max_initial_params = tuple(jnp.asarray(p) for p in max_initial_params)
 
-    # Create initial parameter samples
+    # --- Create initial parameter samples ---
+
     leaves_min, treedef_min = jax.tree.flatten(min_initial_params)
     leaves_max, treedef_max = jax.tree.flatten(max_initial_params)
 
@@ -153,22 +179,23 @@ def multi_start_adam(
         )
 
     key = jax.random.PRNGKey(seed)
-    keys = jax.random.split(key, len(leaves_min))
+    subkeys = jax.random.split(key, len(leaves_min))
 
-    sampled_leaves = []
-    for m, M, k in zip(leaves_min, leaves_max, keys):
-        sampled = jax.random.uniform(
+    sampled_leaves = [
+        jax.random.uniform(
             k,
-            shape=(num_starts,) + m.shape,
+            shape=(num_initializations,) + m.shape,
             minval=m,
             maxval=M,
         )
-        sampled_leaves.append(sampled)
+        for m, M, k in zip(leaves_min, leaves_max, subkeys)
+    ]
 
     initial_params = treedef_min.unflatten(sampled_leaves)
-    tol_vec = jnp.full((num_starts,), tol)
+    tol_vec = jnp.full((num_initializations,), tol)
 
-    # Optimize parameters
+    # --- Optimize parameters ---
+
     infidelity = partial(_infidelity, gate=gate, pulse=pulse, tol=tol)
     infidelity_and_grad = jax.vmap(jax.value_and_grad(infidelity))
 
@@ -182,20 +209,65 @@ def multi_start_adam(
         optimizer=optimizer,
         initial_params=initial_params,
         num_steps=num_steps,
+        min_converged_initializations=min_converged_initializations,
         tol=tol_vec,
     )
     duration = time.perf_counter() - t0
 
     final_infidelities = infidelity_history[steps_taken - 1]
-    best_idx = jnp.argmin(final_infidelities)
-    best_infidelity = final_infidelities[best_idx]
-    best_params = jax.tree.map(lambda x: x[best_idx], final_params)
+    converged = final_infidelities <= tol
+    num_converged = int(jnp.sum(converged))
+    durations_converged = final_params[0][converged]
 
-    # Show results
+    # --- Logging ---
+
     print("\n=== Optimization finished using multi-start Adam ===")
     print(f"Duration: {duration:.3f} seconds")
     print(f"Steps taken: {steps_taken}")
-    print(f"Final parameters: ({', '.join(str(p) for p in best_params)})")
-    print(f"Final infidelity: {best_infidelity:.6e}")
 
-    return best_params
+    # Show slowest converged gate
+    if num_converged > 1:
+        slowest_idx = jnp.argmax(durations_converged)
+        slowest_duration = durations_converged[slowest_idx]
+        slowest_infidelity = final_infidelities[converged][slowest_idx]
+        slowest_params = tuple(p[converged][slowest_idx] for p in final_params)
+
+        print("Slowest converged gate:")
+        print(f"> duration = {slowest_duration}")
+
+        print(f"> parameters = ({', '.join(str(p) for p in slowest_params)})")
+        if float(slowest_infidelity) < 0:
+            print("> infidelity <= numerical precision")
+        else:
+            print(f"> infidelity = {slowest_infidelity:.6e}")
+
+    # Show fastest converged gate
+    fastest_idx = jnp.argmin(durations_converged)
+    fastest_duration = durations_converged[fastest_idx]
+    fastest_infidelity = final_infidelities[converged][fastest_idx]
+    fastest_params = tuple(p[converged][fastest_idx] for p in final_params)
+
+    if num_converged > 1:
+        print("Fastest converged gate:")
+        rng = np.random.default_rng(seed)
+        idx = rng.integers(0, num_converged, size=(1024, num_converged))
+        mins = np.asarray(durations_converged)[idx].min(axis=1)
+        duration_err = mins.std()
+        print(
+            f"> duration = {fastest_duration} (one-sided bootstrap error: {duration_err:.1g})"
+        )
+    else:
+        print("Converged gate:")
+        print(f"> duration = {fastest_duration}")
+
+    print(f"> parameters = ({', '.join(str(p) for p in fastest_params)})")
+    if float(fastest_infidelity) < 0:
+        print("> infidelity <= numerical precision")
+    else:
+        print(f"> infidelity = {fastest_infidelity:.6e}")
+
+    if return_all_converged:
+        sorter = jnp.argsort(durations_converged)
+        return [tuple(p[converged][i] for p in final_params) for i in sorter]
+
+    return fastest_params
