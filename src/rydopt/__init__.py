@@ -2,7 +2,7 @@ import jax
 
 jax.config.update("jax_enable_x64", True)
 if jax.config.jax_platforms is None:
-    jax.config.update("jax_platforms", "gpu")
+    jax.config.update("jax_platforms", "cpu")
 
 import rydopt.gates as gates  # noqa: E402
 import rydopt.pulses as pulses  # noqa: E402
