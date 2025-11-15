@@ -49,7 +49,7 @@ def test_multi_start_adam() -> None:
         min_initial_params,
         max_initial_params,
         num_steps=200,
-        num_initializations=10,
+        num_initializations=20,
         min_converged_initializations=2,
         tol=tol,
         return_all_converged=True,
@@ -86,6 +86,32 @@ def test_fastest() -> None:
         num_steps=200,
         num_initializations=40,
         min_converged_initializations=20,
+    )
+
+    # Verify the fidelity
+    fidelity = ro.simulation.process_fidelity(gate, pulse, params)
+    assert np.allclose(fidelity, 1, rtol=1e-7)
+
+
+@pytest.mark.optimization
+def test_fixed() -> None:
+    # Gate
+    gate = ro.gates.TwoQubitGate(phi=None, theta=np.pi, Vnn=float("inf"), decay=0)
+
+    # Pulse
+    pulse = ro.pulses.PulseAnsatz(
+        detuning_ansatz=ro.pulses.const,
+        phase_ansatz=ro.pulses.sin_crab,
+        rabi_ansatz=None,
+    )
+
+    # Initial parameters
+    initial_params = (7.6, (0.0,), (1.8, -0.6), ())
+    fixed_initial_params = (False, (True,), (False, False), ())
+
+    # Run optimization
+    params = ro.optimization.adam(
+        gate, pulse, initial_params, fixed_initial_params, num_steps=200
     )
 
     # Verify the fidelity

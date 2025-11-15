@@ -21,7 +21,9 @@ def _propagate(
 ) -> jnp.ndarray:
     term = diffrax.ODETerm(eq)
     solver = diffrax.Tsit5()
-    stepsize_controller = diffrax.PIDController(rtol=0.1 * tol, atol=0.1 * tol)
+    stepsize_controller = diffrax.PIDController(
+        rtol=0.1 * tol, atol=0.1 * tol
+    )  # diffrax.ConstantStepSize()
 
     sol = diffrax.diffeqsolve(
         term,
