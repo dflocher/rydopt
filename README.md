@@ -28,7 +28,7 @@ Development
 To set up a local development environment, clone the repository and install the package in editable mode along with its development dependencies:
 ```bash
 git clone https://github.com/dflocher/Multiqubit_Rydberg_Gates.git
-cd rydopt
+cd Multiqubit_Rydberg_Gates/
 pip install -e .[dev]
 ```
 

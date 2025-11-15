@@ -1,10 +1,12 @@
 """The example takes
-* 9m17,916s on NVIDIA GeForce RTX 4060 Ti
+* ~70m on a AMD Ryzen 7 5700G CPU
+* 9m 17.916s on a NVIDIA GeForce RTX 4060 Ti
+* 4m 54.621s on a NVIDIA H100 PCIe
 """
 
 import jax
 
-jax.config.update("jax_platforms", "cuda,cpu")
+jax.config.update("jax_platforms", "cpu")
 import rydopt as ro  # noqa: E402
 import numpy as np  # noqa: E402
 
