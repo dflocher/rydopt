@@ -11,6 +11,7 @@ from rydopt.gates.subsystem_hamiltonians import (
     H_4LS,
     H_4LS_Vnnn,
     H_5LS,
+    H_5LS_sym,
     H_6LS,
     H_8LS,
 )
@@ -44,7 +45,13 @@ class FourQubitGatePyramidal(Gate):
                 partial(H_2LS, decay=self._decay, k=3),
                 partial(H_2LS, decay=self._decay, k=4),
             )
-        # TODO Vnn = Vnnn
+        if float(self._Vnn) == float(self._Vnnn):
+            return (
+                partial(H_2LS, decay=self._decay, k=1),
+                partial(H_3LS, decay=self._decay, V=self._Vnn),
+                partial(H_4LS_Vnnn, decay=self._decay, Vnnn=self._Vnn),
+                partial(H_5LS_sym, decay=self._decay, V=self._Vnn),
+            )
         if isinf(float(self._Vnn)) and float(self._Vnnn) == 0.0:
             return (
                 partial(H_2LS, decay=self._decay, k=1),
@@ -77,6 +84,13 @@ class FourQubitGatePyramidal(Gate):
                 jnp.array([1.0 + 0.0j, 0.0 + 0.0j]),
                 jnp.array([1.0 + 0.0j, 0.0 + 0.0j]),
                 jnp.array([1.0 + 0.0j, 0.0 + 0.0j]),
+            )
+        if float(self._Vnn) == float(self._Vnnn):
+            return (
+                jnp.array([1.0 + 0.0j, 0.0 + 0.0j]),
+                jnp.array([1.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j]),
+                jnp.array([1.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j]),
+                jnp.array([1.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j]),
             )
         if isinf(float(self._Vnn)) and float(self._Vnnn) == 0.0:
             return (

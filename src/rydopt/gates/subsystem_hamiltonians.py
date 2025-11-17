@@ -35,7 +35,7 @@ def H_3LS(Delta, Phi, Omega, decay, V):
     )
 
 
-# Hamiltonian for subspace |111> -- (|r11>+|1r1>+|11r>) -- |r1r> -- (|11r>+|r11>-2|1r1>)  (Vnn = infinity)
+# Hamiltonian for subspace |111> -- (|r11>+|1r1>+|11r>) -- (|11r>+|r11>-2|1r1>) -- |r1r>  (Vnn = infinity)
 def H_4LS(Delta, Phi, Omega, decay, Vnnn):
     return jnp.array(
         [
@@ -43,27 +43,27 @@ def H_4LS(Delta, Phi, Omega, decay, Vnnn):
             [
                 0.5 * jnp.sqrt(3) * Omega * jnp.exp(1j * Phi),
                 Delta - 1j * 0.5 * decay,
-                (1 / jnp.sqrt(3)) * Omega * jnp.exp(-1j * Phi),
                 0.0,
+                (1 / jnp.sqrt(3)) * Omega * jnp.exp(-1j * Phi),
+            ],
+            [
+                0.0,
+                0.0,
+                Delta - 1j * 0.5 * decay,
+                (1 / jnp.sqrt(6)) * Omega * jnp.exp(-1j * Phi),
             ],
             [
                 0.0,
                 (1 / jnp.sqrt(3)) * Omega * jnp.exp(1j * Phi),
-                Vnnn + 2 * Delta - 1j * decay,
                 (1 / jnp.sqrt(6)) * Omega * jnp.exp(1j * Phi),
-            ],
-            [
-                0.0,
-                0.0,
-                (1 / jnp.sqrt(6)) * Omega * jnp.exp(-1j * Phi),
-                Delta - 1j * 0.5 * decay,
+                Vnnn + 2 * Delta - 1j * decay,
             ],
         ]
     )
 
 
 # Hamiltonian for subspace |111> -- (|r11>+|1r1>+|11r>) -- (|1rr>+|r1r>+|rr1>) -- |rrr>  (Vnn = Vnnn)
-# TODO: rename or combine with other 4LS
+# TODO: rename
 def H_4LS_Vnnn(Delta, Phi, Omega, decay, Vnnn):
     return jnp.array(
         [
@@ -124,6 +124,43 @@ def H_5LS(Delta, Phi, Omega, decay, Vnnn):
                 0.0,
                 0.5 * jnp.sqrt(3) * Omega * jnp.exp(1j * Phi),
                 3 * Vnnn + 3 * Delta - 1j * 1.5 * decay,
+            ],
+        ]
+    )
+
+
+# Hamiltonian for subspace |1111> -- |W> -- ... -- |rrrr>  (Vnn = Vnnn)
+def H_5LS_sym(Delta, Phi, Omega, decay, V):
+    return jnp.array(
+        [
+            [0.0, Omega * jnp.exp(-1j * Phi), 0.0, 0.0, 0.0],
+            [
+                Omega * jnp.exp(1j * Phi),
+                Delta - 1j * 0.5 * decay,
+                0.5 * jnp.sqrt(6) * Omega * jnp.exp(-1j * Phi),
+                0.0,
+                0.0,
+            ],
+            [
+                0.0,
+                0.5 * jnp.sqrt(6) * Omega * jnp.exp(1j * Phi),
+                V + 2 * Delta - 1j * decay,
+                0.5 * jnp.sqrt(6) * Omega * jnp.exp(-1j * Phi),
+                0.0,
+            ],
+            [
+                0.0,
+                0.0,
+                0.5 * jnp.sqrt(6) * Omega * jnp.exp(1j * Phi),
+                3 * V + 3 * Delta - 1j * 1.5 * decay,
+                Omega * jnp.exp(-1j * Phi),
+            ],
+            [
+                0.0,
+                0.0,
+                0.0,
+                Omega * jnp.exp(1j * Phi),
+                6 * V + 4 * Delta - 1j * 2 * decay,
             ],
         ]
     )
@@ -259,6 +296,85 @@ def H_8LS(Delta, Phi, Omega, decay, Vnn, Vnnn):
                 0.5 * jnp.sqrt(3) * Omega * jnp.exp(1j * Phi),
                 0.5 * Omega * jnp.exp(1j * Phi),
                 4 * Delta - 1j * 2 * decay + 3 * Vnn + 3 * Vnnn,
+            ],
+        ]
+    )
+
+
+# Hamiltonian for subspace |1111> -- |W> -- ... -- |rrrr>
+def H_8LS_v2(Delta, Phi, Omega, decay, Vnn, Vnnn):
+    return jnp.array(
+        [
+            [0.0, Omega * jnp.exp(-1j * Phi), 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+            [
+                Omega * jnp.exp(1j * Phi),
+                Delta - 1j * 0.5 * decay,
+                0.0,
+                0.5 * jnp.sqrt(6) * Omega * jnp.exp(-1j * Phi),
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+            ],
+            [
+                0.0,
+                0.0,
+                Delta - 1j * 0.5 * decay,
+                0.0,
+                0.5 * jnp.sqrt(2) * Omega * jnp.exp(-1j * Phi),
+                0.0,
+                0.0,
+                0.0,
+            ],
+            [
+                0.0,
+                0.5 * jnp.sqrt(6) * Omega * jnp.exp(1j * Phi),
+                0.0,
+                0.5 * Vnn + 0.5 * Vnnn + 2 * Delta - 1j * decay,
+                0.5 * (Vnnn - Vnn),
+                0.0,
+                0.5 * jnp.sqrt(6) * Omega * jnp.exp(-1j * Phi),
+                0.0,
+            ],
+            [
+                0.0,
+                0.0,
+                0.5 * jnp.sqrt(2) * Omega * jnp.exp(1j * Phi),
+                0.5 * (Vnnn - Vnn),
+                0.5 * Vnn + 0.5 * Vnnn + 2 * Delta - 1j * decay,
+                -0.5 * jnp.sqrt(2) * Omega * jnp.exp(-1j * Phi),
+                0.0,
+                0.0,
+            ],
+            [
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                -0.5 * jnp.sqrt(2) * Omega * jnp.exp(1j * Phi),
+                0.5 * Vnn + 2.5 * Vnnn + 3 * Delta - 1j * 1.5 * decay,
+                0.5 * jnp.sqrt(3) * (Vnn - Vnnn),
+                0.0,
+            ],
+            [
+                0.0,
+                0.0,
+                0.0,
+                0.5 * jnp.sqrt(6) * Omega * jnp.exp(1j * Phi),
+                0.0,
+                0.5 * jnp.sqrt(3) * (Vnn - Vnnn),
+                1.5 * Vnn + 1.5 * Vnnn + 3 * Delta - 1j * 1.5 * decay,
+                Omega * jnp.exp(-1j * Phi),
+            ],
+            [
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                Omega * jnp.exp(1j * Phi),
+                3 * Vnn + 3 * Vnnn + 4 * Delta - 1j * 2 * decay,
             ],
         ]
     )
