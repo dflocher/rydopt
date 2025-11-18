@@ -6,7 +6,7 @@
 
 import jax
 
-jax.config.update("jax_platforms", "cpu")
+jax.config.update("jax_platforms", "cuda,cpu")
 import rydopt as ro  # noqa: E402
 import numpy as np  # noqa: E402
 
