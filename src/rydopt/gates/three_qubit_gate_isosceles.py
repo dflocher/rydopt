@@ -5,22 +5,21 @@ from functools import partial
 import jax.numpy as jnp
 from rydopt.gates.gate import Gate
 from rydopt.gates.subsystem_hamiltonians import (
-    H_2LS,
-    H_3LS,
-    H_4LS,
-    H_4LS_Vnnn,
-    H_6LS,
+    H_k_atoms_perfect_blockade,
+    H_2_atoms,
+    H_3_atoms_inf_V,
+    H_3_atoms_symmetric,
+    H_3_atoms,
 )
 from math import isinf
 
 
 class ThreeQubitGateIsosceles(Gate):
     def __init__(self, phi, theta, eps, lamb, Vnn, Vnnn, decay):
-        # TODO: check error cases
         if (Vnnn == Vnnn) and (theta != eps):
-            raise IOError("For Vnn=Vnnn, theta=eps is required")
+            raise ValueError("For Vnn=Vnnn, theta=eps is required")  # value error
         if (Vnnn == 0) and (eps != 0.0):
-            raise IOError("For Vnnn=0, eps=0 is required")
+            raise ValueError("For Vnnn=0, eps=0 is required")
         self._phi = phi
         self._theta = theta
         self._eps = eps
@@ -35,34 +34,34 @@ class ThreeQubitGateIsosceles(Gate):
     def subsystem_hamiltonians(self):
         if isinf(float(self._Vnn)) and isinf(float(self._Vnnn)):
             return (
-                partial(H_2LS, decay=self._decay, k=1),
-                partial(H_2LS, decay=self._decay, k=2),
-                partial(H_2LS, decay=self._decay, k=3),
+                partial(H_k_atoms_perfect_blockade, decay=self._decay, k=1),
+                partial(H_k_atoms_perfect_blockade, decay=self._decay, k=2),
+                partial(H_k_atoms_perfect_blockade, decay=self._decay, k=3),
             )
         if float(self._Vnn) == float(self._Vnnn):
             return (
-                partial(H_2LS, decay=self._decay, k=1),
-                partial(H_3LS, decay=self._decay, V=self._Vnn),
-                partial(H_4LS_Vnnn, decay=self._decay, Vnnn=self._Vnn),
+                partial(H_k_atoms_perfect_blockade, decay=self._decay, k=1),
+                partial(H_2_atoms, decay=self._decay, V=self._Vnn),
+                partial(H_3_atoms_symmetric, decay=self._decay, V=self._Vnn),
             )
         if isinf(float(self._Vnn)) and float(self._Vnnn) == 0.0:
             return (
-                partial(H_2LS, decay=self._decay, k=1),
-                partial(H_2LS, decay=self._decay, k=2),
-                partial(H_4LS, decay=self._decay, Vnnn=self._Vnnn),
+                partial(H_k_atoms_perfect_blockade, decay=self._decay, k=1),
+                partial(H_k_atoms_perfect_blockade, decay=self._decay, k=2),
+                partial(H_3_atoms_inf_V, decay=self._decay, V=self._Vnnn),
             )
         if isinf(float(self._Vnn)):
             return (
-                partial(H_2LS, decay=self._decay, k=1),
-                partial(H_2LS, decay=self._decay, k=2),
-                partial(H_3LS, decay=self._decay, V=self._Vnnn),
-                partial(H_4LS, decay=self._decay, Vnnn=self._Vnnn),
+                partial(H_k_atoms_perfect_blockade, decay=self._decay, k=1),
+                partial(H_k_atoms_perfect_blockade, decay=self._decay, k=2),
+                partial(H_2_atoms, decay=self._decay, V=self._Vnnn),
+                partial(H_3_atoms_inf_V, decay=self._decay, V=self._Vnnn),
             )
         return (
-            partial(H_2LS, decay=self._decay, k=1),
-            partial(H_3LS, decay=self._decay, V=self._Vnn),
-            partial(H_3LS, decay=self._decay, V=self._Vnnn),
-            partial(H_6LS, decay=self._decay, Vnn=self._Vnn, Vnnn=self._Vnnn),
+            partial(H_k_atoms_perfect_blockade, decay=self._decay, k=1),
+            partial(H_2_atoms, decay=self._decay, V=self._Vnn),
+            partial(H_2_atoms, decay=self._decay, V=self._Vnnn),
+            partial(H_3_atoms, decay=self._decay, Vnn=self._Vnn, Vnnn=self._Vnnn),
         )
 
     def initial_states(self):

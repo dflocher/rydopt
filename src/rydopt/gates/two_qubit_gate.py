@@ -2,8 +2,8 @@ from functools import partial
 import jax.numpy as jnp
 from rydopt.gates.gate import Gate
 from rydopt.gates.subsystem_hamiltonians import (
-    H_2LS,
-    H_3LS,
+    H_k_atoms_perfect_blockade,
+    H_2_atoms,
 )
 from math import isinf
 
@@ -21,12 +21,12 @@ class TwoQubitGate(Gate):
     def subsystem_hamiltonians(self):
         if isinf(float(self._Vnn)):
             return (
-                partial(H_2LS, decay=self._decay, k=1),
-                partial(H_2LS, decay=self._decay, k=2),
+                partial(H_k_atoms_perfect_blockade, decay=self._decay, k=1),
+                partial(H_k_atoms_perfect_blockade, decay=self._decay, k=2),
             )
         return (
-            partial(H_2LS, decay=self._decay, k=1),
-            partial(H_3LS, decay=self._decay, V=self._Vnn),
+            partial(H_k_atoms_perfect_blockade, decay=self._decay, k=1),
+            partial(H_2_atoms, decay=self._decay, V=self._Vnn),
         )
 
     def initial_states(self):

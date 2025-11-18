@@ -3,18 +3,20 @@ import jax
 from functools import partial
 from rydopt.gates.two_qubit_gate import TwoQubitGate
 from rydopt.gates.subsystem_hamiltonians import (
-    H_2LS_1,
-    H_2LS_sqrt2,
-    H_2LS_sqrt3,
-    H_2LS_sqrt4,
-    H_3LS_Vnnn,
-    H_3LS_Vnn,
-    H_4LS,
-    H_6LS,
-    H_4LS_Vnnn,
-    H_5LS,
-    H_8LS,
+    H_k_atoms_perfect_blockade,
+    H_2_atoms as H_3LS_Vnnn,
+    H_2_atoms as H_3LS_Vnn,
+    H_3_atoms_inf_V as H_4LS,
+    H_3_atoms as H_6LS,
+    H_3_atoms_symmetric as H_4LS_Vnnn,
+    H_4_atoms_inf_V as H_5LS,
+    H_4_atoms as H_8LS,
 )
+
+H_2LS_1 = partial(H_k_atoms_perfect_blockade, k=1)
+H_2LS_sqrt2 = partial(H_k_atoms_perfect_blockade, k=2)
+H_2LS_sqrt3 = partial(H_k_atoms_perfect_blockade, k=3)
+H_2LS_sqrt4 = partial(H_k_atoms_perfect_blockade, k=4)
 
 # internal function that provides Hamiltonians and fidelity functions
 
