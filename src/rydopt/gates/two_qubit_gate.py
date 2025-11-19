@@ -18,6 +18,9 @@ class TwoQubitGate(Gate):
     def dim(self):
         return 4
 
+    def get_decay(self):
+        return self._decay
+
     def set_decay(self, decay):
         self._decay = decay
 

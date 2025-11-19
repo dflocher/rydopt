@@ -13,7 +13,7 @@ from math import isinf
 
 class ThreeQubitGateIsosceles(Gate):
     def __init__(self, phi, theta, eps, lamb, Vnn, Vnnn, decay):
-        if (Vnnn == Vnnn) and (theta != eps):
+        if (Vnn == Vnnn) and (theta != eps):
             raise ValueError("For Vnn=Vnnn, theta=eps is required")
         if (Vnnn == 0) and (eps != 0.0):
             raise ValueError("For Vnnn=0, eps=0 is required")
@@ -27,6 +27,9 @@ class ThreeQubitGateIsosceles(Gate):
 
     def dim(self):
         return 8
+
+    def get_decay(self):
+        return self._decay
 
     def set_decay(self, decay):
         self._decay = decay

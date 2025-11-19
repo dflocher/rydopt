@@ -3,11 +3,11 @@ from rydopt.pulses.pulse_ansatz import PulseAnsatz
 import numpy as np
 import qutip as qt
 from typing import TypeAlias
-from functools import partial
 
 FloatParams: TypeAlias = float | tuple[float, ...]
 
 
+# TODO: tidy this up: maybe gate classes again?
 IrxrI = qt.basis(3, 2).proj()
 I1x1I = qt.basis(3, 1).proj()
 I0x0I = qt.basis(3, 0).proj()
@@ -101,14 +101,25 @@ projector_4atoms_Vnnninf = (
 plus_state = (qt.basis(3, 0) + qt.basis(3, 1)).unit()
 
 
+def _make_control(fn, duration, params, default):
+    if fn is None:
+        return lambda t: default
+    return lambda t: fn(t, duration, params)
+
+
 def _setup(gate, pulse_ansatz, params):
     dim = gate.dim()
     T, detuning_params, phase_params, rabi_params = params
-    detuning_fn = partial(
-        pulse_ansatz.detuning_ansatz, duration=T, params=detuning_params
-    )
-    phase_fn = partial(pulse_ansatz.phase_ansatz, duration=T, params=phase_params)
-    # rabi_fn = partial(pulse_ansatz.rabi_ansatz, duration=T, params=rabi_params)
+
+    detuning_params = np.asarray(detuning_params)
+    phase_params = np.asarray(phase_params)
+    rabi_params = np.asarray(rabi_params)
+
+    # TODO: partial(...) does not allow ansatz=None;
+    #  linking ansatz=None to a default function could be done in the pulse setup (constructor)?
+    detuning_fn = _make_control(pulse_ansatz.detuning_ansatz, T, detuning_params, 0.0)
+    phase_fn = _make_control(pulse_ansatz.phase_ansatz, T, phase_params, 0.0)
+    rabi_fn = _make_control(pulse_ansatz.rabi_ansatz, T, rabi_params, 1.0)
 
     if dim == 4:
         decay = gate._decay
@@ -126,8 +137,8 @@ def _setup(gate, pulse_ansatz, params):
                 * (
                     H2_Vnn * Vnn
                     + H2_Delta * (detuning_fn(t) - 1j * 0.5 * decay)
-                    + H2_Omega_real * np.cos(phase_fn(t))
-                    + H2_Omega_imag * np.sin(phase_fn(t))
+                    + rabi_fn(t) * H2_Omega_real * np.cos(phase_fn(t))
+                    + rabi_fn(t) * H2_Omega_imag * np.sin(phase_fn(t))
                 )
                 * proj
             )
@@ -159,8 +170,8 @@ def _setup(gate, pulse_ansatz, params):
                     H3_Vnnn * Vnnn
                     + H3_Vnn * Vnn
                     + H3_Delta * (detuning_fn(t) - 1j * 0.5 * decay)
-                    + H3_Omega_real * np.cos(phase_fn(t))
-                    + H3_Omega_imag * np.sin(phase_fn(t))
+                    + rabi_fn(t) * H3_Omega_real * np.cos(phase_fn(t))
+                    + rabi_fn(t) * H3_Omega_imag * np.sin(phase_fn(t))
                 )
                 * proj
             )
@@ -195,8 +206,8 @@ def _setup(gate, pulse_ansatz, params):
                     H4_Vnnn * Vnnn
                     + H4_Vnn * Vnn
                     + H4_Delta * (detuning_fn(t) - 1j * 0.5 * decay)
-                    + H4_Omega_real * np.cos(phase_fn(t))
-                    + H4_Omega_imag * np.sin(phase_fn(t))
+                    + rabi_fn(t) * H4_Omega_real * np.cos(phase_fn(t))
+                    + rabi_fn(t) * H4_Omega_imag * np.sin(phase_fn(t))
                 )
                 * proj
             )
@@ -206,7 +217,7 @@ def _setup(gate, pulse_ansatz, params):
     raise ValueError("The specified number of atoms is not yet implemented.")
 
 
-def _make_target(final_state, gate):
+def _make_target(gate, final_state):
     dim = gate.dim()
 
     if dim == 4:
@@ -338,7 +349,7 @@ def _qutip_time_evolution(H, psi_in, T, TR_op, normalize):
 
 def _evolve(gate, pulse_ansatz, params):
     H, psi_in, T, TR_op = _setup(gate, pulse_ansatz, params)
-    normalize = gate._decay == 0
+    normalize = gate.get_decay() == 0
     psi_out, _ = _qutip_time_evolution(H, psi_in, T, TR_op, normalize)
     return psi_out
 
@@ -349,8 +360,8 @@ def _evolve_TR(gate, pulse_ansatz, params):
     return TR
 
 
-def _process_fidelity(final_state, gate):
-    target_state = _make_target(final_state, gate)
+def _process_fidelity(gate, final_state):
+    target_state = _make_target(gate, final_state)
     return qt.fidelity(final_state, target_state) ** 2
 
 
@@ -360,12 +371,14 @@ def analyze_gate_qutip(
     params: tuple[FloatParams, ...],
 ):
     final_state = _evolve(gate, pulse_ansatz, params)
-    infid = 1 - _process_fidelity(final_state, gate)
+    infid = 1 - _process_fidelity(gate, final_state)
 
+    decay = gate.get_decay()
     gate.set_decay(0.0)
     final_state_nodecay = _evolve(gate, pulse_ansatz, params)
-    infid_nodecay = 1 - _process_fidelity(final_state_nodecay, gate)
+    infid_nodecay = 1 - _process_fidelity(gate, final_state_nodecay)
 
     ryd_time = _evolve_TR(gate, pulse_ansatz, params)
+    gate.set_decay(decay)
 
     return infid, infid_nodecay, ryd_time

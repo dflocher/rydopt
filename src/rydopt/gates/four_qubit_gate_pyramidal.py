@@ -16,7 +16,7 @@ from rydopt.gates.subsystem_hamiltonians import (
 
 class FourQubitGatePyramidal(Gate):
     def __init__(self, phi, theta, eps, lamb, delta, kappa, Vnn, Vnnn, decay):
-        if (Vnnn == Vnnn) and ((theta != eps) or (lamb != delta)):
+        if (Vnn == Vnnn) and ((theta != eps) or (lamb != delta)):
             raise ValueError("For Vnn=Vnnn, theta=eps and lambda=delta is required")
         if (Vnnn == 0) and ((eps != 0.0) or (delta != 0.0)):
             raise ValueError("For Vnnn=0, eps=0 and delta=0 is required")
@@ -32,6 +32,9 @@ class FourQubitGatePyramidal(Gate):
 
     def dim(self):
         return 16
+
+    def get_decay(self):
+        return self._decay
 
     def set_decay(self, decay):
         self._decay = decay
