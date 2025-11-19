@@ -83,9 +83,9 @@ def test_fastest() -> None:
         pulse,
         min_initial_params,
         max_initial_params,
-        num_steps=200,
-        num_initializations=40,
-        min_converged_initializations=20,
+        num_steps=300,
+        num_initializations=48,
+        min_converged_initializations=24,
     )
 
     # Verify the fidelity

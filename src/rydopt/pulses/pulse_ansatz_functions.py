@@ -140,7 +140,7 @@ def const(
     """
     c0 = params[0]
 
-    return jnp.full_like(t, c0)
+    return jnp.zeros_like(t) + c0
 
 
 def const_sin_crab(
@@ -170,7 +170,7 @@ def const_sin_crab(
     """
     c0 = params[0]
 
-    return jnp.full_like(t, c0) + sin_crab(t, duration, params[1:])
+    return c0 + sin_crab(t, duration, params[1:])
 
 
 def const_cos_crab(
@@ -200,7 +200,7 @@ def const_cos_crab(
     """
     c0 = params[0]
 
-    return jnp.full_like(t, c0) + cos_crab(t, duration, params[1:])
+    return c0 + cos_crab(t, duration, params[1:])
 
 
 def const_sin_cos_crab(
@@ -239,4 +239,4 @@ def const_sin_cos_crab(
 
     c0 = params[0]
 
-    return jnp.full_like(t, c0) + sin_cos_crab(t, duration, params[1:])
+    return c0 + sin_cos_crab(t, duration, params[1:])

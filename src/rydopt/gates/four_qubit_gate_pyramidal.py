@@ -1,6 +1,3 @@
-# TODO remove the suppression of the error F841 when the class is implemented
-# ruff: noqa: F841
-
 from functools import partial
 import jax.numpy as jnp
 from math import isinf

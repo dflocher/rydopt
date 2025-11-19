@@ -3,7 +3,7 @@ from rydopt.pulses.pulse_ansatz import PulseAnsatz
 from rydopt.simulation import evolve
 from functools import partial
 import jax.numpy as jnp
-import jax.sharding as jsr
+import jax.sharding as jshard
 import jax
 import time
 import optax
@@ -20,12 +20,12 @@ def _infidelity(params, unravel, gate: Gate, pulse: PulseAnsatz, tol: float):
     return 1 - gate.process_fidelity(final_states)
 
 
-"""
 @partial(
     jax.jit,
     static_argnames=[
         "infidelity_and_grad",
         "optimizer",
+        "axis_name",
         "num_steps",
         "min_converged_initializations",
     ],
@@ -35,6 +35,7 @@ def _adam_runner(
     infidelity_and_grad,
     optimizer: optax.GradientTransformation,
     initial_params,
+    axis_name: str | None,
     num_steps: int,
     min_converged_initializations: int,
     tol,
@@ -42,56 +43,11 @@ def _adam_runner(
     opt_state0 = optimizer.init(initial_params)
 
     def body(carry, step):
-        params, opt_state, prev_converged_initializations, steps_taken = carry
-
-        infidelity, grads = infidelity_and_grad(params)
-        new_converged_initializations = 1
-        new_steps_taken = steps_taken + 1
-
-        updates, new_opt_state = optimizer.update(grads, opt_state, params)
-        new_params = optax.apply_updates(params, updates)
-
-        return (new_params, new_opt_state, new_converged_initializations, new_steps_taken), infidelity
-
-    (final_params, _, converged_initializations, steps_taken), infidelity_history = (
-        jax.lax.scan(
-            body,
-            (initial_params, opt_state0, 0, 0),
-            jnp.arange(num_steps),
-        )
-    )
-
-    return final_params, infidelity_history, steps_taken, converged_initializations
-"""
-
-
-@partial(
-    jax.jit,
-    static_argnames=[
-        "infidelity_and_grad",
-        "optimizer",
-        "num_steps",
-        "min_converged_initializations",
-    ],
-    donate_argnames=["initial_params"],
-)
-def _adam_runner(
-    infidelity_and_grad,
-    optimizer: optax.GradientTransformation,
-    initial_params,
-    num_steps: int,
-    min_converged_initializations: int,
-    tol,
-):
-    opt_state0 = optimizer.init(initial_params)
-
-    def body(carry, step):
-        params, opt_state, prev_converged_initializations, steps_taken = carry
+        params, infidelity, opt_state, prev_converged_initializations = carry
 
         def do_step(_):
-            infidelity, grads = infidelity_and_grad(params)
-            new_converged_initializations = jnp.sum(infidelity <= tol)
-            new_steps_taken = steps_taken + 1
+            new_infidelity, grads = infidelity_and_grad(params)
+            new_converged_initializations = jnp.sum(new_infidelity <= tol)
 
             def apply_update(_):
                 updates, new_opt_state = optimizer.update(grads, opt_state, params)
@@ -110,24 +66,22 @@ def _adam_runner(
 
             return (
                 new_params,
+                new_infidelity,
                 new_opt_state,
                 new_converged_initializations,
-                new_steps_taken,
-            ), infidelity
+            )
 
         def do_no_step(_):
-            return carry, jnp.zeros_like(tol)
+            return carry
 
-        (params, opt_state, converged_initializations, steps_taken), infidelity = (
-            jax.lax.cond(
-                prev_converged_initializations >= min_converged_initializations,
-                do_no_step,
-                do_step,
-                operand=None,
-            )
+        params, infidelity, opt_state, converged_initializations = jax.lax.cond(
+            prev_converged_initializations >= min_converged_initializations,
+            do_no_step,
+            do_step,
+            operand=None,
         )
 
-        is_periodic = (step % 10 == 0) | (step == num_steps - 1)
+        is_periodic = (step % 20 == 0) | (step == num_steps - 1)
         log_step = (prev_converged_initializations < min_converged_initializations) & (
             is_periodic | (converged_initializations >= min_converged_initializations)
         )
@@ -135,8 +89,9 @@ def _adam_runner(
         jax.lax.cond(
             jnp.any(log_step),
             lambda _: jax.debug.print(
-                "Step {step:06d}: min infidelity ={infidelity:13.6e}, converged = {converged}",
+                "Step {step:06d} on device {idx:03d}: min infidelity ={infidelity:13.6e}, converged = {converged}",
                 step=step,
+                idx=jax.lax.axis_index(axis_name) if axis_name else 0,
                 infidelity=jnp.min(infidelity),
                 converged=converged_initializations,
             ),
@@ -144,17 +99,15 @@ def _adam_runner(
             operand=None,
         )
 
-        return (params, opt_state, converged_initializations, steps_taken), infidelity
+        return (params, infidelity, opt_state, converged_initializations), infidelity
 
-    (final_params, _, converged_initializations, steps_taken), infidelity_history = (
-        jax.lax.scan(
-            body,
-            (initial_params, opt_state0, 0, 0),
-            jnp.arange(num_steps),
-        )
+    (final_params, final_infidelity, _, _), infidelity_history = jax.lax.scan(
+        body,
+        (initial_params, jnp.zeros_like(tol), opt_state0, 0),
+        jnp.arange(num_steps),
     )
 
-    return final_params, infidelity_history, steps_taken, converged_initializations
+    return final_params, final_infidelity
 
 
 def adam(
@@ -176,7 +129,7 @@ def adam(
         flat_fixed, _ = ravel_pytree(fixed_initial_params)
         optimizer = optax.chain(
             optax.adam(learning_rate),
-            # TODO optax.transforms.freeze(flat_fixed), fix it !!!!!!!!
+            optax.transforms.freeze(flat_fixed),
         )
 
     # Infidelity and its gradient
@@ -188,41 +141,35 @@ def adam(
     print("")
 
     t0 = time.perf_counter()
-    final_params, infidelity_history, steps_taken, converged_initializations = (
-        _adam_runner(
-            infidelity_and_grad=infidelity_and_grad,
-            optimizer=optimizer,
-            initial_params=flat_params,
-            num_steps=num_steps,
-            min_converged_initializations=1,
-            tol=tol,
-        )
+    final_params, final_infidelity = _adam_runner(
+        infidelity_and_grad=infidelity_and_grad,
+        optimizer=optimizer,
+        initial_params=flat_params,
+        axis_name=None,
+        num_steps=num_steps,
+        min_converged_initializations=1,
+        tol=tol,
     )
     jax.block_until_ready(final_params)
     duration = time.perf_counter() - t0
 
-    if converged_initializations == 0:
-        raise RuntimeError("No convergence. Try increasing num_steps or relaxing tol.")
-
+    num_converged = 1 if final_infidelity <= tol else 0
     final_params = jax.tree.map(float, unravel(final_params))
 
     # --- Logging ---
 
     print("\n=== Optimization finished using Adam ===\n")
     print(f"Duration: {duration:.3f} seconds")
-    print(f"Steps taken: {steps_taken}")
-    print(f"Convergences: {converged_initializations}")
+    print(f"Convergences: {num_converged}")
 
     # Show converged gate
-    infidelity = infidelity_history[steps_taken - 1]
-
     print("\nConverged gate:")
     print(f"> duration = {final_params[0]}")
     print(f"> parameters = ({', '.join(str(p) for p in final_params)})")
-    if float(infidelity) < 0:
+    if float(final_infidelity) < 0:
         print("> infidelity <= numerical precision")
     else:
-        print(f"> infidelity = {infidelity:.6e}")
+        print(f"> infidelity = {final_infidelity:.6e}")
 
     return final_params
 
@@ -241,6 +188,12 @@ def multi_start_adam(
     seed: int = 0,
     return_all_converged: bool = False,
 ) -> tuple[FloatParams, ...] | list[tuple[FloatParams, ...]]:
+    num_devices = len(jax.devices())
+    axis_name = "batch" if num_devices > 1 else None
+
+    # Pad the number of initial parameter samples to be a multiple of the number of devices
+    num_initializations += (-num_initializations) % num_devices
+
     # Initial parameter samples
     key = jax.random.PRNGKey(seed)
     flat_min, unravel = ravel_pytree(min_initial_params)
@@ -258,44 +211,58 @@ def multi_start_adam(
     if fixed_initial_params is None:
         optimizer = optax.adam(learning_rate)
     else:
+        flat_fixed, _ = ravel_pytree(fixed_initial_params)
         optimizer = optax.chain(
             optax.adam(learning_rate),
-            optax.transforms.freeze(ravel_pytree(fixed_initial_params)[0]),
+            optax.transforms.freeze(flat_fixed),
         )
 
     # Infidelity and its gradient
     infidelity = partial(_infidelity, gate=gate, pulse=pulse, tol=tol, unravel=unravel)
     infidelity_and_grad = jax.vmap(jax.value_and_grad(infidelity))
 
+    # Function that runs the optimization
+    def runner(flat_params, tol):
+        return _adam_runner(
+            infidelity_and_grad=infidelity_and_grad,
+            optimizer=optimizer,
+            initial_params=flat_params,
+            axis_name=axis_name,
+            num_steps=num_steps,
+            min_converged_initializations=(
+                min_converged_initializations + num_devices - 1
+            )
+            // num_devices,
+            tol=tol,
+        )
+
+    if num_devices > 1:
+        mesh = jax.make_mesh(
+            (num_devices,), (axis_name,), axis_types=(jshard.AxisType.Auto,)
+        )
+        spec_batch = jshard.PartitionSpec(axis_name)
+        sharding = jax.NamedSharding(mesh, spec_batch)
+        flat_params = jax.device_put(flat_params, sharding)
+        tol_vec = jax.device_put(tol_vec, sharding)
+        runner = jax.shard_map(
+            runner,
+            mesh=mesh,
+            in_specs=(spec_batch, spec_batch),
+            out_specs=(spec_batch, spec_batch),
+            check_vma=False,
+        )
+
     # --- Optimize parameters ---
 
     print("")
 
-    devices = jax.devices()
-    if len(devices) > 1:
-        mesh = jax.make_mesh((len(devices),), ("s",))
-        sharding = jsr.NamedSharding(mesh, jsr.PartitionSpec("s"))
-        flat_params = jax.device_put(flat_params, sharding)
-        tol_vec = jax.device_put(tol_vec, sharding)
-
     t0 = time.perf_counter()
-    final_params, infidelity_history, steps_taken, converged_initializations = (
-        _adam_runner(
-            infidelity_and_grad=infidelity_and_grad,
-            optimizer=optimizer,
-            initial_params=flat_params,
-            num_steps=num_steps,
-            min_converged_initializations=min_converged_initializations,
-            tol=tol_vec,
-        )
+    final_params, final_infidelities = runner(flat_params, tol_vec)
+    final_params, final_infidelities = jax.device_get(
+        (final_params, final_infidelities)
     )
-    jax.block_until_ready(final_params)
     duration = time.perf_counter() - t0
 
-    if converged_initializations == 0:
-        raise RuntimeError("No convergence. Try increasing num_steps or relaxing tol.")
-
-    final_infidelities = infidelity_history[steps_taken - 1]
     converged = final_infidelities <= tol
     num_converged = int(jnp.sum(converged))
     params_converged = final_params[converged]
@@ -304,9 +271,8 @@ def multi_start_adam(
     # --- Logging ---
 
     print("\n=== Optimization finished using multi-start Adam ===\n")
-    print(f"Duration: {duration:.3f} seconds on {devices}")
-    print(f"Steps taken: {steps_taken}")
-    print(f"Convergences: {converged_initializations}")
+    print(f"Duration: {duration:.3f} seconds")
+    print(f"Convergences: {num_converged}")
 
     # Show slowest converged gate
     if num_converged > 1:
