@@ -17,7 +17,7 @@ from math import isinf
 class ThreeQubitGateIsosceles(Gate):
     def __init__(self, phi, theta, eps, lamb, Vnn, Vnnn, decay):
         if (Vnnn == Vnnn) and (theta != eps):
-            raise ValueError("For Vnn=Vnnn, theta=eps is required")  # value error
+            raise ValueError("For Vnn=Vnnn, theta=eps is required")
         if (Vnnn == 0) and (eps != 0.0):
             raise ValueError("For Vnnn=0, eps=0 is required")
         self._phi = phi
@@ -168,3 +168,24 @@ class ThreeQubitGateIsosceles(Gate):
             jnp.abs(jnp.vdot(targeted_gate, obtained_gate)) ** 2
             / len(targeted_gate) ** 2
         )
+
+    def rydberg_time(self, ryd_times_subsystems):
+        if float(self._Vnn) == float(self._Vnnn):
+            return (1 / 8) * (
+                3 * ryd_times_subsystems[0]
+                + 3 * ryd_times_subsystems[1]
+                + ryd_times_subsystems[2]
+            )
+        if isinf(float(self._Vnn)) and float(self._Vnnn) == 0.0:
+            return (1 / 8) * (
+                5 * ryd_times_subsystems[0]
+                + 2 * ryd_times_subsystems[1]
+                + ryd_times_subsystems[2]
+            )
+        else:
+            return (1 / 8) * (
+                3 * ryd_times_subsystems[0]
+                + 2 * ryd_times_subsystems[1]
+                + ryd_times_subsystems[2]
+                + ryd_times_subsystems[3]
+            )

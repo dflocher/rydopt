@@ -240,3 +240,28 @@ class FourQubitGatePyramidal(Gate):
             jnp.abs(jnp.vdot(targeted_gate, obtained_gate)) ** 2
             / len(targeted_gate) ** 2
         )
+
+    def rydberg_time(self, ryd_times_subsystems):
+        if float(self._Vnn) == float(self._Vnnn):
+            return (1 / 16) * (
+                4 * ryd_times_subsystems[0]
+                + 6 * ryd_times_subsystems[1]
+                + 4 * ryd_times_subsystems[2]
+                + ryd_times_subsystems[3]
+            )
+        if isinf(float(self._Vnn)) and float(self._Vnnn) == 0.0:
+            return (1 / 16) * (
+                13 * ryd_times_subsystems[0]
+                + 3 * ryd_times_subsystems[1]
+                + 3 * ryd_times_subsystems[2]
+                + ryd_times_subsystems[3]
+            )
+        else:
+            return (1 / 16) * (
+                4 * ryd_times_subsystems[0]
+                + 3 * ryd_times_subsystems[1]
+                + 3 * ryd_times_subsystems[2]
+                + 3 * ryd_times_subsystems[3]
+                + ryd_times_subsystems[4]
+                + ryd_times_subsystems[5]
+            )

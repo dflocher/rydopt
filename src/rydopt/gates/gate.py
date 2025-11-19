@@ -13,3 +13,6 @@ class Gate(ABC):
 
     @abstractmethod
     def process_fidelity(self, final_states): ...
+
+    @abstractmethod
+    def rydberg_time(self, ryd_times_subsystems): ...

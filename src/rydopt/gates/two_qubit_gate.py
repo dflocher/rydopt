@@ -68,3 +68,6 @@ class TwoQubitGate(Gate):
             jnp.abs(jnp.vdot(targeted_gate, obtained_gate)) ** 2
             / len(targeted_gate) ** 2
         )
+
+    def rydberg_time(self, ryd_times_subsystems):
+        return (1 / 4) * (2 * ryd_times_subsystems[0] + ryd_times_subsystems[1])
