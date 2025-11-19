@@ -18,6 +18,9 @@ class TwoQubitGate(Gate):
     def dim(self):
         return 4
 
+    def set_decay(self, decay):
+        self._decay = decay
+
     def subsystem_hamiltonians(self):
         if isinf(float(self._Vnn)):
             return (

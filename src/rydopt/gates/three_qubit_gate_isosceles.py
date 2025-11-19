@@ -28,6 +28,9 @@ class ThreeQubitGateIsosceles(Gate):
     def dim(self):
         return 8
 
+    def set_decay(self, decay):
+        self._decay = decay
+
     def subsystem_hamiltonians(self):
         if isinf(float(self._Vnn)) and isinf(float(self._Vnnn)):
             return (

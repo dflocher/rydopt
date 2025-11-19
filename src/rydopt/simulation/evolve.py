@@ -78,3 +78,15 @@ def evolve(gate: Gate, pulse: PulseAnsatz, params: tuple, tol: float = 1e-7):
     )
 
     return final_states
+
+
+# TODO: implement the function. The operators whose expectation values must be calculated are the subsystem Hamiltonians
+# TODO: with Delta=1, Omega=Vnn=Vnnn=decay=0  (this counts the number of Rydberg excitations)
+def evolve_TR(gate: Gate, pulse: PulseAnsatz, params: tuple, tol: float = 1e-7):
+    ryd_times_subsystems = tuple(
+        0.0
+        for hamiltonian, psi_initial in zip(
+            gate.subsystem_hamiltonians(), gate.initial_states()
+        )
+    )
+    return ryd_times_subsystems

@@ -5,6 +5,8 @@ from rydopt.characterization.pulse_visualization import (
     visualize_subsystem_dynamics,
 )
 from rydopt.characterization.pulse_verification import verify
+from rydopt.characterization.gate_performance import analyze_gate
+from rydopt.characterization.gate_performance_qutip import analyze_gate_qutip
 
 __all__ = [
     "postprocess_pulses",
@@ -12,4 +14,6 @@ __all__ = [
     "visualize_subsystem_dynamics",
     "verify",
     "pulses_qutip",
+    "analyze_gate",
+    "analyze_gate_qutip",
 ]
