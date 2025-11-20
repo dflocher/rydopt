@@ -25,6 +25,7 @@ def _infidelity(params, unravel, gate: Gate, pulse: PulseAnsatz, tol: float):
     static_argnames=[
         "infidelity_and_grad",
         "optimizer",
+        "use_grad_mask",
         "axis_name",
         "num_steps",
         "min_converged_initializations",
@@ -35,6 +36,8 @@ def _adam_runner(
     infidelity_and_grad,
     optimizer: optax.GradientTransformation,
     initial_params,
+    use_grad_mask,
+    grads_mask,
     axis_name: str | None,
     num_steps: int,
     min_converged_initializations: int,
@@ -48,6 +51,10 @@ def _adam_runner(
         def do_step(_):
             new_infidelity, grads = infidelity_and_grad(params)
             new_converged_initializations = jnp.sum(new_infidelity <= tol)
+
+            if use_grad_mask:
+                grads = grads * grads_mask
+
             updates, new_opt_state = optimizer.update(grads, opt_state, params)
             new_params = optax.apply_updates(params, updates)
 
@@ -117,16 +124,11 @@ def adam(
 ) -> tuple[FloatParams, ...]:
     # Initial parameters
     flat_params, unravel = ravel_pytree(initial_params)
+    flat_fixed, _ = ravel_pytree(fixed_initial_params)
+    grads_mask = 1 - flat_fixed.astype(float)
 
     # Optimizer
-    if fixed_initial_params is None:
-        optimizer = optax.adam(learning_rate)
-    else:
-        flat_fixed, _ = ravel_pytree(fixed_initial_params)
-        optimizer = optax.chain(
-            optax.adam(learning_rate),
-            optax.transforms.freeze(flat_fixed),
-        )
+    optimizer = optax.adam(learning_rate)
 
     # Infidelity and its gradient
     infidelity = partial(_infidelity, gate=gate, pulse=pulse, tol=tol, unravel=unravel)
@@ -141,6 +143,8 @@ def adam(
         infidelity_and_grad=infidelity_and_grad,
         optimizer=optimizer,
         initial_params=flat_params,
+        use_grad_mask=(fixed_initial_params is not None),
+        grads_mask=grads_mask,
         axis_name=None,
         num_steps=num_steps,
         min_converged_initializations=1,
@@ -191,9 +195,12 @@ def multi_start_adam(
     num_initializations += (-num_initializations) % num_devices
 
     # Initial parameter samples
-    key = jax.random.PRNGKey(seed)
     flat_min, unravel = ravel_pytree(min_initial_params)
     flat_max, _ = ravel_pytree(max_initial_params)
+    flat_fixed, _ = ravel_pytree(fixed_initial_params)
+    grads_mask = 1 - flat_fixed.astype(float)
+
+    key = jax.random.PRNGKey(seed)
     flat_params = jax.random.uniform(
         key,
         shape=(num_initializations, flat_min.size),
@@ -204,14 +211,7 @@ def multi_start_adam(
     tol_vec = jnp.full((num_initializations,), tol)
 
     # Optimizer
-    if fixed_initial_params is None:
-        optimizer = optax.adam(learning_rate)
-    else:
-        flat_fixed, _ = ravel_pytree(fixed_initial_params)
-        optimizer = optax.chain(
-            optax.adam(learning_rate),
-            optax.transforms.freeze(flat_fixed),
-        )
+    optimizer = optax.adam(learning_rate)
 
     # Infidelity and its gradient
     infidelity = partial(_infidelity, gate=gate, pulse=pulse, tol=tol, unravel=unravel)
@@ -223,6 +223,8 @@ def multi_start_adam(
             infidelity_and_grad=infidelity_and_grad,
             optimizer=optimizer,
             initial_params=flat_params,
+            use_grad_mask=(fixed_initial_params is not None),
+            grads_mask=grads_mask,
             axis_name=axis_name,
             num_steps=num_steps,
             min_converged_initializations=(
