@@ -19,13 +19,11 @@ def test_adam() -> None:
     initial_params = (7.6, (-0.1,), (1.8, -0.6), ())
 
     # Run optimization
-    params, infidelity = ro.optimization.adam(
-        gate, pulse, initial_params, num_steps=200, tol=1e-7
-    )
+    r = ro.optimization.adam(gate, pulse, initial_params, num_steps=200, tol=1e-7)
 
     # Verify the fidelity
-    fidelity = ro.simulation.process_fidelity(gate, pulse, params)
-    assert np.allclose(1 - fidelity, infidelity, rtol=1e-12)
+    fidelity = ro.simulation.process_fidelity(gate, pulse, r.params)
+    assert np.allclose(1 - fidelity, r.infidelity, rtol=1e-12)
     assert np.allclose(fidelity, 1, rtol=1e-7)
 
 
@@ -45,13 +43,11 @@ def test_adam_decay() -> None:
     initial_params = (7.6, (-0.1,), (1.8, -0.6), ())
 
     # Run optimization
-    params, infidelity = ro.optimization.adam(
-        gate, pulse, initial_params, num_steps=200, tol=1e-7
-    )
+    r = ro.optimization.adam(gate, pulse, initial_params, num_steps=200, tol=1e-7)
 
     # Verify the fidelity
-    fidelity = ro.simulation.process_fidelity(gate, pulse, params)
-    assert np.allclose(1 - fidelity, infidelity, rtol=1e-12)
+    fidelity = ro.simulation.process_fidelity(gate, pulse, r.params)
+    assert np.allclose(1 - fidelity, r.infidelity, rtol=1e-12)
 
 
 @pytest.mark.optimization
@@ -71,7 +67,7 @@ def test_multi_start_adam() -> None:
     max_initial_params = (9, (2, 2, 2), (), ())
 
     # Run optimization
-    params, infidelities = ro.optimization.multi_start_adam(
+    r = ro.optimization.multi_start_adam(
         gate,
         pulse,
         min_initial_params,
@@ -84,18 +80,18 @@ def test_multi_start_adam() -> None:
     )
 
     # Verify the fidelities of the 'min_converged_initializations'
-    fidelity = ro.simulation.process_fidelity(gate, pulse, params[0], tol=tol)
-    assert np.allclose(1 - fidelity, infidelities[0], rtol=1e-12)
+    fidelity = ro.simulation.process_fidelity(gate, pulse, r.params[0], tol=tol)
+    assert np.allclose(1 - fidelity, r.infidelity[0], rtol=1e-12)
     assert np.allclose(fidelity, 1, rtol=tol)
 
-    fidelity = ro.simulation.process_fidelity(gate, pulse, params[1], tol=tol)
-    assert np.allclose(1 - fidelity, infidelities[1], rtol=1e-12)
+    fidelity = ro.simulation.process_fidelity(gate, pulse, r.params[1], tol=tol)
+    assert np.allclose(1 - fidelity, r.infidelity[1], rtol=1e-12)
     assert np.allclose(fidelity, 1, rtol=tol)
 
     # Verify the other fidelities
-    for p, infidelity in zip(params[2:], infidelities[2:]):
+    for p, infi in zip(r.params[2:], r.infidelity[2:]):
         fidelity = ro.simulation.process_fidelity(gate, pulse, p, tol=tol)
-        assert np.allclose(1 - fidelity, infidelity, rtol=1e-12)
+        assert np.allclose(1 - fidelity, infi, rtol=1e-12)
 
 
 @pytest.mark.optimization
@@ -115,7 +111,7 @@ def test_multi_start_adam_decay() -> None:
     max_initial_params = (9, (2, 2, 2), (), ())
 
     # Run optimization
-    params, infidelity = ro.optimization.multi_start_adam(
+    r = ro.optimization.multi_start_adam(
         gate,
         pulse,
         min_initial_params,
@@ -126,8 +122,8 @@ def test_multi_start_adam_decay() -> None:
     )
 
     # Verify the fidelity
-    fidelity = ro.simulation.process_fidelity(gate, pulse, params, tol=tol)
-    assert np.allclose(1 - fidelity, infidelity, rtol=1e-12)
+    fidelity = ro.simulation.process_fidelity(gate, pulse, r.params, tol=tol)
+    assert np.allclose(1 - fidelity, r.infidelity, rtol=1e-12)
 
 
 @pytest.mark.optimization
@@ -147,7 +143,7 @@ def test_fastest() -> None:
     max_initial_params = (9, (2,), (2, 2), ())
 
     # Run optimization
-    params, infidelity = ro.optimization.multi_start_adam(
+    r = ro.optimization.multi_start_adam(
         gate,
         pulse,
         min_initial_params,
@@ -158,8 +154,8 @@ def test_fastest() -> None:
     )
 
     # Verify the fidelity
-    fidelity = ro.simulation.process_fidelity(gate, pulse, params)
-    assert np.allclose(1 - fidelity, infidelity, rtol=1e-12)
+    fidelity = ro.simulation.process_fidelity(gate, pulse, r.params)
+    assert np.allclose(1 - fidelity, r.infidelity, rtol=1e-12)
     assert np.allclose(fidelity, 1, rtol=1e-7)
 
 
@@ -180,11 +176,11 @@ def test_fixed() -> None:
     fixed_initial_params = (False, (True,), (False, False), ())
 
     # Run optimization
-    params, infidelity = ro.optimization.adam(
+    r = ro.optimization.adam(
         gate, pulse, initial_params, fixed_initial_params, num_steps=200
     )
 
     # Verify the fidelity
-    fidelity = ro.simulation.process_fidelity(gate, pulse, params)
-    assert np.allclose(1 - fidelity, infidelity, rtol=1e-12)
+    fidelity = ro.simulation.process_fidelity(gate, pulse, r.params)
+    assert np.allclose(1 - fidelity, r.infidelity, rtol=1e-12)
     assert np.allclose(fidelity, 1, rtol=1e-7)

@@ -28,6 +28,12 @@ class _EvolveSetup:
     unravel: Callable[[jnp.ndarray], object]
 
 
+@dataclass
+class OptimizationResult:
+    params: tuple[FloatParams, ...] | list[tuple[FloatParams, ...]]
+    infidelity: float | list[float]
+
+
 # -----------------------------------------------------------------------------
 # Utility functions
 # -----------------------------------------------------------------------------
@@ -42,7 +48,7 @@ def _make_grads_mask(fixed_initial_params):
     if fixed_initial_params is None:
         return None
     flat_fixed, _ = ravel_pytree(fixed_initial_params)
-    return 1 - np.array(flat_fixed, dtype=float)
+    return 1 - flat_fixed.astype(float)
 
 
 def _print_gate(title: str, duration: float, params, infidelity: float):
@@ -90,62 +96,51 @@ def _adam_scan(
     opt_state0 = optimizer.init(initial_params)
 
     def body(carry, step):
-        _, params, _, opt_state, prev_converged_initializations = carry
+        _, _, _, _, prev_converged_initializations = carry
 
-        def do_step(_):
-            new_infidelity, grads = infidelity_and_grad(params)
-            new_converged_initializations = jnp.sum(new_infidelity <= tol)
+        # Do an gradient descent step if the optimization was not yet done. Note that 'params' and
+        # not 'new_params' contains the parameters that correspond to the 'infidelity'.
+        def do_step(carry):
+            _, params, _, opt_state, _ = carry
+
+            infidelity, grads = infidelity_and_grad(params)
+            converged_initializations = jnp.sum(infidelity <= tol)
 
             if use_grad_mask:
                 grads = grads * grads_mask
 
-            updates, new_opt_state = optimizer.update(grads, opt_state, params)
+            updates, opt_state = optimizer.update(grads, opt_state, params)
             new_params = optax.apply_updates(params, updates)
 
             return (
                 params,
                 new_params,
-                new_infidelity,
-                new_opt_state,
-                new_converged_initializations,
+                infidelity,
+                opt_state,
+                converged_initializations,
             )
 
-        def do_no_step(_):
-            return carry
+        was_not_done = prev_converged_initializations < min_converged_initializations
+        carry = jax.lax.cond(was_not_done, do_step, lambda carry: carry, operand=carry)
 
-        params, new_params, infidelity, opt_state, converged_initializations = (
-            jax.lax.cond(
-                prev_converged_initializations >= min_converged_initializations,
-                do_no_step,
-                do_step,
-                operand=None,
-            )
-        )
+        _, _, infidelity, _, converged_initializations = carry
 
-        is_periodic = (step % 20 == 0) | (step == num_steps - 1)
-        log_step = (prev_converged_initializations < min_converged_initializations) & (
-            is_periodic | (converged_initializations >= min_converged_initializations)
-        )
-
+        # Log intermediate results at distinct steps
+        is_done_now = converged_initializations >= min_converged_initializations
+        is_distinct = (step % 20 == 0) | (step == num_steps - 1)
         jax.lax.cond(
-            jnp.any(log_step),
-            lambda _: jax.debug.print(
-                "Step {step:06d}: min infidelity ={infidelity:13.6e}, converged = {converged}",
-                step=step,
-                infidelity=jnp.min(infidelity),
-                converged=converged_initializations,
+            was_not_done & (is_done_now | is_distinct),
+            lambda args: jax.debug.print(
+                "Step {step:06d}: min infidelity ={min_infidelity:13.6e}, converged = {converged}",
+                step=args[0],
+                min_infidelity=args[1],
+                converged=args[2],
             ),
             lambda _: None,
-            operand=None,
+            operand=(step, jnp.min(infidelity), converged_initializations),
         )
 
-        return (
-            params,
-            new_params,
-            infidelity,
-            opt_state,
-            converged_initializations,
-        ), infidelity
+        return carry, infidelity
 
     (final_params, _, final_infidelity, _, _), infidelity_history = jax.lax.scan(
         body,
@@ -153,7 +148,10 @@ def _adam_scan(
         jnp.arange(num_steps),
     )
 
-    return final_params, final_infidelity
+    return (
+        final_params,
+        final_infidelity,
+    )  # TODO offer an option to the user to get the infidelity_history
 
 
 # -----------------------------------------------------------------------------
@@ -222,9 +220,12 @@ def adam(
     num_steps: int = 1000,
     learning_rate: float = 0.05,
     tol: float = 1e-7,
-) -> tuple[tuple[FloatParams, ...], float]:
+) -> OptimizationResult:
     flat_params, unravel = ravel_pytree(initial_params)
     grads_mask = _make_grads_mask(fixed_initial_params)
+    flat_params = np.array(flat_params)
+    grads_mask = np.array(grads_mask) if grads_mask is not None else None
+
     setup = _EvolveSetup(gate=gate, pulse=pulse, tol=tol, unravel=unravel)
 
     # --- Optimize parameters ---
@@ -235,7 +236,6 @@ def adam(
     final_params, final_infidelity = _adam_optimize(
         flat_params, grads_mask, num_steps, 1, learning_rate, setup
     )
-    jax.block_until_ready(final_params)
     duration = time.perf_counter() - t0
 
     num_converged = 1 if final_infidelity <= tol else 0
@@ -246,7 +246,7 @@ def adam(
     _print_summary("Adam", duration, tol, num_converged)
     _print_gate("Best gate:", final_params[0], final_params, final_infidelity)
 
-    return final_params, final_infidelity
+    return OptimizationResult(params=final_params, infidelity=final_infidelity)
 
 
 def multi_start_adam(
@@ -263,24 +263,32 @@ def multi_start_adam(
     seed: int = 0,
     return_all: bool = False,
     num_workers: int | None = None,
-) -> (
-    tuple[tuple[FloatParams, ...], float]
-    | tuple[list[tuple[FloatParams, ...]], list[float]]
-):
+) -> OptimizationResult:
+    # TODO is a non-jax object possible for 'unravel'? can we also avoid jax for the gate class
+    # etc.? this would circumvent that objects are on the gpu device 0 even if a subprocess is
+    # supposed to use another gpu device via the context manager in _adam_optimize.
     flat_min, unravel = ravel_pytree(min_initial_params)
     flat_max, _ = ravel_pytree(max_initial_params)
     grads_mask = _make_grads_mask(fixed_initial_params)
+    flat_min = np.array(flat_min)
+    flat_max = np.array(flat_max)
+    grads_mask = np.array(grads_mask) if grads_mask is not None else None
+
     setup = _EvolveSetup(gate=gate, pulse=pulse, tol=tol, unravel=unravel)
 
-    multi_device = len(jax.devices()) > 1
+    use_one_process_per_device = (
+        len(jax.devices()) > 1 or jax.devices()[0].platform != "cpu"
+    )
     if num_workers is None:
         num_workers = (
-            len(jax.devices()) if multi_device else mp.cpu_count() // 2
-        )  # the division by 2 avoids oversubscription
-    elif multi_device:
+            len(jax.devices())
+            if use_one_process_per_device
+            else max(1, mp.cpu_count() // 4)
+        )  # the division by 4 avoids oversubscription
+    elif use_one_process_per_device and num_workers > len(jax.devices()):
         raise ValueError(
-            "If multiple devices are visible, for example, on a host with multiple GPUs, "
-            "num_workers must not be set."
+            "If multiple devices or a GPU device is visible, num_workers must be smaller or equal "
+            "to the number of devices."
         )
 
     # Pad the number of initial parameter samples to be a multiple of the number of workers
@@ -314,7 +322,6 @@ def multi_start_adam(
             learning_rate,
             setup,
         )
-        jax.block_until_ready(final_params)
 
     else:
         # Run optimization in spawned worker processes
@@ -332,7 +339,7 @@ def multi_start_adam(
                         // num_workers,
                         learning_rate,
                         setup,
-                        device_idx if multi_device else None,
+                        device_idx if use_one_process_per_device else None,
                     )
                     for device_idx, p in enumerate(flat_params_chunks)
                 ],
@@ -388,8 +395,11 @@ def multi_start_adam(
 
     if return_all:
         sorter = np.argsort(final_infidelities)
-        return [
-            jax.tree.map(float, unravel(p)) for p in final_params[sorter]
-        ], final_infidelities[sorter]
+        return OptimizationResult(
+            params=[jax.tree.map(float, unravel(p)) for p in final_params[sorter]],
+            infidelity=final_infidelities[sorter],
+        )
 
-    return fastest_params, infidelities_converged[fastest_idx]
+    return OptimizationResult(
+        params=fastest_params, infidelity=infidelities_converged[fastest_idx]
+    )
