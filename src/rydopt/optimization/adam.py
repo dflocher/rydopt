@@ -10,10 +10,10 @@ import numpy as np
 from typing import TypeAlias
 from jax.flatten_util import ravel_pytree
 import multiprocessing as mp
-from psutil import cpu_count
 import warnings
 from dataclasses import dataclass
 from collections.abc import Callable
+from contextlib import nullcontext
 
 
 FloatParams: TypeAlias = float | tuple[float, ...]
@@ -168,37 +168,45 @@ def _adam_optimize(
     min_converged_initializations: int,
     learning_rate: float,
     setup: _EvolveSetup,
+    device_idx: int | None = None,
 ) -> tuple[np.ndarray, np.ndarray]:
-    optimizer = optax.adam(learning_rate)
-    infidelity = partial(_infidelity, setup=setup)
+    device_ctx = (
+        nullcontext()
+        if device_idx is None
+        else jax.default_device(jax.devices()[device_idx])
+    )
 
-    if flat_params.ndim == 1:
-        infidelity_and_grad = jax.value_and_grad(infidelity)
-        tol = setup.tol
-    else:
-        infidelity_and_grad = jax.vmap(jax.value_and_grad(infidelity))
-        tol = jnp.full((flat_params.shape[0],), setup.tol)
+    with device_ctx:
+        optimizer = optax.adam(learning_rate)
+        infidelity = partial(_infidelity, setup=setup)
 
-    with warnings.catch_warnings():
-        warnings.filterwarnings(
-            "ignore",
-            message=r"Complex dtype support in Diffrax.*",
-            category=UserWarning,
-            module=r"^equinox\._jit$",
-        )
+        if flat_params.ndim == 1:
+            infidelity_and_grad = jax.value_and_grad(infidelity)
+            tol = setup.tol
+        else:
+            infidelity_and_grad = jax.vmap(jax.value_and_grad(infidelity))
+            tol = jnp.full((flat_params.shape[0],), setup.tol)
 
-        final_params, final_infidelities = _adam_scan(
-            infidelity_and_grad=infidelity_and_grad,
-            optimizer=optimizer,
-            initial_params=jnp.array(flat_params),
-            use_grad_mask=(grads_mask is not None),
-            grads_mask=None if grads_mask is None else jnp.array(grads_mask),
-            num_steps=num_steps,
-            min_converged_initializations=min_converged_initializations,
-            tol=tol,
-        )
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                "ignore",
+                message=r"Complex dtype support in Diffrax.*",
+                category=UserWarning,
+                module=r"^equinox\._jit$",
+            )
 
-    return np.array(final_params), np.array(final_infidelities)
+            final_params, final_infidelities = _adam_scan(
+                infidelity_and_grad=infidelity_and_grad,
+                optimizer=optimizer,
+                initial_params=jnp.array(flat_params),
+                use_grad_mask=(grads_mask is not None),
+                grads_mask=None if grads_mask is None else jnp.array(grads_mask),
+                num_steps=num_steps,
+                min_converged_initializations=min_converged_initializations,
+                tol=tol,
+            )
+
+        return np.array(final_params), np.array(final_infidelities)
 
 
 # -----------------------------------------------------------------------------
@@ -264,9 +272,16 @@ def multi_start_adam(
     grads_mask = _make_grads_mask(fixed_initial_params)
     setup = _EvolveSetup(gate=gate, pulse=pulse, tol=tol, unravel=unravel)
 
+    multi_device = len(jax.devices()) > 1
     if num_workers is None:
-        n = cpu_count(logical=False)
-        num_workers = min(4, (n // 2) if n is not None else 4)
+        num_workers = (
+            len(jax.devices()) if multi_device else mp.cpu_count() // 2
+        )  # the division by 2 avoids oversubscription
+    elif multi_device:
+        raise ValueError(
+            "If multiple devices are visible, for example, on a host with multiple GPUs, "
+            "num_workers must not be set."
+        )
 
     # Pad the number of initial parameter samples to be a multiple of the number of workers
     pad = (-num_initializations) % num_workers
@@ -303,21 +318,23 @@ def multi_start_adam(
 
     else:
         # Run optimization in spawned worker processes
+        flat_params_chunks = np.array_split(flat_params, num_workers, axis=0)
         ctx = mp.get_context("spawn")
         with ctx.Pool(processes=num_workers) as pool:
             results = pool.starmap(
                 _adam_optimize,
                 [
                     (
-                        pc,
+                        p,
                         grads_mask,
                         num_steps,
                         (min_converged_initializations + num_workers - 1)
                         // num_workers,
                         learning_rate,
                         setup,
+                        device_idx if multi_device else None,
                     )
-                    for pc in np.array_split(flat_params, num_workers, axis=0)
+                    for device_idx, p in enumerate(flat_params_chunks)
                 ],
             )
 
