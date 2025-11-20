@@ -1,7 +1,7 @@
 """The example takes
 * ~70m on a AMD Ryzen 7 5700G CPU
-* 9m 17.916s on a NVIDIA GeForce RTX 4060 Ti
-* 4m 54.621s on a NVIDIA H100 PCIe
+* 9m 17.916s on a NVIDIA GeForce RTX 4060 Ti GPU
+* 4m 54.621s on a NVIDIA H100 PCIe GPU
 """
 
 import jax
