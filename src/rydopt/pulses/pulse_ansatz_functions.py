@@ -164,7 +164,7 @@ def cos_sin_crab(
     return cos_crab(t, duration, cos_params) + sin_crab(t, duration, sin_params)
 
 
-def const(t: jnp.ndarray | float, duration: float, params: jnp.ndarray) -> jnp.ndarray:
+def const(t: jnp.ndarray | float, _duration: float, params: jnp.ndarray) -> jnp.ndarray:
     r"""Constant pulse.
 
     .. math::
@@ -173,7 +173,7 @@ def const(t: jnp.ndarray | float, duration: float, params: jnp.ndarray) -> jnp.n
 
     Args:
         t: Time samples at which :math:`\xi(t)` is evaluated.
-        duration: Pulse duration :math:`T` (unused).
+        _duration: Pulse duration :math:`T` (unused).
         params: Array with entry :math:`(c_0)`.
 
     Returns:

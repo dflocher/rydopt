@@ -4,12 +4,6 @@ from rydopt.gates.gate import Gate
 from rydopt.pulses.pulse_ansatz import PulseAnsatz
 
 
-def _make_control(fn, duration, default):
-    if fn is None:
-        return lambda t, _params: default
-    return lambda t, params: fn(t, duration, params)
-
-
 def _propagate(
     psi_initial: jnp.ndarray,
     eq,
@@ -48,9 +42,9 @@ def evolve(gate: Gate, pulse: PulseAnsatz, params: tuple, tol: float = 1e-7):
     phase_params = jnp.asarray(phase_params)
     rabi_params = jnp.asarray(rabi_params)
 
-    detuning_fn = _make_control(pulse.detuning_ansatz, duration, 0.0)
-    phase_fn = _make_control(pulse.phase_ansatz, duration, 0.0)
-    rabi_fn = _make_control(pulse.rabi_ansatz, duration, 1.0)
+    detuning_fn = lambda t, params: pulse.detuning_ansatz(t, duration, params)  # noqa: E731
+    phase_fn = lambda t, params: pulse.phase_ansatz(t, duration, params)  # noqa: E731
+    rabi_fn = lambda t, params: pulse.rabi_ansatz(t, duration, params)  # noqa: E731
 
     def make_schroedinger_eq(hamiltonian):
         def eq(t, y, args):

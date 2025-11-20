@@ -10,9 +10,7 @@ def test_adam() -> None:
 
     # Pulse
     pulse = ro.pulses.PulseAnsatz(
-        detuning_ansatz=ro.pulses.const,
-        phase_ansatz=ro.pulses.sin_crab,
-        rabi_ansatz=None,
+        detuning_ansatz=ro.pulses.const, phase_ansatz=ro.pulses.sin_crab
     )
 
     # Initial parameters
@@ -34,9 +32,7 @@ def test_adam_decay() -> None:
 
     # Pulse
     pulse = ro.pulses.PulseAnsatz(
-        detuning_ansatz=ro.pulses.const,
-        phase_ansatz=ro.pulses.sin_crab,
-        rabi_ansatz=None,
+        detuning_ansatz=ro.pulses.const, phase_ansatz=ro.pulses.sin_crab
     )
 
     # Initial parameters
@@ -58,9 +54,7 @@ def test_multi_start_adam() -> None:
     gate = ro.gates.TwoQubitGate(phi=None, theta=np.pi, Vnn=2.0, decay=0)
 
     # Pulse
-    pulse = ro.pulses.PulseAnsatz(
-        detuning_ansatz=ro.pulses.const_cos_crab, phase_ansatz=None, rabi_ansatz=None
-    )
+    pulse = ro.pulses.PulseAnsatz(detuning_ansatz=ro.pulses.const_cos_crab)
 
     # Parameter bounds for choosing random initial parameters
     min_initial_params = (6, (-2, -2, -2), (), ())
@@ -102,9 +96,7 @@ def test_multi_start_adam_decay() -> None:
     gate = ro.gates.TwoQubitGate(phi=None, theta=np.pi, Vnn=2.0, decay=0.01)
 
     # Pulse
-    pulse = ro.pulses.PulseAnsatz(
-        detuning_ansatz=ro.pulses.const_cos_crab, phase_ansatz=None, rabi_ansatz=None
-    )
+    pulse = ro.pulses.PulseAnsatz(detuning_ansatz=ro.pulses.const_cos_crab)
 
     # Parameter bounds for choosing random initial parameters
     min_initial_params = (6, (-2, -2, -2), (), ())
@@ -133,9 +125,7 @@ def test_fastest() -> None:
 
     # Pulse
     pulse = ro.pulses.PulseAnsatz(
-        detuning_ansatz=ro.pulses.const,
-        phase_ansatz=ro.pulses.sin_crab,
-        rabi_ansatz=None,
+        detuning_ansatz=ro.pulses.const, phase_ansatz=ro.pulses.sin_crab
     )
 
     # Parameter bounds for choosing random initial parameters
@@ -166,9 +156,7 @@ def test_fixed() -> None:
 
     # Pulse
     pulse = ro.pulses.PulseAnsatz(
-        detuning_ansatz=ro.pulses.const,
-        phase_ansatz=ro.pulses.sin_crab,
-        rabi_ansatz=None,
+        detuning_ansatz=ro.pulses.const, phase_ansatz=ro.pulses.sin_crab
     )
 
     # Initial parameters
