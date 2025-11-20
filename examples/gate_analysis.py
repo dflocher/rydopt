@@ -6,8 +6,8 @@ import numpy as np  # noqa: E402
 
 
 # Gate
-# gate = ro.gates.TwoQubitGate(phi=None, theta=np.pi, Vnn=1.5, decay=0.0001)
-# gate = ro.gates.ThreeQubitGateIsosceles(phi=None, theta=np.pi, eps=None, lamb=np.pi, Vnn=float("inf"), Vnnn=0.5, decay=0.0001)
+# gate = ro.gates.TwoQubitGate(phi=None, theta=np.pi, Vnn=float("inf"), decay=0.0001,)
+# gate = ro.gates.ThreeQubitGateIsosceles(phi=None, theta=np.pi, eps=None, lamb=np.pi, Vnn=float("inf"), Vnnn=0.5, decay=0.0001,)
 gate = ro.gates.FourQubitGatePyramidal(
     phi=None,
     theta=np.pi,
