@@ -6,14 +6,6 @@ You can install the software using pip (requires Python ≥ 3.10) by first cloni
 pip install -e .
 ```
 
-Multi-Core CPU Support
-----------------------
-
-To use, for example, 4 CPU cores for optimizing over many initial parameter guesses, set the environment variable:
-```bash
-XLA_FLAGS="--xla_force_host_platform_device_count=4"
-```
-
 GPU Support
 -----------
 

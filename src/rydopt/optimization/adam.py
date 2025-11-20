@@ -12,14 +12,58 @@ from jax.flatten_util import ravel_pytree
 import multiprocessing as mp
 from psutil import cpu_count
 import warnings
+from dataclasses import dataclass
+from collections.abc import Callable
+
 
 FloatParams: TypeAlias = float | tuple[float, ...]
 BoolParams: TypeAlias = bool | tuple[bool, ...]
 
 
-def _infidelity(params, unravel, gate: Gate, pulse: PulseAnsatz, tol: float):
-    final_states = evolve(gate, pulse, unravel(params), tol)
-    return 1 - gate.process_fidelity(final_states)
+@dataclass
+class _EvolveSetup:
+    gate: Gate
+    pulse: PulseAnsatz
+    tol: float
+    unravel: Callable[[jnp.ndarray], object]
+
+
+# -----------------------------------------------------------------------------
+# Utility functions
+# -----------------------------------------------------------------------------
+
+
+def _infidelity(params, setup: _EvolveSetup):
+    final_states = evolve(setup.gate, setup.pulse, setup.unravel(params), setup.tol)
+    return 1 - setup.gate.process_fidelity(final_states)
+
+
+def _make_grads_mask(fixed_initial_params):
+    if fixed_initial_params is None:
+        return None
+    flat_fixed, _ = ravel_pytree(fixed_initial_params)
+    return 1 - np.array(flat_fixed, dtype=float)
+
+
+def _print_gate(title: str, duration: float, params, infidelity: float):
+    print(f"\n{title}")
+    if float(infidelity) < 0:
+        print("> infidelity <= numerical precision")
+    else:
+        print(f"> infidelity = {infidelity:.6e}")
+    print(f"> parameters = ({', '.join(str(p) for p in params)})")
+    print(f"> duration = {duration}")
+
+
+def _print_summary(method_name: str, duration: float, tol: float, num_converged: int):
+    print(f"\n=== Optimization finished using {method_name} ===\n")
+    print(f"Duration: {duration:.3f} seconds")
+    print(f"Gates with infidelity below tol={tol:.1e}: {num_converged}")
+
+
+# -----------------------------------------------------------------------------
+# Internal jax.jit-ed Adam optimization scan loop
+# -----------------------------------------------------------------------------
 
 
 @partial(
@@ -33,7 +77,7 @@ def _infidelity(params, unravel, gate: Gate, pulse: PulseAnsatz, tol: float):
     ],
     donate_argnames=["initial_params"],
 )
-def _run_adam(
+def _adam_scan(
     infidelity_and_grad,
     optimizer: optax.GradientTransformation,
     initial_params,
@@ -46,7 +90,7 @@ def _run_adam(
     opt_state0 = optimizer.init(initial_params)
 
     def body(carry, step):
-        _, params, infidelity, opt_state, prev_converged_initializations = carry
+        _, params, _, opt_state, prev_converged_initializations = carry
 
         def do_step(_):
             new_infidelity, grads = infidelity_and_grad(params)
@@ -112,23 +156,28 @@ def _run_adam(
     return final_params, final_infidelity
 
 
-def _run_adam_chunk(
-    flat_params_chunk,
-    use_grad_mask,
-    grads_mask,
-    num_steps,
-    min_converged_initializations,
-    tol,
-    learning_rate,
-    gate,
-    pulse,
-    unravel,
-):
-    tol_chunk = jnp.full((len(flat_params_chunk),), tol)
+# -----------------------------------------------------------------------------
+# Internal Adam optimization helper
+# -----------------------------------------------------------------------------
 
+
+def _adam_optimize(
+    flat_params: np.ndarray,
+    grads_mask: np.ndarray | None,
+    num_steps: int,
+    min_converged_initializations: int,
+    learning_rate: float,
+    setup: _EvolveSetup,
+) -> tuple[np.ndarray, np.ndarray]:
     optimizer = optax.adam(learning_rate)
-    infidelity = partial(_infidelity, gate=gate, pulse=pulse, tol=tol, unravel=unravel)
-    infidelity_and_grad = jax.vmap(jax.value_and_grad(infidelity))
+    infidelity = partial(_infidelity, setup=setup)
+
+    if flat_params.ndim == 1:
+        infidelity_and_grad = jax.value_and_grad(infidelity)
+        tol = setup.tol
+    else:
+        infidelity_and_grad = jax.vmap(jax.value_and_grad(infidelity))
+        tol = jnp.full((flat_params.shape[0],), setup.tol)
 
     with warnings.catch_warnings():
         warnings.filterwarnings(
@@ -138,18 +187,23 @@ def _run_adam_chunk(
             module=r"^equinox\._jit$",
         )
 
-        final_params_chunk, final_infidelities_chunk = _run_adam(
+        final_params, final_infidelities = _adam_scan(
             infidelity_and_grad=infidelity_and_grad,
             optimizer=optimizer,
-            initial_params=flat_params_chunk,
-            use_grad_mask=use_grad_mask,
-            grads_mask=grads_mask,
+            initial_params=jnp.array(flat_params),
+            use_grad_mask=(grads_mask is not None),
+            grads_mask=None if grads_mask is None else jnp.array(grads_mask),
             num_steps=num_steps,
             min_converged_initializations=min_converged_initializations,
-            tol=tol_chunk,
+            tol=tol,
         )
 
-    return final_params_chunk, final_infidelities_chunk
+    return np.array(final_params), np.array(final_infidelities)
+
+
+# -----------------------------------------------------------------------------
+# Public optimization functions
+# -----------------------------------------------------------------------------
 
 
 def adam(
@@ -160,33 +214,18 @@ def adam(
     num_steps: int = 1000,
     learning_rate: float = 0.05,
     tol: float = 1e-7,
-) -> tuple[FloatParams, ...]:
-    # Initial parameters
+) -> tuple[tuple[FloatParams, ...], float]:
     flat_params, unravel = ravel_pytree(initial_params)
-    flat_fixed, _ = ravel_pytree(fixed_initial_params)
-    grads_mask = 1 - flat_fixed.astype(float)
-
-    # Optimizer
-    optimizer = optax.adam(learning_rate)
-
-    # Infidelity and its gradient
-    infidelity = partial(_infidelity, gate=gate, pulse=pulse, tol=tol, unravel=unravel)
-    infidelity_and_grad = jax.value_and_grad(infidelity)
+    grads_mask = _make_grads_mask(fixed_initial_params)
+    setup = _EvolveSetup(gate=gate, pulse=pulse, tol=tol, unravel=unravel)
 
     # --- Optimize parameters ---
 
     print("")
 
     t0 = time.perf_counter()
-    final_params, final_infidelity = _run_adam(
-        infidelity_and_grad=infidelity_and_grad,
-        optimizer=optimizer,
-        initial_params=flat_params,
-        use_grad_mask=(fixed_initial_params is not None),
-        grads_mask=grads_mask,
-        num_steps=num_steps,
-        min_converged_initializations=1,
-        tol=tol,
+    final_params, final_infidelity = _adam_optimize(
+        flat_params, grads_mask, num_steps, 1, learning_rate, setup
     )
     jax.block_until_ready(final_params)
     duration = time.perf_counter() - t0
@@ -196,18 +235,8 @@ def adam(
 
     # --- Logging ---
 
-    print("\n=== Optimization finished using Adam ===\n")
-    print(f"Duration: {duration:.3f} seconds")
-    print(f"Gates with infidelity below tol={tol:.1e}: {num_converged}")
-
-    # Show converged gate
-    print("\nBest gate:")
-    print(f"> duration = {final_params[0]}")
-    print(f"> parameters = ({', '.join(str(p) for p in final_params)})")
-    if float(final_infidelity) < 0:
-        print("> infidelity <= numerical precision")
-    else:
-        print(f"> infidelity = {final_infidelity:.6e}")
+    _print_summary("Adam", duration, tol, num_converged)
+    _print_gate("Best gate:", final_params[0], final_params, final_infidelity)
 
     return final_params, final_infidelity
 
@@ -225,24 +254,33 @@ def multi_start_adam(
     tol: float = 1e-7,
     seed: int = 0,
     return_all: bool = False,
-) -> tuple[FloatParams, ...] | list[tuple[FloatParams, ...]]:
-    num_workers = cpu_count(logical=False) // 2  # TODO avoid oversubscription
-
-    # Pad the number of initial parameter samples to be a multiple of the number of workers
-    num_initializations += (-num_initializations) % num_workers
-
-    # Initial parameter samples
+    num_workers: int | None = None,
+) -> (
+    tuple[tuple[FloatParams, ...], float]
+    | tuple[list[tuple[FloatParams, ...]], list[float]]
+):
     flat_min, unravel = ravel_pytree(min_initial_params)
     flat_max, _ = ravel_pytree(max_initial_params)
-    flat_fixed, _ = ravel_pytree(fixed_initial_params)
-    grads_mask = 1 - flat_fixed.astype(float)
+    grads_mask = _make_grads_mask(fixed_initial_params)
+    setup = _EvolveSetup(gate=gate, pulse=pulse, tol=tol, unravel=unravel)
 
-    key = jax.random.PRNGKey(seed)
-    flat_params = jax.random.uniform(
-        key,
-        shape=(num_initializations, flat_min.size),
-        minval=flat_min,
-        maxval=flat_max,
+    if num_workers is None:
+        n = cpu_count(logical=False)
+        num_workers = min(4, (n // 2) if n is not None else 4)
+
+    # Pad the number of initial parameter samples to be a multiple of the number of workers
+    pad = (-num_initializations) % num_workers
+    padded_num_initializations = num_initializations + pad
+    if pad != 0:
+        print(
+            f"Padding num_initializations from {num_initializations} to "
+            f"{padded_num_initializations} to be a multiple of num_workers={num_workers}."
+        )
+
+    # Initial parameter samples
+    rng = np.random.default_rng(seed)
+    flat_params = flat_min + (flat_max - flat_min) * rng.random(
+        size=(padded_num_initializations, flat_min.size)
     )
 
     # --- Optimize parameters ---
@@ -252,113 +290,87 @@ def multi_start_adam(
     t0 = time.perf_counter()
 
     if num_workers == 1:
-        final_params, final_infidelities = _run_adam_chunk(
-            flat_params_chunk=flat_params,
-            use_grad_mask=(fixed_initial_params is not None),
-            grads_maskk=grads_mask,
-            num_steps=num_steps,
-            min_converged_initializations=min_converged_initializations,
-            tol=tol,
-            learning_rate=learning_rate,
-            gate=gate,
-            pulse=pulse,
-            unravel=unravel,
+        # Run optimization in main process
+        final_params, final_infidelities = _adam_optimize(
+            flat_params,
+            grads_mask,
+            num_steps,
+            min_converged_initializations,
+            learning_rate,
+            setup,
         )
         jax.block_until_ready(final_params)
 
     else:
-        # Split across workers
-        param_chunks = jnp.array_split(flat_params, num_workers, axis=0)
-        per_worker_min_converged_initializations = (
-            min_converged_initializations + num_workers - 1
-        ) // num_workers
-
-        # Run in spawned worker processes
+        # Run optimization in spawned worker processes
         ctx = mp.get_context("spawn")
         with ctx.Pool(processes=num_workers) as pool:
             results = pool.starmap(
-                _run_adam_chunk,
+                _adam_optimize,
                 [
                     (
                         pc,
-                        (fixed_initial_params is not None),
                         grads_mask,
                         num_steps,
-                        per_worker_min_converged_initializations,
-                        tol,
+                        (min_converged_initializations + num_workers - 1)
+                        // num_workers,
                         learning_rate,
-                        gate,
-                        pulse,
-                        unravel,
+                        setup,
                     )
-                    for pc in param_chunks
+                    for pc in np.array_split(flat_params, num_workers, axis=0)
                 ],
             )
 
         # Concatenate results from all workers
         final_params_list, final_infidelities_list = zip(*results)
-        final_params = jnp.concatenate(final_params_list, axis=0)
-        final_infidelities = jnp.concatenate(final_infidelities_list, axis=0)
+        final_params = np.concatenate(final_params_list, axis=0)
+        final_infidelities = np.concatenate(final_infidelities_list, axis=0)
 
     duration = time.perf_counter() - t0
 
-    converged = final_infidelities <= tol
-    num_converged = int(jnp.sum(converged))
+    converged = jnp.where(final_infidelities <= tol)[0]
+    num_converged = len(converged)
     if num_converged == 0:
-        converged = jnp.array([jnp.argmin(final_infidelities)])
+        converged = np.array([np.argmin(final_infidelities)])
     params_converged = final_params[converged]
     infidelities_converged = final_infidelities[converged]
     durations_converged = params_converged[:, 0]
 
     # --- Logging ---
 
-    print("\n=== Optimization finished using multi-start Adam ===\n")
-    print(f"Duration: {duration:.3f} seconds")
-    print(f"Gates with infidelity below tol={tol:.1e}: {num_converged}")
+    _print_summary("multi-start Adam", duration, tol, num_converged)
 
-    # Show slowest converged gate
-    if num_converged > 1:
-        slowest_idx = jnp.argmax(durations_converged)
-        slowest_duration = durations_converged[slowest_idx]
-        slowest_infidelity = final_infidelities[converged][slowest_idx]
-        slowest_params = jax.tree.map(float, unravel(params_converged[slowest_idx]))
-
-        print("\nSlowest gate:")
-        print(f"> duration = {slowest_duration}")
-
-        print(f"> parameters = ({', '.join(str(p) for p in slowest_params)})")
-        if float(slowest_infidelity) < 0:
-            print("> infidelity <= numerical precision")
-        else:
-            print(f"> infidelity = {slowest_infidelity:.6e}")
-
-    # Show fastest converged gate
-    fastest_idx = jnp.argmin(durations_converged)
+    fastest_idx = np.argmin(durations_converged)
     fastest_duration = durations_converged[fastest_idx]
-    fastest_infidelity = final_infidelities[converged][fastest_idx]
+    fastest_infidelity = infidelities_converged[fastest_idx]
     fastest_params = jax.tree.map(float, unravel(params_converged[fastest_idx]))
 
     if num_converged > 1:
-        print("\nFastest gate:")
-        rng = np.random.default_rng(seed)
+        # If multiple parameter sets converged, show slowest and fastest gate
+        slowest_idx = np.argmax(durations_converged)
+        slowest_duration = durations_converged[slowest_idx]
+        slowest_infidelity = infidelities_converged[slowest_idx]
+        slowest_params = jax.tree.map(float, unravel(params_converged[slowest_idx]))
+
+        _print_gate(
+            "Slowest gate:", slowest_duration, slowest_params, slowest_infidelity
+        )
+        _print_gate(
+            "Fastest gate:", fastest_duration, fastest_params, fastest_infidelity
+        )
+
         idx = rng.integers(0, num_converged, size=(1024, num_converged))
         mins = np.asarray(durations_converged)[idx].min(axis=1)
-        duration_err = mins.std()
-        print(
-            f"> duration = {fastest_duration} (one-sided bootstrap error: {duration_err:.1g})"
-        )
+        err = mins.std()
+        print(f"> one-sided bootstrap error on duration: {err:.1g}")
     else:
-        print("\nBest gate:")
-        print(f"> duration = {fastest_duration}")
+        # Otherwise, show the gate with the smallest infidelity
+        _print_gate("Best gate:", fastest_duration, fastest_params, fastest_infidelity)
 
-    print(f"> parameters = ({', '.join(str(p) for p in fastest_params)})")
-    if float(fastest_infidelity) < 0:
-        print("> infidelity <= numerical precision")
-    else:
-        print(f"> infidelity = {fastest_infidelity:.6e}")
+    # --- Return value(s) ---
 
     if return_all:
-        sorter = jnp.argsort(final_infidelities)
+        sorter = np.argsort(final_infidelities)
         return [
             jax.tree.map(float, unravel(p)) for p in final_params[sorter]
         ], final_infidelities[sorter]
