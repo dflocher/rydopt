@@ -3,13 +3,15 @@ from rydopt.pulses.pulse_ansatz import PulseAnsatz
 from rydopt.simulation import evolve
 from functools import partial
 import jax.numpy as jnp
-import jax.sharding as jshard
 import jax
 import time
 import optax
 import numpy as np
 from typing import TypeAlias
 from jax.flatten_util import ravel_pytree
+import multiprocessing as mp
+from psutil import cpu_count
+import warnings
 
 FloatParams: TypeAlias = float | tuple[float, ...]
 BoolParams: TypeAlias = bool | tuple[bool, ...]
@@ -26,19 +28,17 @@ def _infidelity(params, unravel, gate: Gate, pulse: PulseAnsatz, tol: float):
         "infidelity_and_grad",
         "optimizer",
         "use_grad_mask",
-        "axis_name",
         "num_steps",
         "min_converged_initializations",
     ],
     donate_argnames=["initial_params"],
 )
-def _adam_runner(
+def _run_adam(
     infidelity_and_grad,
     optimizer: optax.GradientTransformation,
     initial_params,
     use_grad_mask,
     grads_mask,
-    axis_name: str | None,
     num_steps: int,
     min_converged_initializations: int,
     tol,
@@ -86,9 +86,8 @@ def _adam_runner(
         jax.lax.cond(
             jnp.any(log_step),
             lambda _: jax.debug.print(
-                "Step {step:06d} on device {idx:03d}: min infidelity ={infidelity:13.6e}, converged = {converged}",
+                "Step {step:06d}: min infidelity ={infidelity:13.6e}, converged = {converged}",
                 step=step,
-                idx=jax.lax.axis_index(axis_name) if axis_name else 0,
                 infidelity=jnp.min(infidelity),
                 converged=converged_initializations,
             ),
@@ -111,6 +110,46 @@ def _adam_runner(
     )
 
     return final_params, final_infidelity
+
+
+def _run_adam_chunk(
+    flat_params_chunk,
+    use_grad_mask,
+    grads_mask,
+    num_steps,
+    min_converged_initializations,
+    tol,
+    learning_rate,
+    gate,
+    pulse,
+    unravel,
+):
+    tol_chunk = jnp.full((len(flat_params_chunk),), tol)
+
+    optimizer = optax.adam(learning_rate)
+    infidelity = partial(_infidelity, gate=gate, pulse=pulse, tol=tol, unravel=unravel)
+    infidelity_and_grad = jax.vmap(jax.value_and_grad(infidelity))
+
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            "ignore",
+            message=r"Complex dtype support in Diffrax.*",
+            category=UserWarning,
+            module=r"^equinox\._jit$",
+        )
+
+        final_params_chunk, final_infidelities_chunk = _run_adam(
+            infidelity_and_grad=infidelity_and_grad,
+            optimizer=optimizer,
+            initial_params=flat_params_chunk,
+            use_grad_mask=use_grad_mask,
+            grads_mask=grads_mask,
+            num_steps=num_steps,
+            min_converged_initializations=min_converged_initializations,
+            tol=tol_chunk,
+        )
+
+    return final_params_chunk, final_infidelities_chunk
 
 
 def adam(
@@ -139,13 +178,12 @@ def adam(
     print("")
 
     t0 = time.perf_counter()
-    final_params, final_infidelity = _adam_runner(
+    final_params, final_infidelity = _run_adam(
         infidelity_and_grad=infidelity_and_grad,
         optimizer=optimizer,
         initial_params=flat_params,
         use_grad_mask=(fixed_initial_params is not None),
         grads_mask=grads_mask,
-        axis_name=None,
         num_steps=num_steps,
         min_converged_initializations=1,
         tol=tol,
@@ -188,11 +226,10 @@ def multi_start_adam(
     seed: int = 0,
     return_all: bool = False,
 ) -> tuple[FloatParams, ...] | list[tuple[FloatParams, ...]]:
-    num_devices = len(jax.devices())
-    axis_name = "batch" if num_devices > 1 else None
+    num_workers = cpu_count(logical=False) // 2  # TODO avoid oversubscription
 
-    # Pad the number of initial parameter samples to be a multiple of the number of devices
-    num_initializations += (-num_initializations) % num_devices
+    # Pad the number of initial parameter samples to be a multiple of the number of workers
+    num_initializations += (-num_initializations) % num_workers
 
     # Initial parameter samples
     flat_min, unravel = ravel_pytree(min_initial_params)
@@ -208,63 +245,67 @@ def multi_start_adam(
         maxval=flat_max,
     )
 
-    tol_vec = jnp.full((num_initializations,), tol)
-
-    # Optimizer
-    optimizer = optax.adam(learning_rate)
-
-    # Infidelity and its gradient
-    infidelity = partial(_infidelity, gate=gate, pulse=pulse, tol=tol, unravel=unravel)
-    infidelity_and_grad = jax.vmap(jax.value_and_grad(infidelity))
-
-    # Function that runs the optimization
-    def runner(flat_params, tol):
-        return _adam_runner(
-            infidelity_and_grad=infidelity_and_grad,
-            optimizer=optimizer,
-            initial_params=flat_params,
-            use_grad_mask=(fixed_initial_params is not None),
-            grads_mask=grads_mask,
-            axis_name=axis_name,
-            num_steps=num_steps,
-            min_converged_initializations=(
-                min_converged_initializations + num_devices - 1
-            )
-            // num_devices,
-            tol=tol,
-        )
-
-    if num_devices > 1:
-        mesh = jax.make_mesh(
-            (num_devices,), (axis_name,), axis_types=(jshard.AxisType.Auto,)
-        )
-        spec_batch = jshard.PartitionSpec(axis_name)
-        sharding = jax.NamedSharding(mesh, spec_batch)
-        flat_params = jax.device_put(flat_params, sharding)
-        tol_vec = jax.device_put(tol_vec, sharding)
-        runner = jax.shard_map(
-            runner,
-            mesh=mesh,
-            in_specs=(spec_batch, spec_batch),
-            out_specs=(spec_batch, spec_batch),
-            check_vma=False,
-        )
-
     # --- Optimize parameters ---
 
     print("")
 
     t0 = time.perf_counter()
-    final_params, final_infidelities = runner(flat_params, tol_vec)
-    final_params, final_infidelities = jax.device_get(
-        (final_params, final_infidelities)
-    )
+
+    if num_workers == 1:
+        final_params, final_infidelities = _run_adam_chunk(
+            flat_params_chunk=flat_params,
+            use_grad_mask=(fixed_initial_params is not None),
+            grads_maskk=grads_mask,
+            num_steps=num_steps,
+            min_converged_initializations=min_converged_initializations,
+            tol=tol,
+            learning_rate=learning_rate,
+            gate=gate,
+            pulse=pulse,
+            unravel=unravel,
+        )
+        jax.block_until_ready(final_params)
+
+    else:
+        # Split across workers
+        param_chunks = jnp.array_split(flat_params, num_workers, axis=0)
+        per_worker_min_converged_initializations = (
+            min_converged_initializations + num_workers - 1
+        ) // num_workers
+
+        # Run in spawned worker processes
+        ctx = mp.get_context("spawn")
+        with ctx.Pool(processes=num_workers) as pool:
+            results = pool.starmap(
+                _run_adam_chunk,
+                [
+                    (
+                        pc,
+                        (fixed_initial_params is not None),
+                        grads_mask,
+                        num_steps,
+                        per_worker_min_converged_initializations,
+                        tol,
+                        learning_rate,
+                        gate,
+                        pulse,
+                        unravel,
+                    )
+                    for pc in param_chunks
+                ],
+            )
+
+        # Concatenate results from all workers
+        final_params_list, final_infidelities_list = zip(*results)
+        final_params = jnp.concatenate(final_params_list, axis=0)
+        final_infidelities = jnp.concatenate(final_infidelities_list, axis=0)
+
     duration = time.perf_counter() - t0
 
     converged = final_infidelities <= tol
     num_converged = int(jnp.sum(converged))
     if num_converged == 0:
-        converged = [jnp.argmin(final_infidelities)]
+        converged = jnp.array([jnp.argmin(final_infidelities)])
     params_converged = final_params[converged]
     infidelities_converged = final_infidelities[converged]
     durations_converged = params_converged[:, 0]
