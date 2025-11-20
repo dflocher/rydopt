@@ -13,6 +13,7 @@ from math import isinf
 
 class ThreeQubitGateIsosceles(Gate):
     def __init__(self, phi, theta, eps, lamb, Vnn, Vnnn, decay):
+        super().__init__(decay)
         if (Vnn == Vnnn) and (theta != eps):
             raise ValueError("For Vnn=Vnnn, theta=eps is required")
         if (Vnnn == 0) and (eps != 0.0):
@@ -23,16 +24,15 @@ class ThreeQubitGateIsosceles(Gate):
         self._lamb = lamb
         self._Vnn = Vnn
         self._Vnnn = Vnnn
-        self._decay = decay
 
     def dim(self):
         return 8
 
-    def get_decay(self):
-        return self._decay
+    def get_phi_theta_eps_lamb(self):
+        return self._phi, self._theta, self._eps, self._lamb
 
-    def set_decay(self, decay):
-        self._decay = decay
+    def get_Vnn_Vnnn(self):
+        return self._Vnn, self._Vnnn
 
     def subsystem_hamiltonians(self):
         if isinf(float(self._Vnn)) and isinf(float(self._Vnnn)):
@@ -65,6 +65,55 @@ class ThreeQubitGateIsosceles(Gate):
             partial(H_2_atoms, decay=self._decay, V=self._Vnn),
             partial(H_2_atoms, decay=self._decay, V=self._Vnnn),
             partial(H_3_atoms, decay=self._decay, Vnn=self._Vnn, Vnnn=self._Vnnn),
+        )
+
+    def subsystem_rydberg_population_operators(self):
+        if isinf(float(self._Vnn)) and isinf(float(self._Vnnn)):
+            return (
+                H_k_atoms_perfect_blockade(
+                    Delta=1.0, Phi=0.0, Omega=0.0, decay=0.0, k=1
+                ),
+                H_k_atoms_perfect_blockade(
+                    Delta=1.0, Phi=0.0, Omega=0.0, decay=0.0, k=1
+                ),
+                H_k_atoms_perfect_blockade(
+                    Delta=1.0, Phi=0.0, Omega=0.0, decay=0.0, k=1
+                ),
+            )
+        if float(self._Vnn) == float(self._Vnnn):
+            return (
+                H_k_atoms_perfect_blockade(
+                    Delta=1.0, Phi=0.0, Omega=0.0, decay=0.0, k=1
+                ),
+                H_2_atoms(Delta=1.0, Phi=0.0, Omega=0.0, decay=0.0, V=0.0),
+                H_3_atoms_symmetric(Delta=1.0, Phi=0.0, Omega=0.0, decay=0.0, V=0.0),
+            )
+        if isinf(float(self._Vnn)) and float(self._Vnnn) == 0.0:
+            return (
+                H_k_atoms_perfect_blockade(
+                    Delta=1.0, Phi=0.0, Omega=0.0, decay=0.0, k=1
+                ),
+                H_k_atoms_perfect_blockade(
+                    Delta=1.0, Phi=0.0, Omega=0.0, decay=0.0, k=1
+                ),
+                H_3_atoms_inf_V(Delta=1.0, Phi=0.0, Omega=0.0, decay=0.0, V=0.0),
+            )
+        if isinf(float(self._Vnn)):
+            return (
+                H_k_atoms_perfect_blockade(
+                    Delta=1.0, Phi=0.0, Omega=0.0, decay=0.0, k=1
+                ),
+                H_k_atoms_perfect_blockade(
+                    Delta=1.0, Phi=0.0, Omega=0.0, decay=0.0, k=1
+                ),
+                H_2_atoms(Delta=1.0, Phi=0.0, Omega=0.0, decay=0.0, V=0.0),
+                H_3_atoms_inf_V(Delta=1.0, Phi=0.0, Omega=0.0, decay=0.0, V=0.0),
+            )
+        return (
+            H_k_atoms_perfect_blockade(Delta=1.0, Phi=0.0, Omega=0.0, decay=0.0, k=1),
+            H_2_atoms(Delta=1.0, Phi=0.0, Omega=0.0, decay=0.0, V=0.0),
+            H_2_atoms(Delta=1.0, Phi=0.0, Omega=0.0, decay=0.0, V=0.0),
+            H_3_atoms(Delta=1.0, Phi=0.0, Omega=0.0, decay=0.0, Vnn=0.0, Vnnn=0.0),
         )
 
     def initial_states(self):

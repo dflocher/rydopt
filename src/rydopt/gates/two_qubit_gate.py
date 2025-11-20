@@ -10,19 +10,19 @@ from math import isinf
 
 class TwoQubitGate(Gate):
     def __init__(self, phi, theta, Vnn, decay):
+        super().__init__(decay)
         self._phi = phi
         self._theta = theta
         self._Vnn = Vnn
-        self._decay = decay
 
     def dim(self):
         return 4
 
-    def get_decay(self):
-        return self._decay
+    def get_phi_theta(self):
+        return self._phi, self._theta
 
-    def set_decay(self, decay):
-        self._decay = decay
+    def get_Vnn(self):
+        return self._Vnn
 
     def subsystem_hamiltonians(self):
         if isinf(float(self._Vnn)):
@@ -33,6 +33,21 @@ class TwoQubitGate(Gate):
         return (
             partial(H_k_atoms_perfect_blockade, decay=self._decay, k=1),
             partial(H_2_atoms, decay=self._decay, V=self._Vnn),
+        )
+
+    def subsystem_rydberg_population_operators(self):
+        if isinf(float(self._Vnn)):
+            return (
+                H_k_atoms_perfect_blockade(
+                    Delta=1.0, Phi=0.0, Omega=0.0, decay=0.0, k=1
+                ),
+                H_k_atoms_perfect_blockade(
+                    Delta=1.0, Phi=0.0, Omega=0.0, decay=0.0, k=1
+                ),
+            )
+        return (
+            H_k_atoms_perfect_blockade(Delta=1.0, Phi=0.0, Omega=0.0, decay=0.0, k=1),
+            H_2_atoms(Delta=1.0, Phi=0.0, Omega=0.0, decay=0.0, V=0.0),
         )
 
     def initial_states(self):

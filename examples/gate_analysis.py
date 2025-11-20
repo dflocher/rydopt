@@ -28,7 +28,7 @@ pulse_ansatz = ro.pulses.PulseAnsatz(
 )
 
 # Pulse parameters
-pulse_params = (7.6, (-0.1,), (1.8, -0.6), (1.0))
+pulse_params = (7.6, (-0.1,), (1.8, -0.6), ())
 
 # Determine the gate's infidelity, infidelity without decay, and Rydberg time using the subsystem Hamiltonians and jax
 infid, infid_nodecay, ryd_time = ro.characterization.analyze_gate(
