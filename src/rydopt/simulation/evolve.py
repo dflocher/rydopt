@@ -36,7 +36,6 @@ def _propagate(
         stepsize_controller=stepsize_controller,
         saveat=diffrax.SaveAt(t1=True),
         max_steps=10_000,
-        adjoint=diffrax.DirectAdjoint(),
     )
 
     return sol.ys[0]
