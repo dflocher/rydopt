@@ -5,12 +5,12 @@ from typing import Protocol
 class PulseAnsatzFunction(Protocol):
     def __call__(
         self, t: jnp.ndarray | float, duration: float, params: jnp.ndarray
-    ) -> jnp.ndarray | float: ...
+    ) -> jnp.ndarray: ...
 
 
 def sin_crab(
     t: jnp.ndarray | float, duration: float, params: jnp.ndarray
-) -> jnp.ndarray | float:
+) -> jnp.ndarray:
     r"""Sine-only CRAB pulse ansatz.
 
     .. math::
@@ -45,7 +45,7 @@ def sin_crab(
 
 def cos_crab(
     t: jnp.ndarray | float, duration: float, params: jnp.ndarray
-) -> jnp.ndarray | float:
+) -> jnp.ndarray:
     r"""Cosine-only CRAB pulse ansatz.
 
     .. math::
@@ -80,7 +80,7 @@ def cos_crab(
 
 def sin_cos_crab(
     t: jnp.ndarray | float, duration: float, params: jnp.ndarray
-) -> jnp.ndarray | float:
+) -> jnp.ndarray:
     r"""Combined sine and cosine CRAB pulse ansatz.
 
     .. math::
@@ -121,9 +121,50 @@ def sin_cos_crab(
     return sin_crab(t, duration, sin_params) + cos_crab(t, duration, cos_params)
 
 
-def const(
+def cos_sin_crab(
     t: jnp.ndarray | float, duration: float, params: jnp.ndarray
-) -> jnp.ndarray | float:
+) -> jnp.ndarray:
+    r"""Combined cosine and sine CRAB pulse ansatz.
+
+    .. math::
+
+       \xi(t)
+       = \sum_{n=1}^N \beta_n
+         \cos\!\left(
+           \frac{2\pi}{T}\,
+           n\left(1 + \tfrac{1}{2}\tanh(B_n)\right)
+           (t - T/2)
+         \right)
+       \\
+       \quad
+       + \sum_{n=1}^N \alpha_n
+         \sin\!\left(
+           \frac{2\pi}{T}\,
+           n\left(1 + \tfrac{1}{2}\tanh(A_n)\right)
+           (t - T/2)
+         \right)
+
+    Args:
+        t: Time samples at which :math:`\xi(t)` is evaluated.
+        duration: Pulse duration :math:`T`.
+        params: Array with :math:`4N` entries
+            :math:`(B_1, \beta_1, A_1, \alpha_1, \dots, B_N, \beta_N, A_N, \alpha_N)`.
+
+    Returns:
+        Values of :math:`\xi(t)`.
+    """
+    freq_params_cos = params[0::4]
+    coeffs_cos = params[1::4]
+    freq_params_sin = params[2::4]
+    coeffs_sin = params[3::4]
+
+    cos_params = jnp.column_stack((freq_params_cos, coeffs_cos)).ravel()
+    sin_params = jnp.column_stack((freq_params_sin, coeffs_sin)).ravel()
+
+    return cos_crab(t, duration, cos_params) + sin_crab(t, duration, sin_params)
+
+
+def const(t: jnp.ndarray | float, duration: float, params: jnp.ndarray) -> jnp.ndarray:
     r"""Constant pulse.
 
     .. math::
@@ -139,13 +180,12 @@ def const(
         Values of :math:`\xi(t)`.
     """
     c0 = params[0]
-
-    return jnp.zeros_like(t) + c0
+    return c0 + jnp.zeros_like(t)
 
 
 def const_sin_crab(
     t: jnp.ndarray | float, duration: float, params: jnp.ndarray
-) -> jnp.ndarray | float:
+) -> jnp.ndarray:
     r"""Constant offset plus sine CRAB pulse ansatz.
 
     .. math::
@@ -169,13 +209,12 @@ def const_sin_crab(
         Values of :math:`\xi(t)`.
     """
     c0 = params[0]
-
     return c0 + sin_crab(t, duration, params[1:])
 
 
 def const_cos_crab(
     t: jnp.ndarray | float, duration: float, params: jnp.ndarray
-) -> jnp.ndarray | float:
+) -> jnp.ndarray:
     r"""Constant offset plus cosine CRAB pulse ansatz.
 
     .. math::
@@ -199,13 +238,12 @@ def const_cos_crab(
         Values of :math:`\xi(t)`.
     """
     c0 = params[0]
-
     return c0 + cos_crab(t, duration, params[1:])
 
 
 def const_sin_cos_crab(
     t: jnp.ndarray | float, duration: float, params: jnp.ndarray
-) -> jnp.ndarray | float:
+) -> jnp.ndarray:
     r"""Constant offset plus combined sine and cosine CRAB pulse ansatz.
 
     .. math::
@@ -238,5 +276,41 @@ def const_sin_cos_crab(
     """
 
     c0 = params[0]
-
     return c0 + sin_cos_crab(t, duration, params[1:])
+
+
+def const_cos_sin_crab(
+    t: jnp.ndarray | float, duration: float, params: jnp.ndarray
+) -> jnp.ndarray:
+    r"""Constant offset plus combined cosine and sine CRAB pulse ansatz.
+
+    .. math::
+
+       \xi(t)
+       = c_0
+       + \sum_{n=1}^N \beta_n
+         \cos\!\left(
+           \frac{2\pi}{T}\,
+           n\left(1 + \tfrac{1}{2}\tanh(B_n)\right)
+           (t - T/2)
+         \right)
+       \\
+       \quad
+       + \sum_{n=1}^N \alpha_n
+         \sin\!\left(
+           \frac{2\pi}{T}\,
+           n\left(1 + \tfrac{1}{2}\tanh(A_n)\right)
+           (t - T/2)
+         \right)
+
+    Args:
+        t: Time samples at which :math:`\xi(t)` is evaluated.
+        duration: Pulse duration :math:`T`.
+        params: Array with :math:`4N+1` entries
+            :math:`(c_0, B_1, \beta_1, A_1, \alpha_1, \dots, B_N, \beta_N, A_N, \alpha_N)`.
+
+    Returns:
+        Values of :math:`\xi(t)`.
+    """
+    c0 = params[0]
+    return c0 + cos_sin_crab(t, duration, params[1:])
