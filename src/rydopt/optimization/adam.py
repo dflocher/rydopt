@@ -43,28 +43,16 @@ def _adam_runner(
     opt_state0 = optimizer.init(initial_params)
 
     def body(carry, step):
-        params, infidelity, opt_state, prev_converged_initializations = carry
+        _, params, infidelity, opt_state, prev_converged_initializations = carry
 
         def do_step(_):
             new_infidelity, grads = infidelity_and_grad(params)
             new_converged_initializations = jnp.sum(new_infidelity <= tol)
-
-            def apply_update(_):
-                updates, new_opt_state = optimizer.update(grads, opt_state, params)
-                new_params = optax.apply_updates(params, updates)
-                return new_params, new_opt_state
-
-            def keep_params(_):
-                return params, opt_state
-
-            new_params, new_opt_state = jax.lax.cond(
-                new_converged_initializations >= min_converged_initializations,
-                keep_params,
-                apply_update,
-                operand=None,
-            )
+            updates, new_opt_state = optimizer.update(grads, opt_state, params)
+            new_params = optax.apply_updates(params, updates)
 
             return (
+                params,
                 new_params,
                 new_infidelity,
                 new_opt_state,
@@ -74,11 +62,13 @@ def _adam_runner(
         def do_no_step(_):
             return carry
 
-        params, infidelity, opt_state, converged_initializations = jax.lax.cond(
-            prev_converged_initializations >= min_converged_initializations,
-            do_no_step,
-            do_step,
-            operand=None,
+        params, new_params, infidelity, opt_state, converged_initializations = (
+            jax.lax.cond(
+                prev_converged_initializations >= min_converged_initializations,
+                do_no_step,
+                do_step,
+                operand=None,
+            )
         )
 
         is_periodic = (step % 20 == 0) | (step == num_steps - 1)
@@ -99,11 +89,17 @@ def _adam_runner(
             operand=None,
         )
 
-        return (params, infidelity, opt_state, converged_initializations), infidelity
+        return (
+            params,
+            new_params,
+            infidelity,
+            opt_state,
+            converged_initializations,
+        ), infidelity
 
-    (final_params, final_infidelity, _, _), infidelity_history = jax.lax.scan(
+    (final_params, _, final_infidelity, _, _), infidelity_history = jax.lax.scan(
         body,
-        (initial_params, jnp.zeros_like(tol), opt_state0, 0),
+        (initial_params, initial_params, jnp.zeros_like(tol), opt_state0, 0),
         jnp.arange(num_steps),
     )
 
@@ -160,10 +156,10 @@ def adam(
 
     print("\n=== Optimization finished using Adam ===\n")
     print(f"Duration: {duration:.3f} seconds")
-    print(f"Convergences: {num_converged}")
+    print(f"Gates with infidelity below tol={tol:.1e}: {num_converged}")
 
     # Show converged gate
-    print("\nConverged gate:")
+    print("\nBest gate:")
     print(f"> duration = {final_params[0]}")
     print(f"> parameters = ({', '.join(str(p) for p in final_params)})")
     if float(final_infidelity) < 0:
@@ -171,7 +167,7 @@ def adam(
     else:
         print(f"> infidelity = {final_infidelity:.6e}")
 
-    return final_params
+    return final_params, final_infidelity
 
 
 def multi_start_adam(
@@ -186,7 +182,7 @@ def multi_start_adam(
     learning_rate: float = 0.05,
     tol: float = 1e-7,
     seed: int = 0,
-    return_all_converged: bool = False,
+    return_all: bool = False,
 ) -> tuple[FloatParams, ...] | list[tuple[FloatParams, ...]]:
     num_devices = len(jax.devices())
     axis_name = "batch" if num_devices > 1 else None
@@ -265,14 +261,17 @@ def multi_start_adam(
 
     converged = final_infidelities <= tol
     num_converged = int(jnp.sum(converged))
+    if num_converged == 0:
+        converged = [jnp.argmin(final_infidelities)]
     params_converged = final_params[converged]
+    infidelities_converged = final_infidelities[converged]
     durations_converged = params_converged[:, 0]
 
     # --- Logging ---
 
     print("\n=== Optimization finished using multi-start Adam ===\n")
     print(f"Duration: {duration:.3f} seconds")
-    print(f"Convergences: {num_converged}")
+    print(f"Gates with infidelity below tol={tol:.1e}: {num_converged}")
 
     # Show slowest converged gate
     if num_converged > 1:
@@ -281,7 +280,7 @@ def multi_start_adam(
         slowest_infidelity = final_infidelities[converged][slowest_idx]
         slowest_params = jax.tree.map(float, unravel(params_converged[slowest_idx]))
 
-        print("\nSlowest converged gate:")
+        print("\nSlowest gate:")
         print(f"> duration = {slowest_duration}")
 
         print(f"> parameters = ({', '.join(str(p) for p in slowest_params)})")
@@ -297,7 +296,7 @@ def multi_start_adam(
     fastest_params = jax.tree.map(float, unravel(params_converged[fastest_idx]))
 
     if num_converged > 1:
-        print("\nFastest converged gate:")
+        print("\nFastest gate:")
         rng = np.random.default_rng(seed)
         idx = rng.integers(0, num_converged, size=(1024, num_converged))
         mins = np.asarray(durations_converged)[idx].min(axis=1)
@@ -306,7 +305,7 @@ def multi_start_adam(
             f"> duration = {fastest_duration} (one-sided bootstrap error: {duration_err:.1g})"
         )
     else:
-        print("Converged gate:")
+        print("\nBest gate:")
         print(f"> duration = {fastest_duration}")
 
     print(f"> parameters = ({', '.join(str(p) for p in fastest_params)})")
@@ -315,8 +314,10 @@ def multi_start_adam(
     else:
         print(f"> infidelity = {fastest_infidelity:.6e}")
 
-    if return_all_converged:
-        sorter = jnp.argsort(durations_converged)
-        return [jax.tree.map(float, unravel(params_converged[i])) for i in sorter]
+    if return_all:
+        sorter = jnp.argsort(final_infidelities)
+        return [
+            jax.tree.map(float, unravel(p)) for p in final_params[sorter]
+        ], final_infidelities[sorter]
 
-    return fastest_params
+    return fastest_params, infidelities_converged[fastest_idx]
