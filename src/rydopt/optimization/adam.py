@@ -279,8 +279,8 @@ def multi_start_adam(
         num_workers = (
             len(jax.devices())
             if use_one_process_per_device
-            else max(1, mp.cpu_count() // 4)
-        )  # the division by 4 avoids oversubscription
+            else max(1, mp.cpu_count() // 2)
+        )  # the division by 2 avoids oversubscription
     elif use_one_process_per_device and num_workers > len(jax.devices()):
         raise ValueError(
             "If multiple devices or a GPU device is visible, num_workers must be smaller or equal "

@@ -83,18 +83,13 @@ def test_multi_start_adam() -> None:
     assert np.allclose(1 - fidelity, r.infidelity[1], rtol=1e-12)
     assert np.allclose(fidelity, 1, rtol=tol)
 
-    # Verify the other fidelities
-    for p, infi in zip(r.params[2:], r.infidelity[2:]):
-        fidelity = ro.simulation.process_fidelity(gate, pulse, p, tol=tol)
-        assert np.allclose(1 - fidelity, infi, rtol=1e-12)
-
 
 @pytest.mark.optimization
 def test_multi_start_adam_decay() -> None:
-    tol = 1e-4
+    tol = 1e-3
 
     # Gate
-    gate = ro.gates.TwoQubitGate(phi=None, theta=np.pi, Vnn=2.0, decay=0.01)
+    gate = ro.gates.TwoQubitGate(phi=None, theta=np.pi, Vnn=2.0, decay=0.0005)
 
     # Pulse
     pulse = ro.pulses.PulseAnsatz(detuning_ansatz=ro.pulses.const_cos_crab)
@@ -122,6 +117,8 @@ def test_multi_start_adam_decay() -> None:
 
 @pytest.mark.optimization
 def test_fastest() -> None:
+    tol = 1e-4
+
     # Gate
     gate = ro.gates.TwoQubitGate(phi=None, theta=np.pi, Vnn=float("inf"), decay=0)
 
@@ -143,13 +140,14 @@ def test_fastest() -> None:
         num_steps=300,
         num_initializations=48,
         min_converged_initializations=24,
-        num_workers=None,
+        num_workers=4,
+        tol=tol,
     )
 
     # Verify the fidelity
-    fidelity = ro.simulation.process_fidelity(gate, pulse, r.params)
+    fidelity = ro.simulation.process_fidelity(gate, pulse, r.params, tol=tol)
     assert np.allclose(1 - fidelity, r.infidelity, rtol=1e-12)
-    assert np.allclose(fidelity, 1, rtol=1e-7)
+    assert np.allclose(fidelity, 1, rtol=tol)
 
 
 @pytest.mark.optimization

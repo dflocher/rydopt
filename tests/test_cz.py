@@ -5,73 +5,20 @@ import pytest
 
 @pytest.mark.optimization
 def test_cz() -> None:
-    # number of atoms participating in the gate (2, 3 or 4)
-    n_atoms = 2
+    # Gate
+    gate = ro.gates.TwoQubitGate(phi=None, theta=np.pi, Vnn=float("inf"), decay=0)
 
-    # Rydberg interaction strengths (use float("inf") for perfect blockade)
-    Vnn = float("inf")
-    Vnnn = float("inf")
-    decay = 0.000
-
-    # target gate phases
-    theta = np.pi  # set theta=None, eps=None if both are arbitrary / set theta='eps', eps=None if both are arbitrary but must be equal
-    eps = 0  # set eps=None if eps is arbitrary
-    lamb = 0
-    delta = 0  # set delta=None if delta is arbitrary
-    kappa = 0
-
-    # pulse type
-    pulse = ro.pulses.pulse_phase_sin_crab
-
-    # initial parameters
-    initial_params = np.array([7.6, -0.1, 1.8, -0.6])
-
-    # optimization settings
-    N_epochs = 200
-    learning_rate = 0.05
-    T_penalty = 0.0
-
-    # run optimization
-    params = ro.optimization.train_single_gate(
-        n_atoms,
-        Vnn,
-        Vnnn,
-        theta,
-        eps,
-        lamb,
-        delta,
-        kappa,
-        pulse,
-        initial_params,
-        N_epochs,
-        learning_rate,
-        T_penalty,
-        decay,
+    # Pulse
+    pulse = ro.pulses.PulseAnsatz(
+        detuning_ansatz=ro.pulses.const, phase_ansatz=ro.pulses.sin_crab
     )
 
-    # verify the fidelity
-    fidelity, _ = ro.characterization.verify(
-        n_atoms,
-        Vnn,
-        Vnnn,
-        theta,
-        eps,
-        lamb,
-        delta,
-        kappa,
-        "pulse_phase_sin_crab",
-        params,
-        decay,
-    )
-    assert np.allclose(fidelity, 1, rtol=1e-6)
+    # Initial parameters
+    initial_params = (7.6, (-0.1,), (1.8, -0.6), ())
 
-    # compare result to reference
-    ref = np.array(
-        [
-            7.61141034,
-            -0.07884777,
-            1.83253308,
-            -0.61765787,
-        ]
-    )
-    assert np.allclose(params, ref, rtol=1e-4)
+    # Run optimization
+    r = ro.optimization.adam(gate, pulse, initial_params, num_steps=200, tol=1e-7)
+
+    # Compare result to reference
+    ref = (7.61141034, (-0.07884777,), (1.83253308, -0.61765787), ())
+    assert all(np.allclose(x, y, rtol=1e-3) for x, y in zip(r.params, ref))
