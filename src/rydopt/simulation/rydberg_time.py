@@ -2,38 +2,8 @@ import jax.numpy as jnp
 import diffrax
 from rydopt.gates.gate import Gate
 from rydopt.pulses.pulse_ansatz import PulseAnsatz
-
-
-def _propagate(
-    psi_initial: jnp.ndarray,
-    eq,
-    duration: float,
-    detuning_params,
-    phase_params,
-    rabi_params,
-    tol,
-) -> jnp.ndarray:
-    term = diffrax.ODETerm(eq)
-    solver = diffrax.Tsit5()
-    stepsize_controller = diffrax.PIDController(rtol=0.1 * tol, atol=0.1 * tol)
-
-    y0 = (psi_initial, jnp.array(0.0, dtype=psi_initial.dtype))
-
-    sol = diffrax.diffeqsolve(
-        term,
-        solver,
-        t0=0.0,
-        t1=duration,
-        dt0=None,
-        y0=y0,
-        args=(detuning_params, phase_params, rabi_params),
-        stepsize_controller=stepsize_controller,
-        saveat=diffrax.SaveAt(t1=True),
-        max_steps=10_000,
-    )
-
-    _, expectation_value = sol.ys
-    return jnp.real(expectation_value)
+import jax
+from functools import partial
 
 
 def rydberg_time(gate: Gate, pulse: PulseAnsatz, params: tuple, tol: float = 1e-7):
@@ -43,40 +13,74 @@ def rydberg_time(gate: Gate, pulse: PulseAnsatz, params: tuple, tol: float = 1e-
     phase_params = jnp.asarray(phase_params)
     rabi_params = jnp.asarray(rabi_params)
 
-    detuning_fn = lambda t, params: pulse.detuning_ansatz(t, duration, params)  # noqa: E731
-    phase_fn = lambda t, params: pulse.phase_ansatz(t, duration, params)  # noqa: E731
-    rabi_fn = lambda t, params: pulse.rabi_ansatz(t, duration, params)  # noqa: E731
+    # Collect initial states and pad them to a common dimension so we can stack
+    initial_states = tuple(jnp.asarray(psi) for psi in gate.initial_states())
 
-    def make_schroedinger_eq(hamiltonian, rydberg_operator):
-        def eq(t, y, args):
-            psi, _ = y
+    dims = tuple(len(psi) for psi in initial_states)
+    max_dim = max(dims)
 
-            detuning = detuning_fn(t, args[0])
-            phase = phase_fn(t, args[1])
-            rabi = rabi_fn(t, args[2])
+    initial_states_padded = jnp.stack(
+        [jnp.pad(psi, (0, max_dim - dim)) for psi, dim in zip(initial_states, dims)]
+    )
 
-            dpsi = -1j * (hamiltonian(detuning, phase, rabi) @ psi)
-            instantaneous_rydberg_population = jnp.vdot(psi, rydberg_operator @ psi)
-
-            return (dpsi, instantaneous_rydberg_population)
-
-        return eq
-
-    expectation_values = tuple(
-        _propagate(
-            psi_initial,
-            make_schroedinger_eq(hamiltonian, rydberg_operator),
-            duration,
-            detuning_params,
-            phase_params,
-            rabi_params,
-            tol,
+    # Schrödinger equation for the subsystems. The subsystem Hamiltonian is chosen via lax.switch
+    # based on the index of the subsystem, with padding to max_dim × max_dim.
+    def apply_hamiltonian(detuning, phase, rabi, y, hamiltonian, rydberg_operator, dim):
+        psi, expectation = y
+        psi_small = psi[:dim]
+        dpsi_small = -1j * hamiltonian(detuning, phase, rabi) @ psi_small
+        instantaneous_rydberg_population = jnp.vdot(
+            psi_small, rydberg_operator @ psi_small
         )
-        for hamiltonian, rydberg_operator, psi_initial in zip(
+        return (
+            jnp.pad(dpsi_small, (0, psi.shape[0] - dim)),
+            instantaneous_rydberg_population,
+        )
+
+    branches = tuple(
+        partial(apply_hamiltonian, hamiltonian=h, rydberg_operator=r, dim=d)
+        for h, r, d in zip(
             gate.subsystem_hamiltonians(),
             gate.subsystem_rydberg_population_operators(),
-            gate.initial_states(),
+            dims,
         )
     )
 
-    return gate.rydberg_time(expectation_values)
+    def schroedinger_eq(t, y, args):
+        detuning_params, phase_params, rabi_params, idx = args
+
+        detuning = pulse.detuning_ansatz(t, duration, detuning_params)
+        phase = pulse.phase_ansatz(t, duration, phase_params)
+        rabi = pulse.rabi_ansatz(t, duration, rabi_params)
+
+        return jax.lax.switch(idx, branches, detuning, phase, rabi, y)
+
+    # Propagator
+    term = diffrax.ODETerm(schroedinger_eq)
+    solver = diffrax.Tsit5()
+    stepsize_controller = diffrax.PIDController(rtol=0.1 * tol, atol=0.1 * tol)
+    saveat = diffrax.SaveAt(t1=True)
+
+    def propagate(args):
+        psi_initial, idx = args
+        sol = diffrax.diffeqsolve(
+            term,
+            solver,
+            t0=0.0,
+            t1=duration,
+            dt0=None,
+            y0=(psi_initial, jnp.array(0.0, dtype=psi_initial.dtype)),
+            args=(detuning_params, phase_params, rabi_params, idx),
+            stepsize_controller=stepsize_controller,
+            saveat=saveat,
+            max_steps=100_000,
+        )
+        return jnp.real(sol.ys[1])
+
+    # Run the propagator for each subsystem
+    expectation_values = jax.lax.map(
+        propagate,
+        (initial_states_padded, jnp.arange(len(branches))),
+    )
+
+    return gate.rydberg_time(tuple(expectation_values))

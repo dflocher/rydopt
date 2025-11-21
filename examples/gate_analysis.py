@@ -39,5 +39,5 @@ if __name__ == "__main__":
         f"Gate infidelity (no decay):  jax: {infidelity_nodecay:.4e}, qutip: {infidelity_nodecay_qutip:.4e}"
     )
     print(
-        f"Rydberg time:                jax: {ryd_time:.4f},    qutip: {ryd_time_qutip:.4f}"
+        f"Rydberg time:                jax: {ryd_time:.4f},     qutip: {ryd_time_qutip:.4f}"
     )
