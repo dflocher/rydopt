@@ -3,15 +3,10 @@ import numpy as np
 
 if __name__ == "__main__":
     # Gate
-    gate = ro.gates.FourQubitGatePyramidal(
+    gate = ro.gates.TwoQubitGate(
         phi=None,
         theta=np.pi,
-        eps=None,
-        lamb=np.pi,
-        delta=0.0,
-        kappa=0.0,
         Vnn=float("inf"),
-        Vnnn=0.5,
         decay=0.0001,
     )
 
@@ -22,6 +17,9 @@ if __name__ == "__main__":
 
     # Pulse parameters
     pulse_params = (7.6, (-0.1,), (1.8, -0.6), ())
+
+    # Plot the pulse
+    ro.characterization.plot_pulse(pulse_ansatz, pulse_params)
 
     # Determine the gate's infidelity, infidelity without decay, and Rydberg time using the subsystem Hamiltonians and jax
     infidelity, infidelity_nodecay, ryd_time = ro.characterization.analyze_gate(
@@ -41,5 +39,5 @@ if __name__ == "__main__":
         f"Gate infidelity (no decay):  jax: {infidelity_nodecay:.4e}, qutip: {infidelity_nodecay_qutip:.4e}"
     )
     print(
-        f"Rydberg time:                jax: {ryd_time:.5f},    qutip: {ryd_time_qutip:.5f}"
+        f"Rydberg time:                jax: {ryd_time:.4f},    qutip: {ryd_time_qutip:.4f}"
     )

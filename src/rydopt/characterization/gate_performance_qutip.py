@@ -324,7 +324,7 @@ def _setup_target(gate, final_state):
 
 
 def _qutip_time_evolution(T, H, psi_in, TR_op, normalize):
-    t_list = np.linspace(0, T, 5000)
+    t_list = np.linspace(0, T, 10000)
     result = qt.mesolve(
         H,
         psi_in,
