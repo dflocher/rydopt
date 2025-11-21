@@ -343,24 +343,21 @@ def _qutip_time_evolution(T, H, psi_in, TR_op, normalize):
     return psi_out, TR
 
 
-def _evolve(gate, pulse_ansatz, params):
+def _process_fidelity_qutip(gate, pulse_ansatz, params):
     T = params[0]
     H, psi_in, TR_op = _setup_hamiltonian(gate, pulse_ansatz, params)
-    normalize = gate.get_decay() == 0
-    psi_out, _ = _qutip_time_evolution(T, H, psi_in, TR_op, normalize)
-    return psi_out
+    final_state, _ = _qutip_time_evolution(
+        T, H, psi_in, TR_op, normalize=gate.get_decay() == 0
+    )
+    target_state = _setup_target(gate, final_state)
+    return qt.fidelity(final_state, target_state) ** 2
 
 
-def _evolve_TR(gate, pulse_ansatz, params):
+def _rydberg_time_qutip(gate, pulse_ansatz, params):
     T = params[0]
     H, psi_in, TR_op = _setup_hamiltonian(gate, pulse_ansatz, params)
     _, TR = _qutip_time_evolution(T, H, psi_in, TR_op, normalize=True)
     return TR
-
-
-def _process_fidelity(gate, final_state):
-    target_state = _setup_target(gate, final_state)
-    return qt.fidelity(final_state, target_state) ** 2
 
 
 def analyze_gate_qutip(
@@ -368,15 +365,11 @@ def analyze_gate_qutip(
     pulse_ansatz: PulseAnsatz,
     params: tuple[FloatParams, ...],
 ):
-    final_state = _evolve(gate, pulse_ansatz, params)
-    infid = 1 - _process_fidelity(gate, final_state)
+    gate_nodecay = gate.copy()
+    gate_nodecay.set_decay(0.0)
 
-    decay = gate.get_decay()
-    gate.set_decay(0.0)
-    final_state_nodecay = _evolve(gate, pulse_ansatz, params)
-    infid_nodecay = 1 - _process_fidelity(gate, final_state_nodecay)
+    infidelity = 1 - _process_fidelity_qutip(gate, pulse_ansatz, params)
+    infidelity_nodecay = 1 - _process_fidelity_qutip(gate_nodecay, pulse_ansatz, params)
+    ryd_time = _rydberg_time_qutip(gate_nodecay, pulse_ansatz, params)
 
-    ryd_time = _evolve_TR(gate, pulse_ansatz, params)
-    gate.set_decay(decay)
-
-    return infid, infid_nodecay, ryd_time
+    return infidelity, infidelity_nodecay, ryd_time
