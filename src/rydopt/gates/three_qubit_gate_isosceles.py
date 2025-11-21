@@ -221,23 +221,23 @@ class ThreeQubitGateIsosceles(Gate):
             / len(targeted_gate) ** 2
         )
 
-    def rydberg_time(self, ryd_times_subsystems):
+    def rydberg_time(self, expectation_values):
         if float(self._Vnn) == float(self._Vnnn):
-            return (1 / 8) * (
-                3 * ryd_times_subsystems[0]
-                + 3 * ryd_times_subsystems[1]
-                + ryd_times_subsystems[2]
+            return (1 / 8) * jnp.squeeze(
+                3 * expectation_values[0]
+                + 3 * expectation_values[1]
+                + expectation_values[2]
             )
         if isinf(float(self._Vnn)) and float(self._Vnnn) == 0.0:
-            return (1 / 8) * (
-                5 * ryd_times_subsystems[0]
-                + 2 * ryd_times_subsystems[1]
-                + ryd_times_subsystems[2]
+            return (1 / 8) * jnp.squeeze(
+                5 * expectation_values[0]
+                + 2 * expectation_values[1]
+                + expectation_values[2]
             )
         else:
-            return (1 / 8) * (
-                3 * ryd_times_subsystems[0]
-                + 2 * ryd_times_subsystems[1]
-                + ryd_times_subsystems[2]
-                + ryd_times_subsystems[3]
+            return (1 / 8) * jnp.squeeze(
+                3 * expectation_values[0]
+                + 2 * expectation_values[1]
+                + expectation_values[2]
+                + expectation_values[3]
             )

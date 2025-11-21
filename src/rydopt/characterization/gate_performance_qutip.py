@@ -1,11 +1,9 @@
 from rydopt.gates.gate import Gate
 from rydopt.gates import TwoQubitGate, ThreeQubitGateIsosceles, FourQubitGatePyramidal
 from rydopt.pulses.pulse_ansatz import PulseAnsatz
+from rydopt.types import FloatParams
 import numpy as np
 import qutip as qt
-from typing import TypeAlias
-
-FloatParams: TypeAlias = float | tuple[float, ...]
 
 
 IrxrI = qt.basis(3, 2).proj()

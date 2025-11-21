@@ -90,5 +90,5 @@ class TwoQubitGate(Gate):
             / len(targeted_gate) ** 2
         )
 
-    def rydberg_time(self, ryd_times_subsystems):
-        return (1 / 4) * (2 * ryd_times_subsystems[0] + ryd_times_subsystems[1])
+    def rydberg_time(self, expectation_values):
+        return (1 / 4) * jnp.squeeze(2 * expectation_values[0] + expectation_values[1])

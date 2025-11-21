@@ -7,17 +7,13 @@ import jax
 import time
 import optax
 import numpy as np
-from typing import TypeAlias
 from jax.flatten_util import ravel_pytree
 import multiprocessing as mp
 import warnings
 from dataclasses import dataclass
 from collections.abc import Callable
 from contextlib import nullcontext
-
-
-FloatParams: TypeAlias = float | tuple[float, ...]
-BoolParams: TypeAlias = bool | tuple[bool, ...]
+from rydopt.types import FloatParams, BoolParams
 
 
 @dataclass

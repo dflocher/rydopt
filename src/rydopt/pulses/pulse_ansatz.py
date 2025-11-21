@@ -29,9 +29,9 @@ class PulseAnsatz:
         ... )
 
     Attributes:
-        detuning_ansatz (PulseAnsatzFunction): Detuning sweep, default is zero.
-        phase_ansatz (PulseAnsatzFunction): Phase sweep, default is zero.
-        rabi_ansatz (PulseAnsatzFunction): Rabi amplitude sweep, default is one.
+        detuning_ansatz: Detuning sweep, default is zero.
+        phase_ansatz: Phase sweep, default is zero.
+        rabi_ansatz: Rabi amplitude sweep, default is one.
 
     """
 

@@ -302,27 +302,27 @@ class FourQubitGatePyramidal(Gate):
             / len(targeted_gate) ** 2
         )
 
-    def rydberg_time(self, ryd_times_subsystems):
+    def rydberg_time(self, expectation_values):
         if float(self._Vnn) == float(self._Vnnn):
-            return (1 / 16) * (
-                4 * ryd_times_subsystems[0]
-                + 6 * ryd_times_subsystems[1]
-                + 4 * ryd_times_subsystems[2]
-                + ryd_times_subsystems[3]
+            return (1 / 16) * jnp.squeeze(
+                4 * expectation_values[0]
+                + 6 * expectation_values[1]
+                + 4 * expectation_values[2]
+                + expectation_values[3]
             )
         if isinf(float(self._Vnn)) and float(self._Vnnn) == 0.0:
-            return (1 / 16) * (
-                13 * ryd_times_subsystems[0]
-                + 3 * ryd_times_subsystems[1]
-                + 3 * ryd_times_subsystems[2]
-                + ryd_times_subsystems[3]
+            return (1 / 16) * jnp.squeeze(
+                13 * expectation_values[0]
+                + 3 * expectation_values[1]
+                + 3 * expectation_values[2]
+                + expectation_values[3]
             )
         else:
-            return (1 / 16) * (
-                4 * ryd_times_subsystems[0]
-                + 3 * ryd_times_subsystems[1]
-                + 3 * ryd_times_subsystems[2]
-                + 3 * ryd_times_subsystems[3]
-                + ryd_times_subsystems[4]
-                + ryd_times_subsystems[5]
+            return (1 / 16) * jnp.squeeze(
+                4 * expectation_values[0]
+                + 3 * expectation_values[1]
+                + 3 * expectation_values[2]
+                + 3 * expectation_values[3]
+                + expectation_values[4]
+                + expectation_values[5]
             )
