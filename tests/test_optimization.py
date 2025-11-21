@@ -71,6 +71,7 @@ def test_multi_start_adam() -> None:
         min_converged_initializations=2,
         tol=tol,
         return_all=True,
+        num_workers=1,
     )
 
     # Verify the fidelities of the 'min_converged_initializations'
@@ -111,6 +112,7 @@ def test_multi_start_adam_decay() -> None:
         num_steps=100,
         num_initializations=20,
         tol=tol,
+        num_workers=1,
     )
 
     # Verify the fidelity
@@ -141,6 +143,7 @@ def test_fastest() -> None:
         num_steps=300,
         num_initializations=48,
         min_converged_initializations=24,
+        num_workers=None,
     )
 
     # Verify the fidelity
