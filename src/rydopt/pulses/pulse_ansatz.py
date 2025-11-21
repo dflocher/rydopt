@@ -6,13 +6,13 @@ from rydopt.pulses.pulse_ansatz_functions import PulseAnsatzFunction, const
 def const_zero(
     t: jnp.ndarray | float, _duration: float, _params: jnp.ndarray
 ) -> jnp.ndarray:
-    return const(t, _duration, [0.0])
+    return const(t, _duration, jnp.array([0.0]))
 
 
 def const_one(
     t: jnp.ndarray | float, _duration: float, _params: jnp.ndarray
 ) -> jnp.ndarray:
-    return const(t, _duration, [1.0])
+    return const(t, _duration, jnp.array([1.0]))
 
 
 @dataclass

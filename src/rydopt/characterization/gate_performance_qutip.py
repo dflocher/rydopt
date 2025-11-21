@@ -274,12 +274,6 @@ def _target_FourQubitGatePyramidal(final_state, phi, theta, eps, lamb, delta, ka
     )
 
 
-def _make_control(fn, duration, params, default):
-    if fn is None:
-        return lambda t: default
-    return lambda t: fn(t, duration, params)
-
-
 def _setup_hamiltonian(gate, pulse_ansatz, params):
     T, detuning_params, phase_params, rabi_params = params
 
@@ -287,9 +281,9 @@ def _setup_hamiltonian(gate, pulse_ansatz, params):
     phase_params = np.asarray(phase_params)
     rabi_params = np.asarray(rabi_params)
 
-    detuning_fn = _make_control(pulse_ansatz.detuning_ansatz, T, detuning_params, 0.0)
-    phase_fn = _make_control(pulse_ansatz.phase_ansatz, T, phase_params, 0.0)
-    rabi_fn = _make_control(pulse_ansatz.rabi_ansatz, T, rabi_params, 1.0)
+    detuning_fn = lambda t: pulse_ansatz.detuning_ansatz(t, T, detuning_params)  # noqa: E731
+    phase_fn = lambda t: pulse_ansatz.phase_ansatz(t, T, phase_params)  # noqa: E731
+    rabi_fn = lambda t: pulse_ansatz.rabi_ansatz(t, T, rabi_params)  # noqa: E731
 
     if isinstance(gate, TwoQubitGate):
         decay = gate.get_decay()
