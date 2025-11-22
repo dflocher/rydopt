@@ -7,7 +7,6 @@ import jax
 import time
 import optax
 import numpy as np
-from jax.flatten_util import ravel_pytree
 import multiprocessing as mp
 import warnings
 from dataclasses import dataclass
@@ -16,19 +15,10 @@ from rydopt.types import FloatParams, BoolParams
 
 
 @dataclass
-class _EvolveSetup:
-    gate: Gate
-    pulse: PulseAnsatz
-    tol: float
-    # params_base_full: np.ndarray      # full flat vector, fixed entries set # TODO move this out into the function signature
-    # params_free_indices: np.ndarray   # indices of trainable entries # TODO move this out into the function signature
-    split_indices: np.ndarray  # where to split the flat vector
-
-
-@dataclass
 class OptimizationResult:
     params: tuple[FloatParams, ...] | list[tuple[FloatParams, ...]]
     infidelity: float | list[float]
+    history: list[float] | list[list[float]] | None = None
 
 
 # -----------------------------------------------------------------------------
@@ -51,18 +41,29 @@ def _unravel(flat, split_indices):
     return (parts[0][0],) + tuple(parts[1:])
 
 
-def _infidelity(params, setup: _EvolveSetup):
-    final_states = evolve(
-        setup.gate, setup.pulse, _unravel(params, setup.split_indices), setup.tol
-    )
-    return 1 - setup.gate.process_fidelity(final_states)
+def _unravel_jax(flat, split_indices):
+    parts = jnp.split(flat, split_indices)
+    return (parts[0][0],) + tuple(parts[1:])
 
 
-def _make_grads_mask(fixed_initial_params):  # TODO remove
-    if fixed_initial_params is None:
-        return None
-    flat_fixed, _ = ravel_pytree(fixed_initial_params)
-    return 1 - flat_fixed.astype(float)
+def _make_infidelity(
+    gate: Gate,
+    pulse: PulseAnsatz,
+    params_full: np.ndarray,
+    params_trainable_indices: np.ndarray,
+    params_split_indices: tuple,
+    tol: float,
+):
+    full = jnp.asarray(params_full)
+    trainable_indices = jnp.asarray(params_trainable_indices)
+
+    def infidelity(params_trainable):
+        params = full.at[trainable_indices].set(params_trainable)
+        params_tuple = _unravel_jax(params, params_split_indices)
+        final_states = evolve(gate, pulse, params_tuple, tol)
+        return 1 - gate.process_fidelity(final_states)
+
+    return infidelity
 
 
 def _print_gate(title: str, duration: float, params, infidelity: float):
@@ -91,23 +92,20 @@ def _print_summary(method_name: str, duration: float, tol: float, num_converged:
     static_argnames=[
         "infidelity_and_grad",
         "optimizer",
-        "use_grad_mask",
         "num_steps",
         "min_converged_initializations",
     ],
-    donate_argnames=["initial_params"],
+    donate_argnames=["params_trainable"],
 )
 def _adam_scan(
     infidelity_and_grad,
     optimizer: optax.GradientTransformation,
-    initial_params,
-    use_grad_mask,
-    grads_mask,
+    params_trainable,
     num_steps: int,
     min_converged_initializations: int,
     tol,
 ):
-    opt_state0 = optimizer.init(initial_params)
+    opt_state0 = optimizer.init(params_trainable)
 
     def body(carry, step):
         _, _, _, _, prev_converged_initializations = carry
@@ -119,9 +117,6 @@ def _adam_scan(
 
             infidelity, grads = infidelity_and_grad(params)
             converged_initializations = jnp.sum(infidelity <= tol)
-
-            if use_grad_mask:
-                grads = grads * grads_mask
 
             updates, opt_state = optimizer.update(grads, opt_state, params)
             new_params = optax.apply_updates(params, updates)
@@ -158,7 +153,7 @@ def _adam_scan(
 
     (final_params, _, final_infidelity, _, _), infidelity_history = jax.lax.scan(
         body,
-        (initial_params, initial_params, jnp.zeros_like(tol), opt_state0, 0),
+        (params_trainable, params_trainable, jnp.zeros_like(tol), opt_state0, 0),
         jnp.arange(num_steps),
     )
 
@@ -174,12 +169,16 @@ def _adam_scan(
 
 
 def _adam_optimize(
-    flat_params: np.ndarray,
-    grads_mask: np.ndarray | None,
+    gate: Gate,
+    pulse: PulseAnsatz,
+    params_full: np.ndarray,
+    params_trainable: np.ndarray,
+    params_trainable_indices: np.ndarray,
+    params_split_indices: tuple,
     num_steps: int,
     min_converged_initializations: int,
     learning_rate: float,
-    setup: _EvolveSetup,
+    tol: float,
     device_idx: int | None = None,
 ) -> tuple[np.ndarray, np.ndarray]:
     device_ctx = (
@@ -189,20 +188,23 @@ def _adam_optimize(
     )
 
     with device_ctx:
-        flat_params = jax.device_put(flat_params)
-        grads_mask = (
-            jax.device_put(grads_mask) if grads_mask is not None else grads_mask
+        params_trainable = jax.device_put(params_trainable)
+        optimizer = optax.adam(learning_rate)
+        infidelity = _make_infidelity(
+            gate,
+            pulse,
+            params_full,
+            params_trainable_indices,
+            params_split_indices,
+            tol,
         )
 
-        optimizer = optax.adam(learning_rate)
-        infidelity = partial(_infidelity, setup=setup)
-
-        if flat_params.ndim == 1:
+        if params_trainable.ndim == 1:
             infidelity_and_grad = jax.value_and_grad(infidelity)
-            tol = setup.tol
+            tol_arg = tol
         else:
             infidelity_and_grad = jax.vmap(jax.value_and_grad(infidelity))
-            tol = jnp.full((flat_params.shape[0],), setup.tol)
+            tol_arg = jnp.full((params_trainable.shape[0],), tol)
 
         with warnings.catch_warnings():
             warnings.filterwarnings(
@@ -215,12 +217,10 @@ def _adam_optimize(
             final_params, final_infidelities = _adam_scan(
                 infidelity_and_grad=infidelity_and_grad,
                 optimizer=optimizer,
-                initial_params=flat_params,
-                use_grad_mask=(grads_mask is not None),
-                grads_mask=None if grads_mask is None else grads_mask,
+                params_trainable=params_trainable,
                 num_steps=num_steps,
                 min_converged_initializations=min_converged_initializations,
-                tol=tol,
+                tol=tol_arg,
             )
 
         return np.array(final_params), np.array(final_infidelities)
@@ -240,26 +240,41 @@ def adam(
     learning_rate: float = 0.05,
     tol: float = 1e-7,
 ) -> OptimizationResult:
-    grads_mask = _make_grads_mask(fixed_initial_params)
-    grads_mask = np.array(grads_mask) if grads_mask is not None else None
-
     split_indices = _spec(initial_params)
-    flat_params = _ravel(initial_params)
+    params_full = _ravel(initial_params)
 
-    setup = _EvolveSetup(gate=gate, pulse=pulse, tol=tol, split_indices=split_indices)
+    if fixed_initial_params is None:
+        trainable_indices = np.arange(len(params_full))
+    else:
+        mask = _ravel(fixed_initial_params).astype(bool)
+        trainable_indices = np.nonzero(~mask)[0]
+
+    params_trainable = params_full[trainable_indices]
 
     # --- Optimize parameters ---
 
     print("")
 
     t0 = time.perf_counter()
-    final_params, final_infidelity = _adam_optimize(
-        flat_params, grads_mask, num_steps, 1, learning_rate, setup
+    final_params_trainable, final_infidelity = _adam_optimize(
+        gate,
+        pulse,
+        params_full,
+        params_trainable,
+        trainable_indices,
+        split_indices,
+        num_steps,
+        1,
+        learning_rate,
+        tol,
     )
     duration = time.perf_counter() - t0
 
+    final_full = params_full.copy()
+    final_full[trainable_indices] = final_params_trainable
+
+    final_params = _unravel(final_full, split_indices)
     num_converged = 1 if final_infidelity <= tol else 0
-    final_params = _unravel(final_params, split_indices)
 
     # --- Logging ---
 
@@ -284,14 +299,21 @@ def multi_start_adam(
     return_all: bool = False,
     num_workers: int | None = None,
 ) -> OptimizationResult:
-    grads_mask = _make_grads_mask(fixed_initial_params)
-    grads_mask = np.array(grads_mask) if grads_mask is not None else None
-
     split_indices = _spec(min_initial_params)
     flat_min = _ravel(min_initial_params)
     flat_max = _ravel(max_initial_params)
+    params_full = flat_min.copy()
 
-    setup = _EvolveSetup(gate=gate, pulse=pulse, tol=tol, split_indices=split_indices)
+    if fixed_initial_params is None:
+        trainable_indices = np.arange(len(flat_min))
+    else:
+        mask = _ravel(fixed_initial_params).astype(bool)
+        trainable_indices = np.nonzero(~mask)[0]
+
+        if not np.allclose(flat_min[mask], flat_max[mask]):
+            raise ValueError(
+                "For fixed parameters, min_initial_params and max_initial_params must have identical values."
+            )
 
     use_one_process_per_device = (
         len(jax.devices()) > 1 or jax.devices()[0].platform != "cpu"
@@ -319,9 +341,9 @@ def multi_start_adam(
 
     # Initial parameter samples
     rng = np.random.default_rng(seed)
-    flat_params = flat_min + (flat_max - flat_min) * rng.random(
-        size=(padded_num_initializations, flat_min.size)
-    )
+    params_trainable = flat_min[trainable_indices] + (
+        flat_max[trainable_indices] - flat_min[trainable_indices]
+    ) * rng.random(size=(padded_num_initializations, trainable_indices.size))
 
     # --- Optimize parameters ---
 
@@ -331,49 +353,60 @@ def multi_start_adam(
 
     if num_workers == 1:
         # Run optimization in main process
-        final_params, final_infidelities = _adam_optimize(
-            flat_params,
-            grads_mask,
+        final_params_trainable, final_infidelities = _adam_optimize(
+            gate,
+            pulse,
+            params_full,
+            params_trainable,
+            trainable_indices,
+            split_indices,
             num_steps,
             min_converged_initializations,
             learning_rate,
-            setup,
+            tol,
         )
 
     else:
         # Run optimization in spawned worker processes
-        flat_params_chunks = np.array_split(flat_params, num_workers, axis=0)
+        chunks = np.array_split(params_trainable, num_workers, axis=0)
         ctx = mp.get_context("spawn")
         with ctx.Pool(processes=num_workers) as pool:
             results = pool.starmap(
                 _adam_optimize,
                 [
                     (
+                        gate,
+                        pulse,
+                        params_full,
                         p,
-                        grads_mask,
+                        trainable_indices,
+                        split_indices,
                         num_steps,
                         (min_converged_initializations + num_workers - 1)
                         // num_workers,
                         learning_rate,
-                        setup,
+                        tol,
                         device_idx if use_one_process_per_device else None,
                     )
-                    for device_idx, p in enumerate(flat_params_chunks)
+                    for device_idx, p in enumerate(chunks)
                 ],
             )
 
         # Concatenate results from all workers
-        final_params_list, final_infidelities_list = zip(*results)
-        final_params = np.concatenate(final_params_list, axis=0)
+        final_params_trainable_list, final_infidelities_list = zip(*results)
+        final_params_trainable = np.concatenate(final_params_trainable_list, axis=0)
         final_infidelities = np.concatenate(final_infidelities_list, axis=0)
 
     duration = time.perf_counter() - t0
+
+    final_full = np.tile(params_full, (final_params_trainable.shape[0], 1))
+    final_full[:, trainable_indices] = final_params_trainable
 
     converged = jnp.where(final_infidelities <= tol)[0]
     num_converged = len(converged)
     if num_converged == 0:
         converged = np.array([np.argmin(final_infidelities)])
-    params_converged = final_params[converged]
+    params_converged = final_full[converged]
     infidelities_converged = final_infidelities[converged]
     durations_converged = params_converged[:, 0]
 
@@ -413,7 +446,7 @@ def multi_start_adam(
     if return_all:
         sorter = np.argsort(final_infidelities)
         return OptimizationResult(
-            params=[_unravel(p, split_indices) for p in final_params[sorter]],
+            params=[_unravel(p, split_indices) for p in final_full[sorter]],
             infidelity=final_infidelities[sorter],
         )
 
