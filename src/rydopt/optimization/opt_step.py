@@ -1,7 +1,6 @@
 import jax
 import jax.numpy as jnp
 import optax
-import diffrax
 from functools import partial
 
 
@@ -40,6 +39,11 @@ def loss_fn(params, pulse, Hamiltonians, input_states, fidelity_fn, T_penalty):
 
 # time evolution of a quantum state; called internally
 def _propagate(psi_initial, schroedinger_eq, args):
+    # When we import diffrax, at least one jnp array is allocated (see optimistix/_misc.py, line 138). Thus,
+    # if we change the default device after we have imported diffrax, some memory is allocated on the
+    # wrong device. Hence, we defer the import of diffrax to the latest time possible.
+    import diffrax
+
     times = args[0]
     T = times[-1]
     term = diffrax.ODETerm(schroedinger_eq)

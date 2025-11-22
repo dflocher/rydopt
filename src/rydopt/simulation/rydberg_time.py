@@ -1,5 +1,4 @@
 import jax.numpy as jnp
-import diffrax
 from rydopt.gates.gate import Gate
 from rydopt.pulses.pulse_ansatz import PulseAnsatz
 import jax
@@ -7,6 +6,11 @@ from functools import partial
 
 
 def rydberg_time(gate: Gate, pulse: PulseAnsatz, params: tuple, tol: float = 1e-7):
+    # When we import diffrax, at least one jnp array is allocated (see optimistix/_misc.py, line 138). Thus,
+    # if we change the default device after we have imported diffrax, some memory is allocated on the
+    # wrong device. Hence, we defer the import of diffrax to the latest time possible.
+    import diffrax
+
     duration, detuning_params, phase_params, rabi_params = params
 
     detuning_params = jnp.asarray(detuning_params)
