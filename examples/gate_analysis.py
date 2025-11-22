@@ -16,7 +16,7 @@ if __name__ == "__main__":
     )
 
     # Pulse parameters
-    pulse_params = (7.6, (-0.1,), (1.8, -0.6), ())
+    pulse_params = (7.61140652, (-0.07842706,), (1.80300902, -0.61792703), ())
 
     # Plot the pulse
     ro.characterization.plot_pulse(pulse_ansatz, pulse_params)

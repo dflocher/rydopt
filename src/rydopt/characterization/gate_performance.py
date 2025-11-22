@@ -9,7 +9,7 @@ def analyze_gate(
     gate: Gate,
     pulse_ansatz: PulseAnsatz,
     params: tuple[FloatParams, ...],
-    tol: float = 1e-7,
+    tol: float = 1e-12,
 ):
     gate_nodecay = gate.copy()
     gate_nodecay.set_decay(0.0)
