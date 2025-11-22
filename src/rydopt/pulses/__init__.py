@@ -9,6 +9,10 @@ from rydopt.pulses.pulse_ansatz_functions import (
     const_cos_crab,
     const_sin_cos_crab,
     const_cos_sin_crab,
+    lin_sin_crab,
+    lin_cos_crab,
+    lin_sin_cos_crab,
+    lin_cos_sin_crab,
 )
 
 __all__ = [
@@ -22,4 +26,8 @@ __all__ = [
     "const_cos_crab",
     "const_sin_cos_crab",
     "const_cos_sin_crab",
+    "lin_sin_crab",
+    "lin_cos_crab",
+    "lin_sin_cos_crab",
+    "lin_cos_sin_crab",
 ]
