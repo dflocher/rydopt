@@ -11,6 +11,11 @@ def evolve(gate: Gate, pulse: PulseAnsatz, params: tuple, tol: float = 1e-7):
     # wrong device. Hence, we defer the import of diffrax to the latest time possible.
     import diffrax
 
+    # If we are on a GPU, dispatch to a GPU-optimized evolve. On GPUs, it is more efficient to solve one
+    # large differential equation instead of many small ones because it reduced overheads with kernels.
+    if jax.devices()[0].platform == "gpu":
+        return _evolve_optimized_for_gpus(gate, pulse, params, tol)
+
     duration, detuning_params, phase_params, rabi_params = params
 
     detuning_params = jnp.asarray(detuning_params)
@@ -79,3 +84,50 @@ def evolve(gate: Gate, pulse: PulseAnsatz, params: tuple, tol: float = 1e-7):
     final_states = tuple(s[:d] for s, d in zip(final_states_padded, dims))
 
     return final_states
+
+
+def _evolve_optimized_for_gpus(
+    gate: Gate, pulse: PulseAnsatz, params: tuple, tol: float = 1e-7
+):
+    # When we import diffrax, at least one jnp array is allocated (see optimistix/_misc.py, line 138). Thus,
+    # if we change the default device after we have imported diffrax, some memory is allocated on the
+    # wrong device. Hence, we defer the import of diffrax to the latest time possible.
+    import diffrax
+
+    duration, detuning_params, phase_params, rabi_params = params
+
+    detuning_params = jnp.asarray(detuning_params)
+    phase_params = jnp.asarray(phase_params)
+    rabi_params = jnp.asarray(rabi_params)
+
+    initial_states = tuple(jnp.asarray(psi) for psi in gate.initial_states())
+    subsystem_hamiltonians = tuple(gate.subsystem_hamiltonians())
+
+    def schroedinger_eq(t, psi_tuple, _):
+        detuning = pulse.detuning_ansatz(t, duration, detuning_params)
+        phase = pulse.phase_ansatz(t, duration, phase_params)
+        rabi = pulse.rabi_ansatz(t, duration, rabi_params)
+        return tuple(
+            -1j * (h(detuning, phase, rabi) @ psi)
+            for h, psi in zip(subsystem_hamiltonians, psi_tuple)
+        )
+
+    solver = diffrax.Dopri8()
+    stepsize_controller = diffrax.PIDController(rtol=0.1 * tol, atol=0.1 * tol)
+    saveat = diffrax.SaveAt(t1=True)
+    term = diffrax.ODETerm(schroedinger_eq)
+
+    sol = diffrax.diffeqsolve(
+        term,
+        solver,
+        t0=0.0,
+        t1=duration,
+        dt0=None,
+        y0=initial_states,
+        args=None,
+        stepsize_controller=stepsize_controller,
+        saveat=saveat,
+        max_steps=10_000,
+    )
+
+    return sol.ys[0]

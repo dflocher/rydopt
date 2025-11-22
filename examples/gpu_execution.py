@@ -1,6 +1,6 @@
 """The example takes
 * ~70m on a AMD Ryzen 7 5700G CPU
-* 9m 17.916s on a NVIDIA GeForce RTX 4060 Ti GPU
+* 2m 11.985s on a NVIDIA GeForce RTX 4060 Ti GPU
 * 4m 54.621s on a NVIDIA H100 PCIe GPU
 """
 
@@ -24,7 +24,7 @@ if __name__ == "__main__":
     max_initial_params = (9, (2,), (2, 2, 2, 2, 2, 2), ())
 
     # Run optimization
-    params = ro.optimization.multi_start_adam(
+    _ = ro.optimization.multi_start_adam(
         gate,
         pulse,
         min_initial_params,
@@ -34,6 +34,3 @@ if __name__ == "__main__":
         min_converged_initializations=5000,
         tol=1e-7,
     )
-
-    # Print the parameters that belong to the fastest gate
-    print(f"Parameters of the fastest gate: {params}")

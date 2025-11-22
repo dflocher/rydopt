@@ -1,6 +1,6 @@
 from rydopt.gates.gate import Gate
 from rydopt.pulses.pulse_ansatz import PulseAnsatz
-from rydopt.simulation import evolve
+from rydopt.simulation.fidelity import process_fidelity
 from functools import partial
 import jax.numpy as jnp
 import jax
@@ -60,8 +60,7 @@ def _make_infidelity(
     def infidelity(params_trainable):
         params = full.at[trainable_indices].set(params_trainable)
         params_tuple = _unravel_jax(params, params_split_indices)
-        final_states = evolve(gate, pulse, params_tuple, tol)
-        return 1 - gate.process_fidelity(final_states)
+        return 1 - process_fidelity(gate, pulse, params_tuple, tol)
 
     return infidelity
 
