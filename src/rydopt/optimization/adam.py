@@ -11,7 +11,6 @@ from jax.flatten_util import ravel_pytree
 import multiprocessing as mp
 import warnings
 from dataclasses import dataclass
-from collections.abc import Callable
 from contextlib import nullcontext
 from rydopt.types import FloatParams, BoolParams
 
@@ -21,7 +20,9 @@ class _EvolveSetup:
     gate: Gate
     pulse: PulseAnsatz
     tol: float
-    unravel: Callable[[jnp.ndarray], object]
+    # params_base_full: np.ndarray      # full flat vector, fixed entries set # TODO move this out into the function signature
+    # params_free_indices: np.ndarray   # indices of trainable entries # TODO move this out into the function signature
+    split_indices: np.ndarray  # where to split the flat vector
 
 
 @dataclass
@@ -35,12 +36,29 @@ class OptimizationResult:
 # -----------------------------------------------------------------------------
 
 
+def _spec(nested):
+    first, *rest = nested
+    return tuple(np.cumsum([1] + [len(p) for p in rest])[:-1].tolist())
+
+
+def _ravel(nested):
+    first, *rest = nested
+    return np.concatenate([(first,)] + [p for p in rest])
+
+
+def _unravel(flat, split_indices):
+    parts = np.split(flat, split_indices)
+    return (parts[0][0],) + tuple(parts[1:])
+
+
 def _infidelity(params, setup: _EvolveSetup):
-    final_states = evolve(setup.gate, setup.pulse, setup.unravel(params), setup.tol)
+    final_states = evolve(
+        setup.gate, setup.pulse, _unravel(params, setup.split_indices), setup.tol
+    )
     return 1 - setup.gate.process_fidelity(final_states)
 
 
-def _make_grads_mask(fixed_initial_params):
+def _make_grads_mask(fixed_initial_params):  # TODO remove
     if fixed_initial_params is None:
         return None
     flat_fixed, _ = ravel_pytree(fixed_initial_params)
@@ -171,6 +189,11 @@ def _adam_optimize(
     )
 
     with device_ctx:
+        flat_params = jax.device_put(flat_params)
+        grads_mask = (
+            jax.device_put(grads_mask) if grads_mask is not None else grads_mask
+        )
+
         optimizer = optax.adam(learning_rate)
         infidelity = partial(_infidelity, setup=setup)
 
@@ -192,9 +215,9 @@ def _adam_optimize(
             final_params, final_infidelities = _adam_scan(
                 infidelity_and_grad=infidelity_and_grad,
                 optimizer=optimizer,
-                initial_params=jnp.array(flat_params),
+                initial_params=flat_params,
                 use_grad_mask=(grads_mask is not None),
-                grads_mask=None if grads_mask is None else jnp.array(grads_mask),
+                grads_mask=None if grads_mask is None else grads_mask,
                 num_steps=num_steps,
                 min_converged_initializations=min_converged_initializations,
                 tol=tol,
@@ -217,12 +240,13 @@ def adam(
     learning_rate: float = 0.05,
     tol: float = 1e-7,
 ) -> OptimizationResult:
-    flat_params, unravel = ravel_pytree(initial_params)
     grads_mask = _make_grads_mask(fixed_initial_params)
-    flat_params = np.array(flat_params)
     grads_mask = np.array(grads_mask) if grads_mask is not None else None
 
-    setup = _EvolveSetup(gate=gate, pulse=pulse, tol=tol, unravel=unravel)
+    split_indices = _spec(initial_params)
+    flat_params = _ravel(initial_params)
+
+    setup = _EvolveSetup(gate=gate, pulse=pulse, tol=tol, split_indices=split_indices)
 
     # --- Optimize parameters ---
 
@@ -235,7 +259,7 @@ def adam(
     duration = time.perf_counter() - t0
 
     num_converged = 1 if final_infidelity <= tol else 0
-    final_params = jax.tree.map(float, unravel(final_params))
+    final_params = _unravel(final_params, split_indices)
 
     # --- Logging ---
 
@@ -260,17 +284,14 @@ def multi_start_adam(
     return_all: bool = False,
     num_workers: int | None = None,
 ) -> OptimizationResult:
-    # TODO is a non-jax object possible for 'unravel'? can we also avoid jax for the gate class
-    # etc.? this would circumvent that objects are on the gpu device 0 even if a subprocess is
-    # supposed to use another gpu device via the context manager in _adam_optimize.
-    flat_min, unravel = ravel_pytree(min_initial_params)
-    flat_max, _ = ravel_pytree(max_initial_params)
     grads_mask = _make_grads_mask(fixed_initial_params)
-    flat_min = np.array(flat_min)
-    flat_max = np.array(flat_max)
     grads_mask = np.array(grads_mask) if grads_mask is not None else None
 
-    setup = _EvolveSetup(gate=gate, pulse=pulse, tol=tol, unravel=unravel)
+    split_indices = _spec(min_initial_params)
+    flat_min = _ravel(min_initial_params)
+    flat_max = _ravel(max_initial_params)
+
+    setup = _EvolveSetup(gate=gate, pulse=pulse, tol=tol, split_indices=split_indices)
 
     use_one_process_per_device = (
         len(jax.devices()) > 1 or jax.devices()[0].platform != "cpu"
@@ -363,14 +384,14 @@ def multi_start_adam(
     fastest_idx = np.argmin(durations_converged)
     fastest_duration = durations_converged[fastest_idx]
     fastest_infidelity = infidelities_converged[fastest_idx]
-    fastest_params = jax.tree.map(float, unravel(params_converged[fastest_idx]))
+    fastest_params = _unravel(params_converged[fastest_idx], split_indices)
 
     if num_converged > 1:
         # If multiple parameter sets converged, show slowest and fastest gate
         slowest_idx = np.argmax(durations_converged)
         slowest_duration = durations_converged[slowest_idx]
         slowest_infidelity = infidelities_converged[slowest_idx]
-        slowest_params = jax.tree.map(float, unravel(params_converged[slowest_idx]))
+        slowest_params = _unravel(params_converged[slowest_idx], split_indices)
 
         _print_gate(
             "Slowest gate:", slowest_duration, slowest_params, slowest_infidelity
@@ -392,7 +413,7 @@ def multi_start_adam(
     if return_all:
         sorter = np.argsort(final_infidelities)
         return OptimizationResult(
-            params=[jax.tree.map(float, unravel(p)) for p in final_params[sorter]],
+            params=[_unravel(p, split_indices) for p in final_params[sorter]],
             infidelity=final_infidelities[sorter],
         )
 

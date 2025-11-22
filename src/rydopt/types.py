@@ -1,4 +1,5 @@
 from typing import TypeAlias
+from numpy.typing import ArrayLike
 
-FloatParams: TypeAlias = float | tuple[float, ...]
-BoolParams: TypeAlias = bool | tuple[bool, ...]
+FloatParams: TypeAlias = float | ArrayLike
+BoolParams: TypeAlias = bool | ArrayLike
