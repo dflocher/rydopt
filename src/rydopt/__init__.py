@@ -1,4 +1,8 @@
-import jax
+import os
+
+os.environ["XLA_PYTHON_CLIENT_PREALLOCATE"] = "false"
+
+import jax  # noqa: E402
 
 jax.config.update("jax_enable_x64", True)
 if jax.config.jax_platforms is None:
