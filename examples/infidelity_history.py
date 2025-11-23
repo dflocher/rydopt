@@ -6,8 +6,8 @@ import numpy as np  # noqa: E402
 import matplotlib.pyplot as plt  # noqa: E402
 
 if __name__ == "__main__":
-    tol = 1e-9
-    num_initializations = 20000
+    tol = 1e-8
+    num_initializations = 100000
     num_steps = 1000
 
     # Gate
@@ -27,8 +27,8 @@ if __name__ == "__main__":
     )
 
     # Parameter bounds for choosing random initial parameters
-    min_initial_params = (12, (-2,), (-2, -2, 100, -2), ())
-    max_initial_params = (13, (2,), (2, 2, 100, 2), ())
+    min_initial_params = (10, (-3,), (-3, -3, 100, -3), ())
+    max_initial_params = (17, (3,), (3, 3, 100, 3), ())
     fixed_initial_params = (False, (False,), (False, False, True, False), ())
 
     # Run optimization
