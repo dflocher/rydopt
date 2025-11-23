@@ -2,10 +2,33 @@ import jax.numpy as jnp
 
 
 def H_k_atoms_perfect_blockade(Delta, Phi, Omega, decay, k):
-    # k=1: Hamiltonian for subspace |1> -- |r>
-    # k=2: Hamiltonian for subspace |11> -- |W2> = |1r> + |r1>  (Vnn = infinity)
-    # k=3: Hamiltonian for subspace |111> -- |W3>  (Vnn = Vnnn = infinity)
-    # k=4: Hamiltonian for subspace |1111> -- |W4>  (Vnn = Vnnn = Vnnnn = infinity)
+    r"""In the perfect Rydberg blockade regime, the dynamics of :math:`k` atoms initially
+    in state :math:`|1\rangle` can be described using a two-level system
+
+    .. image:: ../_static/k_qubits.png
+
+    :math:`k=1:`
+
+    0: :math:`|1\rangle`
+
+    1: :math:`|r\rangle`
+
+    :math:`k=2:`
+
+    0: :math:`|11\rangle`
+
+    1: :math:`|1r\rangle + |r1\rangle`
+
+    Args:
+        Delta: Detuning pulse
+        Phi: Phase pulse
+        Omega: Rabi pulse
+        decay: Decay strength
+        k: number of atoms
+
+    Returns:
+        Hamitonian describing the two-level system
+    """
     return jnp.array(
         [
             [0.0, 0.5 * jnp.sqrt(k) * Omega * jnp.exp(-1j * Phi)],
@@ -15,8 +38,26 @@ def H_k_atoms_perfect_blockade(Delta, Phi, Omega, decay, k):
 
 
 def H_2_atoms(Delta, Phi, Omega, decay, V):
-    # V=Vnn: Hamiltonian for subspace |011> -- (|01r> + |0r1>) -- |0rr>
-    # V=Vnnn: Hamiltonian for subspace |101> -- (|10r> + |r01>) -- |r0r>
+    r"""Two atoms initially in state :math:`|1\rangle` can be described as follows:
+
+    .. image:: ../_static/2_qubits.png
+
+    0: :math:`|11\rangle`
+
+    1: :math:`|1r\rangle + |r1\rangle`
+
+    2: :math:`|rr\rangle`
+
+    Args:
+        Delta: Detuning pulse
+        Phi: Phase pulse
+        Omega: Rabi pulse
+        decay: Decay strength
+        k: number of atoms
+
+    Returns:
+        Hamitonian describing the three-level system
+    """
     return jnp.array(
         [
             [0.0, 0.5 * jnp.sqrt(2) * Omega * jnp.exp(-1j * Phi), 0],
