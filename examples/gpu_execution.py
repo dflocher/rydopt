@@ -2,7 +2,7 @@
 * 29m 28,732s on AMD Ryzen 7 5700G
 * 4m 49.323s on AMD EPYC 9374F
 * 4m 20.041s on NVIDIA GeForce RTX 4060 Ti
-* TODO on NVIDIA H100 PCIe
+* 2m 10.97s on NVIDIA H100 PCIe
 """
 
 import jax

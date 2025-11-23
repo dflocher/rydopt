@@ -17,12 +17,15 @@ def test_adam() -> None:
     initial_params = (7.6, (-0.1,), (1.8, -0.6), ())
 
     # Run optimization
-    r = ro.optimization.adam(gate, pulse, initial_params, num_steps=200, tol=1e-7)
+    r = ro.optimization.adam(
+        gate, pulse, initial_params, num_steps=200, tol=1e-7, return_history=True
+    )
 
     # Verify the fidelity
     fidelity = ro.simulation.process_fidelity(gate, pulse, r.params)
     assert np.allclose(1 - fidelity, r.infidelity, rtol=1e-12)
     assert np.allclose(fidelity, 1, rtol=1e-7)
+    assert r.infidelity == r.history[-1]
 
 
 @pytest.mark.optimization
@@ -72,16 +75,19 @@ def test_multi_start_adam() -> None:
         tol=tol,
         return_all=True,
         num_workers=1,
+        return_history=True,
     )
 
     # Verify the fidelities of the 'min_converged_initializations'
     fidelity = ro.simulation.process_fidelity(gate, pulse, r.params[0], tol=tol)
     assert np.allclose(1 - fidelity, r.infidelity[0], rtol=1e-12)
     assert np.allclose(fidelity, 1, rtol=tol)
+    assert r.infidelity[0] == r.history[-1, 0]
 
     fidelity = ro.simulation.process_fidelity(gate, pulse, r.params[1], tol=tol)
     assert np.allclose(1 - fidelity, r.infidelity[1], rtol=1e-12)
     assert np.allclose(fidelity, 1, rtol=tol)
+    assert r.infidelity[1] == r.history[-1, 1]
 
 
 @pytest.mark.optimization
@@ -142,12 +148,14 @@ def test_fastest() -> None:
         min_converged_initializations=24,
         num_workers=4,
         tol=tol,
+        return_history=True,
     )
 
     # Verify the fidelity
     fidelity = ro.simulation.process_fidelity(gate, pulse, r.params, tol=tol)
     assert np.allclose(1 - fidelity, r.infidelity, rtol=1e-12)
     assert np.allclose(fidelity, 1, rtol=tol)
+    assert r.infidelity == r.history[-1]
 
 
 @pytest.mark.optimization

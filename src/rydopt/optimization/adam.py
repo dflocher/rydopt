@@ -156,10 +156,7 @@ def _adam_scan(
         jnp.arange(num_steps),
     )
 
-    return (
-        final_params,
-        final_infidelity,
-    )  # TODO offer an option to the user to get the infidelity_history
+    return (final_params, final_infidelity, infidelity_history)
 
 
 # -----------------------------------------------------------------------------
@@ -179,7 +176,7 @@ def _adam_optimize(
     learning_rate: float,
     tol: float,
     device_idx: int | None = None,
-) -> tuple[np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     device_ctx = (
         nullcontext()
         if device_idx is None
@@ -213,7 +210,7 @@ def _adam_optimize(
                 module=r"^equinox\._jit$",
             )
 
-            final_params, final_infidelities = _adam_scan(
+            final_params, final_infidelities, infidelity_history = _adam_scan(
                 infidelity_and_grad=infidelity_and_grad,
                 optimizer=optimizer,
                 params_trainable=params_trainable,
@@ -222,7 +219,11 @@ def _adam_optimize(
                 tol=tol_arg,
             )
 
-        return np.array(final_params), np.array(final_infidelities)
+        return (
+            np.array(final_params),
+            np.array(final_infidelities),
+            np.array(infidelity_history),
+        )
 
 
 # -----------------------------------------------------------------------------
@@ -256,7 +257,7 @@ def adam(
     print("")
 
     t0 = time.perf_counter()
-    final_params_trainable, final_infidelity = _adam_optimize(
+    final_params_trainable, final_infidelity, history = _adam_optimize(
         gate,
         pulse,
         params_full,
@@ -281,7 +282,10 @@ def adam(
     _print_summary("Adam", duration, tol, num_converged)
     _print_gate("Best gate:", final_params, final_infidelity)
 
-    return OptimizationResult(params=final_params, infidelity=final_infidelity)
+    history_out = history if return_history else None
+    return OptimizationResult(
+        params=final_params, infidelity=final_infidelity, history=history_out
+    )
 
 
 def multi_start_adam(
@@ -354,7 +358,7 @@ def multi_start_adam(
 
     if num_workers == 1:
         # Run optimization in main process
-        final_params_trainable, final_infidelities = _adam_optimize(
+        final_params_trainable, final_infidelities, history = _adam_optimize(
             gate,
             pulse,
             params_full,
@@ -394,9 +398,14 @@ def multi_start_adam(
             )
 
         # Concatenate results from all workers
-        final_params_trainable_list, final_infidelities_list = zip(*results)
+        final_params_trainable_list, final_infidelities_list, histories_list = zip(
+            *results
+        )
         final_params_trainable = np.concatenate(final_params_trainable_list, axis=0)
         final_infidelities = np.concatenate(final_infidelities_list, axis=0)
+
+        if return_history:
+            history = np.concatenate(histories_list, axis=1)
 
     duration = time.perf_counter() - t0
 
@@ -407,23 +416,21 @@ def multi_start_adam(
     num_converged = len(converged)
     if num_converged == 0:
         converged = np.array([np.argmin(final_infidelities)])
-    params_converged = final_full[converged]
-    infidelities_converged = final_infidelities[converged]
-    durations_converged = params_converged[:, 0]
+    durations_converged = final_full[converged][:, 0]
 
     # --- Logging ---
 
     _print_summary("multi-start Adam", duration, tol, num_converged)
 
-    fastest_idx = np.argmin(durations_converged)
-    fastest_infidelity = infidelities_converged[fastest_idx]
-    fastest_params = _unravel(params_converged[fastest_idx], split_indices)
+    fastest_idx = converged[np.argmin(durations_converged)]
+    fastest_infidelity = final_infidelities[fastest_idx]
+    fastest_params = _unravel(final_full[fastest_idx], split_indices)
 
     if num_converged > 1:
         # If multiple parameter sets converged, show slowest and fastest gate
-        slowest_idx = np.argmax(durations_converged)
-        slowest_infidelity = infidelities_converged[slowest_idx]
-        slowest_params = _unravel(params_converged[slowest_idx], split_indices)
+        slowest_idx = converged[np.argmax(durations_converged)]
+        slowest_infidelity = final_infidelities[slowest_idx]
+        slowest_params = _unravel(final_full[slowest_idx], split_indices)
 
         _print_gate("Slowest gate:", slowest_params, slowest_infidelity)
         _print_gate("Fastest gate:", fastest_params, fastest_infidelity)
@@ -440,11 +447,17 @@ def multi_start_adam(
 
     if return_all:
         sorter = np.argsort(final_infidelities)
+        history_out = None
+        history_out = history[:, sorter] if return_history else None
         return OptimizationResult(
             params=[_unravel(p, split_indices) for p in final_full[sorter]],
             infidelity=final_infidelities[sorter],
+            history=history_out,
         )
 
+    history_out = history[:, fastest_idx] if return_history else None
     return OptimizationResult(
-        params=fastest_params, infidelity=infidelities_converged[fastest_idx]
+        params=fastest_params,
+        infidelity=final_infidelities[fastest_idx],
+        history=history_out,
     )
