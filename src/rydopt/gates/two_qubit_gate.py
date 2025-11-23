@@ -9,7 +9,30 @@ from math import isinf
 
 
 class TwoQubitGate(Gate):
-    def __init__(self, phi, theta, Vnn, decay):
+    r"""Class that describes a gate on two atoms.
+    The physical setting is described by the interaction strength between the atoms, :math:`V_{\mathrm{nn}}`,
+    and the decay strength from Rydberg states, :math:`\gamma`.
+    The target gate is specified by the phases :math:`\phi, \theta`.
+    Some phases can remain unspecified if they may take on arbitrary values.
+
+    .. image:: ../_static/2QubitGate.png
+
+    In the figure, we use the notation :math:`\mathrm{C}_1\mathrm{Z}(\alpha) = \mathrm{diag}(1, 1, 1, e^{i\alpha})`,
+    and :math:`\mathrm{Z}(\alpha) = \mathrm{diag}(1, e^{i\alpha})`.
+
+    Args:
+        phi: target phase :math:`\phi` of single-qubit gate contribution.
+        theta: target phase :math:`\theta` of two-qubit gate contribution.
+        Vnn: interaction strength :math:`V_{\mathrm{nn}}/(\hbar\Omega_0)`.
+        decay: Rydberg decay strength :math:`\gamma/\Omega_0`.
+
+    Returns:
+        Two-qubit gate object.
+    """
+
+    def __init__(
+        self, phi: float | None, theta: float | None, Vnn: float, decay: float
+    ):
         super().__init__(decay)
         self._phi = phi
         self._theta = theta
@@ -19,9 +42,17 @@ class TwoQubitGate(Gate):
         return 4
 
     def get_phi_theta(self):
+        r"""
+        Returns:
+            Gate phases :math:`\phi, \theta`.
+        """
         return self._phi, self._theta
 
-    def get_Vnn(self):
+    def get_Vnn(self) -> float:
+        r"""
+        Returns:
+            Interaction strength :math:`V_{\mathrm{nn}}/(\hbar\Omega_0)`.
+        """
         return self._Vnn
 
     def subsystem_hamiltonians(self):

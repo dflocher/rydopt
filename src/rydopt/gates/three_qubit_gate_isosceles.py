@@ -12,7 +12,40 @@ from math import isinf
 
 
 class ThreeQubitGateIsosceles(Gate):
-    def __init__(self, phi, theta, eps, lamb, Vnn, Vnnn, decay):
+    r"""Class that describes a gate on three atoms arranged in an isosceles triangle.
+    The physical setting is described by the interaction strengths between atoms, :math:`V_{\mathrm{nn}}` and :math:`V_{\mathrm{nnn}}`,
+    and the decay strength from Rydberg states, :math:`\gamma`.
+    The target gate is specified by the phases :math:`\phi, \theta, \theta', \lambda`.
+    Some phases can remain unspecified if they may take on arbitrary values.
+
+    .. image:: ../_static/3QubitGateIsosceles.png
+
+    In the figure, we use the notation :math:`\mathrm{C}_n\mathrm{Z}(\alpha) = \mathrm{diag}(1, ..., 1, e^{i\alpha})` on :math:`n+1` qubits,
+    and :math:`\mathrm{Z}(\alpha) = \mathrm{C}_0\mathrm{Z}(\alpha) = \mathrm{diag}(1, e^{i\alpha})`.
+
+    Args:
+        phi: target phase :math:`\phi` of single-qubit gate contribution.
+        theta: target phase :math:`\theta` of nearest-neighbour two-qubit gate contribution.
+        eps: target phase :math:`\theta'` of next-nearest-neighbour two-qubit gate contribution.
+        lamb: target phase :math:`\lambda` of three-qubit gate contribution.
+        Vnn: nearest-neighbour interaction strength :math:`V_{\mathrm{nn}}/(\hbar\Omega_0)`.
+        Vnnn: next-nearest-neighbour interaction strength :math:`V_{\mathrm{nnn}}/(\hbar\Omega_0)`.
+        decay: Rydberg decay strength :math:`\gamma/\Omega_0`.
+
+    Returns:
+        Three-qubit gate object.
+    """
+
+    def __init__(
+        self,
+        phi: float | None,
+        theta: float | None,
+        eps: float | None,
+        lamb: float | None,
+        Vnn: float,
+        Vnnn: float,
+        decay: float,
+    ):
         super().__init__(decay)
         if (Vnn == Vnnn) and (theta != eps):
             raise ValueError("For Vnn=Vnnn, theta=eps is required")
@@ -29,9 +62,17 @@ class ThreeQubitGateIsosceles(Gate):
         return 8
 
     def get_phi_theta_eps_lamb(self):
+        r"""
+        Returns:
+            Gate phases :math:`\phi, \theta, \theta', \lambda`.
+        """
         return self._phi, self._theta, self._eps, self._lamb
 
     def get_Vnn_Vnnn(self):
+        r"""
+        Returns:
+            Interaction strengths :math:`V_{\mathrm{nn}}/(\hbar\Omega_0), V_{\mathrm{nnn}}/(\hbar\Omega_0)`.
+        """
         return self._Vnn, self._Vnnn
 
     def subsystem_hamiltonians(self):

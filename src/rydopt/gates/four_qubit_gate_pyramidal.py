@@ -15,7 +15,44 @@ from rydopt.gates.subsystem_hamiltonians import (
 
 
 class FourQubitGatePyramidal(Gate):
-    def __init__(self, phi, theta, eps, lamb, delta, kappa, Vnn, Vnnn, decay):
+    r"""Class that describes a gate on four atoms arranged in a pyramid.
+    The physical setting is described by the interaction strengths between atoms, :math:`V_{\mathrm{nn}}` and :math:`V_{\mathrm{nnn}}`,
+    and the decay strength from Rydberg states, :math:`\gamma`.
+    The target gate is specified by the phases :math:`\phi, \theta, \theta', \lambda, \lambda', \kappa`.
+    Some phases can remain unspecified if they may take on arbitrary values.
+
+    .. image:: ../_static/4QubitGatePyramidal.png
+
+    In the figure, we use the notation :math:`\mathrm{C}_n\mathrm{Z}(\alpha) = \mathrm{diag}(1, ..., 1, e^{i\alpha})` on :math:`n+1` qubits,
+    and :math:`\mathrm{Z}(\alpha) = \mathrm{C}_0\mathrm{Z}(\alpha) = \mathrm{diag}(1, e^{i\alpha})`.
+
+    Args:
+        phi: target phase :math:`\phi` of single-qubit gate contribution.
+        theta: target phase :math:`\theta` of nearest-neighbour two-qubit gate contribution.
+        eps: target phase :math:`\theta'` of next-nearest-neighbour two-qubit gate contribution.
+        lamb: target phase :math:`\lambda` of asymmetric three-qubit gate contribution.
+        delta: target phase :math:`\lambda'` of symmetric three-qubit gate contribution.
+        kappa: target phase :math:`\kappa` of four-qubit gate contribution.
+        Vnn: nearest-neighbour interaction strength :math:`V_{\mathrm{nn}}/(\hbar\Omega_0)`.
+        Vnnn: next-nearest-neighbour interaction strength :math:`V_{\mathrm{nnn}}/(\hbar\Omega_0)`.
+        decay: Rydberg decay strength :math:`\gamma/\Omega_0`.
+
+    Returns:
+        Four-qubit gate object.
+    """
+
+    def __init__(
+        self,
+        phi: float | None,
+        theta: float | None,
+        eps: float | None,
+        lamb: float | None,
+        delta: float | None,
+        kappa: float | None,
+        Vnn: float,
+        Vnnn: float,
+        decay: float,
+    ):
         super().__init__(decay)
         if (Vnn == Vnnn) and ((theta != eps) or (lamb != delta)):
             raise ValueError("For Vnn=Vnnn, theta=eps and lambda=delta is required")
@@ -34,9 +71,17 @@ class FourQubitGatePyramidal(Gate):
         return 16
 
     def get_phi_theta_eps_lamb_delta_kappa(self):
+        r"""
+        Returns:
+            Gate phases :math:`\phi, \theta, \theta', \lambda, \lambda', \kappa`.
+        """
         return self._phi, self._theta, self._eps, self._lamb, self._delta, self._kappa
 
     def get_Vnn_Vnnn(self):
+        r"""
+        Returns:
+            Interaction strengths :math:`V_{\mathrm{nn}}/(\hbar\Omega_0), V_{\mathrm{nnn}}/(\hbar\Omega_0)`.
+        """
         return self._Vnn, self._Vnnn
 
     def subsystem_hamiltonians(self):
