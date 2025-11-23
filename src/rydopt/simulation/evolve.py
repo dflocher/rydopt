@@ -130,4 +130,6 @@ def _evolve_optimized_for_gpus(
         max_steps=10_000,
     )
 
-    return sol.ys[0]
+    final_states = tuple(psi_t1[0] for psi_t1 in sol.ys)
+
+    return final_states

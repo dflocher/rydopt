@@ -17,8 +17,8 @@ from rydopt.types import FloatParams, BoolParams
 @dataclass
 class OptimizationResult:
     params: tuple[FloatParams, ...] | list[tuple[FloatParams, ...]]
-    infidelity: float | list[float]
-    history: list[float] | list[list[float]] | None = None
+    infidelity: float | np.ndarray
+    history: np.ndarray | None = None
 
 
 # -----------------------------------------------------------------------------
@@ -65,14 +65,14 @@ def _make_infidelity(
     return infidelity
 
 
-def _print_gate(title: str, duration: float, params, infidelity: float):
+def _print_gate(title: str, params, infidelity: float):
     print(f"\n{title}")
     if float(infidelity) < 0:
         print("> infidelity <= numerical precision")
     else:
         print(f"> infidelity = {infidelity:.6e}")
     print(f"> parameters = ({', '.join(str(p) for p in params)})")
-    print(f"> duration = {duration}")
+    print(f"> duration = {params[0]}")
 
 
 def _print_summary(method_name: str, duration: float, tol: float, num_converged: int):
@@ -238,6 +238,7 @@ def adam(
     num_steps: int = 1000,
     learning_rate: float = 0.05,
     tol: float = 1e-7,
+    return_history: bool = False,
 ) -> OptimizationResult:
     split_indices = _spec(initial_params)
     params_full = _ravel(initial_params)
@@ -278,7 +279,7 @@ def adam(
     # --- Logging ---
 
     _print_summary("Adam", duration, tol, num_converged)
-    _print_gate("Best gate:", final_params[0], final_params, final_infidelity)
+    _print_gate("Best gate:", final_params, final_infidelity)
 
     return OptimizationResult(params=final_params, infidelity=final_infidelity)
 
@@ -296,6 +297,7 @@ def multi_start_adam(
     tol: float = 1e-7,
     seed: int = 0,
     return_all: bool = False,
+    return_history: bool = False,
     num_workers: int | None = None,
 ) -> OptimizationResult:
     split_indices = _spec(min_initial_params)
@@ -401,7 +403,7 @@ def multi_start_adam(
     final_full = np.tile(params_full, (final_params_trainable.shape[0], 1))
     final_full[:, trainable_indices] = final_params_trainable
 
-    converged = jnp.where(final_infidelities <= tol)[0]
+    converged = np.where(final_infidelities <= tol)[0]
     num_converged = len(converged)
     if num_converged == 0:
         converged = np.array([np.argmin(final_infidelities)])
@@ -414,23 +416,17 @@ def multi_start_adam(
     _print_summary("multi-start Adam", duration, tol, num_converged)
 
     fastest_idx = np.argmin(durations_converged)
-    fastest_duration = durations_converged[fastest_idx]
     fastest_infidelity = infidelities_converged[fastest_idx]
     fastest_params = _unravel(params_converged[fastest_idx], split_indices)
 
     if num_converged > 1:
         # If multiple parameter sets converged, show slowest and fastest gate
         slowest_idx = np.argmax(durations_converged)
-        slowest_duration = durations_converged[slowest_idx]
         slowest_infidelity = infidelities_converged[slowest_idx]
         slowest_params = _unravel(params_converged[slowest_idx], split_indices)
 
-        _print_gate(
-            "Slowest gate:", slowest_duration, slowest_params, slowest_infidelity
-        )
-        _print_gate(
-            "Fastest gate:", fastest_duration, fastest_params, fastest_infidelity
-        )
+        _print_gate("Slowest gate:", slowest_params, slowest_infidelity)
+        _print_gate("Fastest gate:", fastest_params, fastest_infidelity)
 
         idx = rng.integers(0, num_converged, size=(1024, num_converged))
         mins = np.asarray(durations_converged)[idx].min(axis=1)
@@ -438,7 +434,7 @@ def multi_start_adam(
         print(f"> one-sided bootstrap error on duration: {err:.1g}")
     else:
         # Otherwise, show the gate with the smallest infidelity
-        _print_gate("Best gate:", fastest_duration, fastest_params, fastest_infidelity)
+        _print_gate("Best gate:", fastest_params, fastest_infidelity)
 
     # --- Return value(s) ---
 

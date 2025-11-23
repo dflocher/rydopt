@@ -1,8 +1,8 @@
 """The example takes
 * 29m 28,732s on AMD Ryzen 7 5700G
 * 4m 49.323s on AMD EPYC 9374F
-* 2m 11.985s on NVIDIA GeForce RTX 4060 Ti
-* 1m 6.84s on NVIDIA H100 PCIe
+* 4m 20.041s on NVIDIA GeForce RTX 4060 Ti
+* TODO on NVIDIA H100 PCIe
 """
 
 import jax
