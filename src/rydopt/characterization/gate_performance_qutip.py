@@ -279,33 +279,27 @@ def _target_FourQubitGatePyramidal(
 
 
 def _setup_hamiltonian(gate, pulse_ansatz, params):
-    T, detuning_params, phase_params, rabi_params = params
-
-    detuning_params = np.asarray(detuning_params)
-    phase_params = np.asarray(phase_params)
-    rabi_params = np.asarray(rabi_params)
-
-    detuning_fn = lambda t: pulse_ansatz.detuning_ansatz(t, T, detuning_params)  # noqa: E731
-    phase_fn = lambda t: pulse_ansatz.phase_ansatz(t, T, phase_params)  # noqa: E731
-    rabi_fn = lambda t: pulse_ansatz.rabi_ansatz(t, T, rabi_params)  # noqa: E731
+    detuning_pulse, phase_pulse, rabi_pulse = pulse_ansatz.make_pulses(params)
 
     if isinstance(gate, TwoQubitGate):
         decay = gate.get_decay()
         Vnn = gate.get_interactions()
-        return _hamiltonian_TwoQubitGate(detuning_fn, phase_fn, rabi_fn, decay, Vnn)
+        return _hamiltonian_TwoQubitGate(
+            detuning_pulse, phase_pulse, rabi_pulse, decay, Vnn
+        )
 
     if isinstance(gate, ThreeQubitGateIsosceles):
         decay = gate.get_decay()
         Vnn, Vnnn = gate.get_interactions()
         return _hamiltonian_ThreeQubitGateIsosceles(
-            detuning_fn, phase_fn, rabi_fn, decay, Vnn, Vnnn
+            detuning_pulse, phase_pulse, rabi_pulse, decay, Vnn, Vnnn
         )
 
     if isinstance(gate, FourQubitGatePyramidal):
         decay = gate.get_decay()
         Vnn, Vnnn = gate.get_interactions()
         return _hamiltonian_FourQubitGatePyramidal(
-            detuning_fn, phase_fn, rabi_fn, decay, Vnn, Vnnn
+            detuning_pulse, phase_pulse, rabi_pulse, decay, Vnn, Vnnn
         )
 
     raise ValueError("The specified number of atoms is not yet implemented.")

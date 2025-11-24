@@ -31,18 +31,14 @@ def plot_pulse(
         plot_rabi: whether to plot the rabi pulse.
         phase_offset: let the phase pulse begin at 0.
     """
-    T, detuning_params, phase_params, rabi_params = params
-    detuning_params = np.asarray(detuning_params)
-    phase_params = np.asarray(phase_params)
-    rabi_params = np.asarray(rabi_params)
-
+    T = params[0]
     ts = np.linspace(0, T, 1000)
-    detuning_pulse = pulse_ansatz.detuning_ansatz(ts, T, detuning_params)  # noqa: E731
-    phase_pulse = pulse_ansatz.phase_ansatz(ts, T, phase_params)  # noqa: E731
-    rabi_pulse = pulse_ansatz.rabi_ansatz(ts, T, rabi_params)  # noqa: E731
+    detuning_pulse, phase_pulse, rabi_pulse = pulse_ansatz.make_pulses(params)
 
     if phase_offset:
-        phase_pulse -= phase_pulse[0]
+        offset = phase_pulse(0)
+    else:
+        offset = 0
 
     plt.rcParams["font.sans-serif"] = "Helvetica"
     plt.rcParams["mathtext.fontset"] = "cm"
@@ -52,7 +48,7 @@ def plot_pulse(
     if plot_rabi:
         ax.plot(
             ts,
-            rabi_pulse,
+            rabi_pulse(ts),
             linewidth=2,
             color="tab:gray",
             linestyle="dotted",
@@ -62,7 +58,7 @@ def plot_pulse(
     if plot_detuning:
         ax.plot(
             ts,
-            detuning_pulse,
+            detuning_pulse(ts),
             linewidth=2,
             color="tab:blue",
             linestyle="dashed",
@@ -72,7 +68,7 @@ def plot_pulse(
     if plot_phase:
         ax.plot(
             ts,
-            phase_pulse,
+            phase_pulse(ts) - offset,
             linewidth=2,
             color="tab:orange",
             linestyle="solid",
