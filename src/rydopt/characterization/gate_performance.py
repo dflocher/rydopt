@@ -10,12 +10,13 @@ def analyze_gate(
     pulse_ansatz: PulseAnsatz,
     params: tuple[FloatParams, ...],
     tol: float = 1e-15,
-):
+) -> tuple[float, float, float]:
     r"""Function that analyzes the performance of a gate pulse using JAX.
     It determines the gate infidelity, the gate infidelity in the absence of Rydberg state decay, and the Rydberg time.
 
     Example:
         >>> import rydopt as ro
+        >>> import numpy as np
         >>> gate = ro.gates.TwoQubitGate(
         ...     phi=None,
         ...     theta=np.pi,
@@ -33,6 +34,7 @@ def analyze_gate(
         gate: target gate.
         pulse_ansatz: ansatz of the gate pulse.
         params: pulse parameters.
+        tol: precision of the ODE solver.
 
     Returns:
         gate infidelity, gate infidelity without decay, Rydberg time

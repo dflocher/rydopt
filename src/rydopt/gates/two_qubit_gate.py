@@ -21,9 +21,10 @@ class TwoQubitGate(Gate):
 
     Example:
         >>> import rydopt as ro
+        >>> import numpy as np
         >>> gate = ro.gates.TwoQubitGate(
         ...     phi=None,
-        ...     theta=jnp.pi,
+        ...     theta=np.pi,
         ...     Vnn=float("inf"),
         ...     decay=0.0001,
         ... )
@@ -46,24 +47,24 @@ class TwoQubitGate(Gate):
         self._theta = theta
         self._Vnn = Vnn
 
-    def dim(self):
+    def dim(self) -> int:
         return 4
 
-    def get_phi_theta(self):
+    def get_gate_angles(self) -> tuple[float | None, float | None]:
         r"""
         Returns:
             Gate phases :math:`\phi, \theta`.
         """
         return self._phi, self._theta
 
-    def get_Vnn(self) -> float:
+    def get_interactions(self) -> float:
         r"""
         Returns:
             Interaction strength :math:`V_{\mathrm{nn}}/(\hbar\Omega_0)`.
         """
         return self._Vnn
 
-    def subsystem_hamiltonians(self):
+    def subsystem_hamiltonians(self) -> tuple:
         if isinf(float(self._Vnn)):
             return (
                 partial(H_k_atoms_perfect_blockade, decay=self._decay, k=1),
@@ -74,7 +75,7 @@ class TwoQubitGate(Gate):
             partial(H_2_atoms, decay=self._decay, V=self._Vnn),
         )
 
-    def subsystem_rydberg_population_operators(self):
+    def subsystem_rydberg_population_operators(self) -> tuple:
         if isinf(float(self._Vnn)):
             return (
                 H_k_atoms_perfect_blockade(
@@ -89,7 +90,7 @@ class TwoQubitGate(Gate):
             H_2_atoms(Delta=1.0, Phi=0.0, Omega=0.0, decay=0.0, V=0.0),
         )
 
-    def initial_states(self):
+    def initial_states(self) -> tuple:
         if isinf(float(self._Vnn)):
             return (
                 jnp.array([1.0 + 0.0j, 0.0 + 0.0j]),
@@ -100,7 +101,7 @@ class TwoQubitGate(Gate):
             jnp.array([1.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0j]),
         )
 
-    def process_fidelity(self, final_states):
+    def process_fidelity(self, final_states) -> float:
         # Obtained diagonal gate matrix
         obtained_gate = jnp.array(
             [

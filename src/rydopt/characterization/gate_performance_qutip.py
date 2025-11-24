@@ -201,10 +201,10 @@ def _target_TwoQubitGate(final_state, phi, theta):
     return entangling_gate * global_z_rotation * qt.tensor(plus_state, plus_state)
 
 
-def _target_ThreeQubitGateIsosceles(final_state, phi, theta, eps, lamb):
+def _target_ThreeQubitGateIsosceles(final_state, phi, theta, theta_prime, lamb):
     p = np.angle(final_state[1, 0]) if phi is None else phi
     t = np.angle(final_state[4, 0]) - 2 * p if theta is None else theta
-    e = np.angle(final_state[10, 0]) - 2 * p if eps is None else eps
+    e = np.angle(final_state[10, 0]) - 2 * p if theta_prime is None else theta_prime
     l = np.angle(final_state[13, 0]) - 3 * p - 2 * t - e if lamb is None else lamb
 
     rz = qt.Qobj([[1, 0, 0], [0, np.exp(1j * p), 0], [0, 0, 1]])
@@ -224,12 +224,18 @@ def _target_ThreeQubitGateIsosceles(final_state, phi, theta, eps, lamb):
     )
 
 
-def _target_FourQubitGatePyramidal(final_state, phi, theta, eps, lamb, delta, kappa):
+def _target_FourQubitGatePyramidal(
+    final_state, phi, theta, theta_prime, lamb, lamb_prime, kappa
+):
     p = np.angle(final_state[1, 0]) if phi is None else phi
     t = np.angle(final_state[4, 0]) - 2 * p if theta is None else theta
-    e = np.angle(final_state[12, 0]) - 2 * p if eps is None else eps
+    e = np.angle(final_state[12, 0]) - 2 * p if theta_prime is None else theta_prime
     l = np.angle(final_state[13, 0]) - 3 * p - 2 * t - e if lamb is None else lamb
-    d = np.angle(final_state[39, 0]) - 3 * p - 3 * e if delta is None else delta
+    d = (
+        np.angle(final_state[39, 0]) - 3 * p - 3 * e
+        if lamb_prime is None
+        else lamb_prime
+    )
     k = (
         np.angle(final_state[40, 0]) - 4 * p - 3 * t - 3 * e - 3 * l - d
         if kappa is None
@@ -285,19 +291,19 @@ def _setup_hamiltonian(gate, pulse_ansatz, params):
 
     if isinstance(gate, TwoQubitGate):
         decay = gate.get_decay()
-        Vnn = gate.get_Vnn()
+        Vnn = gate.get_interactions()
         return _hamiltonian_TwoQubitGate(detuning_fn, phase_fn, rabi_fn, decay, Vnn)
 
     if isinstance(gate, ThreeQubitGateIsosceles):
         decay = gate.get_decay()
-        Vnn, Vnnn = gate.get_Vnn_Vnnn()
+        Vnn, Vnnn = gate.get_interactions()
         return _hamiltonian_ThreeQubitGateIsosceles(
             detuning_fn, phase_fn, rabi_fn, decay, Vnn, Vnnn
         )
 
     if isinstance(gate, FourQubitGatePyramidal):
         decay = gate.get_decay()
-        Vnn, Vnnn = gate.get_Vnn_Vnnn()
+        Vnn, Vnnn = gate.get_interactions()
         return _hamiltonian_FourQubitGatePyramidal(
             detuning_fn, phase_fn, rabi_fn, decay, Vnn, Vnnn
         )
@@ -307,17 +313,19 @@ def _setup_hamiltonian(gate, pulse_ansatz, params):
 
 def _setup_target(gate, final_state):
     if isinstance(gate, TwoQubitGate):
-        phi, theta = gate.get_phi_theta()
+        phi, theta = gate.get_gate_angles()
         return _target_TwoQubitGate(final_state, phi, theta)
 
     if isinstance(gate, ThreeQubitGateIsosceles):
-        phi, theta, eps, lamb = gate.get_phi_theta_eps_lamb()
-        return _target_ThreeQubitGateIsosceles(final_state, phi, theta, eps, lamb)
+        phi, theta, theta_prime, lamb = gate.get_gate_angles()
+        return _target_ThreeQubitGateIsosceles(
+            final_state, phi, theta, theta_prime, lamb
+        )
 
     if isinstance(gate, FourQubitGatePyramidal):
-        phi, theta, eps, lamb, delta, kappa = gate.get_phi_theta_eps_lamb_delta_kappa()
+        phi, theta, theta_prime, lamb, lamb_prime, kappa = gate.get_gate_angles()
         return _target_FourQubitGatePyramidal(
-            final_state, phi, theta, eps, lamb, delta, kappa
+            final_state, phi, theta, theta_prime, lamb, lamb_prime, kappa
         )
 
     raise ValueError("The specified number of atoms is not yet implemented.")
@@ -364,12 +372,13 @@ def analyze_gate_qutip(
     gate: Gate,
     pulse_ansatz: PulseAnsatz,
     params: tuple[FloatParams, ...],
-):
+) -> tuple[float, float, float]:
     r"""Function that analyzes the performance of a gate pulse using QuTiP.
     It determines the gate infidelity, the gate infidelity in the absence of Rydberg state decay, and the Rydberg time.
 
     Example:
         >>> import rydopt as ro
+        >>> import numpy as np
         >>> gate = ro.gates.TwoQubitGate(
         ...     phi=None,
         ...     theta=np.pi,

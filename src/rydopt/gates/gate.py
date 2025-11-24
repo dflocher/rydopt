@@ -36,6 +36,22 @@ class Gate(ABC):
         ...
 
     @abstractmethod
+    def get_gate_angles(self) -> tuple[float]:
+        r"""
+        Returns:
+            Gate angles
+        """
+        ...
+
+    @abstractmethod
+    def get_interactions(self) -> tuple[float] | float:
+        r"""
+        Returns:
+            Interactions between the atoms
+        """
+        ...
+
+    @abstractmethod
     def subsystem_hamiltonians(self) -> tuple:
         r"""
         The full gate Hamiltonian can be split into distinct subsystems.

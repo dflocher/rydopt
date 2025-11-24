@@ -24,10 +24,11 @@ class ThreeQubitGateIsosceles(Gate):
 
     Example:
         >>> import rydopt as ro
+        >>> import numpy as np
         >>> gate = ro.gates.ThreeQubitGateIsosceles(
         ...     phi=None,
-        ...     theta=jnp.pi,
-        ...     eps=None,
+        ...     theta=np.pi,
+        ...     theta_prime=None,
         ...     lamb=0.0,
         ...     Vnn=float("inf"),
         ...     Vnnn=1.0,
@@ -37,7 +38,7 @@ class ThreeQubitGateIsosceles(Gate):
     Args:
         phi: target phase :math:`\phi` of single-qubit gate contribution.
         theta: target phase :math:`\theta` of nearest-neighbour two-qubit gate contribution.
-        eps: target phase :math:`\theta'` of next-nearest-neighbour two-qubit gate contribution.
+        theta_prime: target phase :math:`\theta'` of next-nearest-neighbour two-qubit gate contribution.
         lamb: target phase :math:`\lambda` of three-qubit gate contribution.
         Vnn: nearest-neighbour interaction strength :math:`V_{\mathrm{nn}}/(\hbar\Omega_0)`.
         Vnnn: next-nearest-neighbour interaction strength :math:`V_{\mathrm{nnn}}/(\hbar\Omega_0)`.
@@ -51,42 +52,44 @@ class ThreeQubitGateIsosceles(Gate):
         self,
         phi: float | None,
         theta: float | None,
-        eps: float | None,
+        theta_prime: float | None,
         lamb: float | None,
         Vnn: float,
         Vnnn: float,
         decay: float,
     ):
         super().__init__(decay)
-        if (Vnn == Vnnn) and (theta != eps):
-            raise ValueError("For Vnn=Vnnn, theta=eps is required")
-        if (Vnnn == 0) and (eps != 0.0):
-            raise ValueError("For Vnnn=0, eps=0 is required")
+        if (Vnn == Vnnn) and (theta != theta_prime):
+            raise ValueError("For Vnn=Vnnn, theta=theta_prime is required")
+        if (Vnnn == 0) and (theta_prime != 0.0):
+            raise ValueError("For Vnnn=0, theta_prime=0 is required")
         self._phi = phi
         self._theta = theta
-        self._eps = eps
+        self._theta_prime = theta_prime
         self._lamb = lamb
         self._Vnn = Vnn
         self._Vnnn = Vnnn
 
-    def dim(self):
+    def dim(self) -> int:
         return 8
 
-    def get_phi_theta_eps_lamb(self):
+    def get_gate_angles(
+        self,
+    ) -> tuple[float | None, float | None, float | None, float | None]:
         r"""
         Returns:
             Gate phases :math:`\phi, \theta, \theta', \lambda`.
         """
-        return self._phi, self._theta, self._eps, self._lamb
+        return self._phi, self._theta, self._theta_prime, self._lamb
 
-    def get_Vnn_Vnnn(self):
+    def get_interactions(self) -> tuple[float, float]:
         r"""
         Returns:
             Interaction strengths :math:`V_{\mathrm{nn}}/(\hbar\Omega_0), V_{\mathrm{nnn}}/(\hbar\Omega_0)`.
         """
         return self._Vnn, self._Vnnn
 
-    def subsystem_hamiltonians(self):
+    def subsystem_hamiltonians(self) -> tuple:
         if isinf(float(self._Vnn)) and isinf(float(self._Vnnn)):
             return (
                 partial(H_k_atoms_perfect_blockade, decay=self._decay, k=1),
@@ -119,7 +122,7 @@ class ThreeQubitGateIsosceles(Gate):
             partial(H_3_atoms, decay=self._decay, Vnn=self._Vnn, Vnnn=self._Vnnn),
         )
 
-    def subsystem_rydberg_population_operators(self):
+    def subsystem_rydberg_population_operators(self) -> tuple:
         if isinf(float(self._Vnn)) and isinf(float(self._Vnnn)):
             return (
                 H_k_atoms_perfect_blockade(
@@ -168,7 +171,7 @@ class ThreeQubitGateIsosceles(Gate):
             H_3_atoms(Delta=1.0, Phi=0.0, Omega=0.0, decay=0.0, Vnn=0.0, Vnnn=0.0),
         )
 
-    def initial_states(self):
+    def initial_states(self) -> tuple:
         if isinf(float(self._Vnn)) and isinf(float(self._Vnnn)):
             return (
                 jnp.array([1.0 + 0.0j, 0.0 + 0.0j]),
@@ -203,7 +206,7 @@ class ThreeQubitGateIsosceles(Gate):
             ),
         )
 
-    def process_fidelity(self, final_states):
+    def process_fidelity(self, final_states) -> float:
         # Obtained diagonal gate matrix
         if float(self._Vnn) == float(self._Vnnn):
             obtained_gate = jnp.array(
@@ -248,7 +251,11 @@ class ThreeQubitGateIsosceles(Gate):
         # Targeted diagonal gate matrix
         p = jnp.angle(obtained_gate[1]) if self._phi is None else self._phi
         t = jnp.angle(obtained_gate[3]) - 2 * p if self._theta is None else self._theta
-        e = jnp.angle(obtained_gate[5]) - 2 * p if self._eps is None else self._eps
+        e = (
+            jnp.angle(obtained_gate[5]) - 2 * p
+            if self._theta_prime is None
+            else self._theta_prime
+        )
         l = (
             jnp.angle(obtained_gate[7]) - 3 * p - 2 * t - e
             if self._lamb is None
