@@ -4,9 +4,33 @@ from rydopt.pulses.pulse_ansatz import PulseAnsatz
 from rydopt.types import FloatParams
 
 
-def _plot_subpulses(
-    pulse_ansatz, params, phase_offset, plot_detuning, plot_phase, plot_rabi
+def plot_pulse(
+    pulse_ansatz: PulseAnsatz,
+    params: tuple[FloatParams, ...],
+    plot_detuning: bool = True,
+    plot_phase: bool = True,
+    plot_rabi: bool = True,
+    phase_offset: bool = False,
 ):
+    r"""Function that plots a pulse, given the pulse ansatz and the pulse parameters.
+
+    Example:
+        >>> import rydopt as ro
+        >>> pulse_ansatz = ro.pulses.PulseAnsatz(
+        ...     detuning_ansatz=ro.pulses.const,
+        ...     phase_ansatz=ro.pulses.sin_crab
+        ... )
+        >>> params = (7.61140652, (-0.07842706,), (1.80300902, -0.61792703), ())
+        >>> plot_pulse(pulse_ansatz, params)
+
+    Args:
+        pulse_ansatz: ansatz of the gate pulse.
+        params: pulse parameters.
+        plot_detuning: whether to plot the detuning pulse.
+        plot_phase: whether to plot the phase pulse.
+        plot_rabi: whether to plot the rabi pulse.
+        phase_offset: let the phase pulse begin at 0.
+    """
     T, detuning_params, phase_params, rabi_params = params
     detuning_params = np.asarray(detuning_params)
     phase_params = np.asarray(phase_params)
@@ -61,34 +85,3 @@ def _plot_subpulses(
     ax.legend(fontsize=8)
     ax.grid()
     plt.show()
-
-
-def plot_pulse(
-    pulse_ansatz: PulseAnsatz,
-    params: tuple[FloatParams, ...],
-    phase_offset=False,
-):
-    _plot_subpulses(
-        pulse_ansatz,
-        params,
-        phase_offset,
-        plot_detuning=True,
-        plot_phase=True,
-        plot_rabi=True,
-    )
-
-
-def plot_pulse_without_defaults(
-    pulse_ansatz: PulseAnsatz,
-    params: tuple[FloatParams, ...],
-    phase_offset=False,
-):
-    T, detuning_params, phase_params, rabi_params = params
-    _plot_subpulses(
-        pulse_ansatz,
-        params,
-        phase_offset,
-        len(detuning_params) > 0,
-        len(phase_params) > 0,
-        len(rabi_params) > 0,
-    )
