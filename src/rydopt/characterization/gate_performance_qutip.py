@@ -365,6 +365,32 @@ def analyze_gate_qutip(
     pulse_ansatz: PulseAnsatz,
     params: tuple[FloatParams, ...],
 ):
+    r"""Function that analyzes the performance of a gate pulse using QuTiP.
+    It determines the gate infidelity, the gate infidelity in the absence of Rydberg state decay, and the Rydberg time.
+
+    Example:
+        >>> import rydopt as ro
+        >>> gate = ro.gates.TwoQubitGate(
+        ...     phi=None,
+        ...     theta=np.pi,
+        ...     Vnn=float("inf"),
+        ...     decay=0.0001,
+        ... )
+        >>> pulse_ansatz = ro.pulses.PulseAnsatz(
+        ...     detuning_ansatz=ro.pulses.const,
+        ...     phase_ansatz=ro.pulses.sin_crab
+        ... )
+        >>> params = (7.61140652, (-0.07842706,), (1.80300902, -0.61792703), ())
+        >>> analyze_gate_qutip(gate, pulse_ansatz, params)
+
+    Args:
+        gate: target gate.
+        pulse_ansatz: ansatz of the gate pulse.
+        params: pulse parameters.
+
+    Returns:
+        gate infidelity, gate infidelity without decay, Rydberg time
+    """
     gate_nodecay = gate.copy()
     gate_nodecay.set_decay(0.0)
 

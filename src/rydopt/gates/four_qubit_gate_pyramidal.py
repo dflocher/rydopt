@@ -25,6 +25,20 @@ class FourQubitGatePyramidal(Gate):
 
     .. image:: ../_static/FourQubitGatePyramidal.png
 
+    Example:
+        >>> import rydopt as ro
+        >>> gate = ro.gates.FourQubitGatePyramidal(
+        ...     phi=None,
+        ...     theta=jnp.pi,
+        ...     eps=None,
+        ...     lamb=0.0,
+        ...     delta=None,
+        ...     kappa=jnp.pi,
+        ...     Vnn=float("inf"),
+        ...     Vnnn=1.0,
+        ...     decay=0.0001,
+        ... )
+
     Args:
         phi: target phase :math:`\phi` of single-qubit gate contribution.
         theta: target phase :math:`\theta` of nearest-neighbour two-qubit gate contribution.

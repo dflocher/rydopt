@@ -22,6 +22,18 @@ class ThreeQubitGateIsosceles(Gate):
 
     .. image:: ../_static/ThreeQubitGateIsosceles.png
 
+    Example:
+        >>> import rydopt as ro
+        >>> gate = ro.gates.ThreeQubitGateIsosceles(
+        ...     phi=None,
+        ...     theta=jnp.pi,
+        ...     eps=None,
+        ...     lamb=0.0,
+        ...     Vnn=float("inf"),
+        ...     Vnnn=1.0,
+        ...     decay=0.0001,
+        ... )
+
     Args:
         phi: target phase :math:`\phi` of single-qubit gate contribution.
         theta: target phase :math:`\theta` of nearest-neighbour two-qubit gate contribution.

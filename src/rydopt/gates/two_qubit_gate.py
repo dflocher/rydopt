@@ -19,6 +19,15 @@ class TwoQubitGate(Gate):
 
     .. image:: ../_static/TwoQubitGate.png
 
+    Example:
+        >>> import rydopt as ro
+        >>> gate = ro.gates.TwoQubitGate(
+        ...     phi=None,
+        ...     theta=jnp.pi,
+        ...     Vnn=float("inf"),
+        ...     decay=0.0001,
+        ... )
+
     Args:
         phi: target phase :math:`\phi` of single-qubit gate contribution.
         theta: target phase :math:`\theta` of two-qubit gate contribution.
