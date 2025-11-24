@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from rydopt.gates.gate import Gate
 from rydopt.gates import TwoQubitGate, ThreeQubitGateIsosceles, FourQubitGatePyramidal
 from rydopt.pulses.pulse_ansatz import PulseAnsatz

@@ -1,11 +1,4 @@
 import jax.numpy as jnp
-from typing import Callable
-
-
-PulseAnsatzFunction = Callable[
-    [jnp.ndarray | float, float, jnp.ndarray],
-    jnp.ndarray,
-]
 
 
 def sin_crab(

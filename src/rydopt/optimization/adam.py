@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from rydopt.gates.gate import Gate
 from rydopt.pulses.pulse_ansatz import PulseAnsatz
 from rydopt.simulation.fidelity import process_fidelity
@@ -13,13 +15,6 @@ from dataclasses import dataclass
 from contextlib import nullcontext
 from rydopt.types import ParamsTuple, FixedParamsTuple
 from typing import Generic, TypeVar, overload, Literal
-
-
-# @dataclass
-# class OptimizationResult(Generic[HistoryType]):
-#     params: ParamsTuple | list[ParamsTuple]
-#     infidelity: float | np.ndarray
-#     history: np.ndarray | None # TODO
 
 ParamsT = TypeVar("ParamsT", covariant=True)
 InfidelityT = TypeVar("InfidelityT", covariant=True)

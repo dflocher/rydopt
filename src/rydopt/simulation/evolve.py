@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import jax.numpy as jnp
 from rydopt.gates.gate import Gate
 from rydopt.pulses.pulse_ansatz import PulseAnsatz

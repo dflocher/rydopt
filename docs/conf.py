@@ -18,7 +18,6 @@ extensions = [
     "sphinx.ext.autosummary",
     "sphinx.ext.napoleon",
     "sphinx.ext.mathjax",
-    "sphinx_autodoc_typehints",
     "sphinx.ext.viewcode",
 ]
 
@@ -30,11 +29,19 @@ autosummary_ignore_module_all = False
 add_module_names = False
 autodoc_class_signature = "mixed"
 autodoc_typehints = "signature"
+
 autodoc_default_options = {
     "members": True,
     "member-order": "bysource",
     "inherited-members": True,
     "class-doc-from": "class",
+}
+
+autodoc_type_aliases = {
+    "ParamsTuple": "ParamsTuple",
+    "FixedParamsTuple": "FixedParamsTuple",
+    "PulseAnsatzFunction": "PulseAnsatzFunction",
+    "PulseFunction": "PulseFunction",
 }
 
 # -- Options for HTML output -------------------------------------------------

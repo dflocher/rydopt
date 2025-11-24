@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from rydopt.gates.gate import Gate
 from rydopt.simulation.evolve import evolve
 from rydopt.pulses.pulse_ansatz import PulseAnsatz

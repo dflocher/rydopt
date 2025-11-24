@@ -1,8 +1,9 @@
+from __future__ import annotations
+
 from dataclasses import dataclass
 import jax.numpy as jnp
-from rydopt.pulses.pulse_ansatz_functions import PulseAnsatzFunction, const
-from rydopt.types import ParamsTuple
-from typing import Callable
+from rydopt.pulses.pulse_ansatz_functions import const
+from rydopt.types import ParamsTuple, PulseAnsatzFunction, PulseFunction
 
 
 def _const_zero(
@@ -45,11 +46,7 @@ class PulseAnsatz:
 
     def make_pulses(
         self, params: ParamsTuple
-    ) -> tuple[
-        Callable[[jnp.ndarray | float], jnp.ndarray],
-        Callable[[jnp.ndarray | float], jnp.ndarray],
-        Callable[[jnp.ndarray | float], jnp.ndarray],
-    ]:
+    ) -> tuple[PulseFunction, PulseFunction, PulseFunction]:
         r"""
         Create three functions that describe the detuning sweep, the phase sweep, and the rabi sweep for fixed parameters.
 

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from rydopt.gates.gate import Gate
 from rydopt.pulses.pulse_ansatz import PulseAnsatz
 from rydopt.simulation.fidelity import process_fidelity
