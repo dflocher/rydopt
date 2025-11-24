@@ -14,7 +14,7 @@ if __name__ == "__main__":
     gate = ro.gates.ThreeQubitGateIsosceles(
         phi=None,
         theta=np.pi,
-        eps=np.pi,
+        theta_prime=np.pi,
         lamb=np.pi,
         Vnn=float("inf"),
         Vnnn=float("inf"),

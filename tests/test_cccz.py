@@ -9,9 +9,9 @@ def test_cccz() -> None:
     gate = ro.gates.FourQubitGatePyramidal(
         phi=None,
         theta=np.pi,
-        eps=np.pi,
+        theta_prime=np.pi,
         lamb=np.pi,
-        delta=np.pi,
+        lamb_prime=np.pi,
         kappa=np.pi,
         Vnn=float("inf"),
         Vnnn=float("inf"),
@@ -51,4 +51,4 @@ def test_cccz() -> None:
         ),
         (),
     )
-    assert all(np.allclose(x, y, rtol=1e-2) for x, y in zip(r.params, ref))
+    assert all(np.allclose(x, y, rtol=1e-2) for x, y in zip(r.params, ref))  # type: ignore[arg-type]

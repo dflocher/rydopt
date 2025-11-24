@@ -9,7 +9,7 @@ def test_ccz() -> None:
     gate = ro.gates.ThreeQubitGateIsosceles(
         phi=None,
         theta=np.pi,
-        eps=np.pi,
+        theta_prime=np.pi,
         lamb=np.pi,
         Vnn=float("inf"),
         Vnnn=float("inf"),
@@ -35,4 +35,4 @@ def test_ccz() -> None:
         (0.43322811, -1.18878954, 1.10057937, -0.70670388, 1.16454156, -0.25082207),
         (),
     )
-    assert all(np.allclose(x, y, rtol=1e-3) for x, y in zip(r.params, ref))
+    assert all(np.allclose(x, y, rtol=1e-3) for x, y in zip(r.params, ref))  # type: ignore[arg-type]

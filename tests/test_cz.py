@@ -21,4 +21,4 @@ def test_cz() -> None:
 
     # Compare result to reference
     ref = (7.61141034, (-0.07884777,), (1.83253308, -0.61765787), ())
-    assert all(np.allclose(x, y, rtol=1e-3) for x, y in zip(r.params, ref))
+    assert all(np.allclose(x, y, rtol=1e-3) for x, y in zip(r.params, ref))  # type: ignore[arg-type]

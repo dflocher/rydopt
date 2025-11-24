@@ -1,12 +1,12 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from rydopt.pulses.pulse_ansatz import PulseAnsatz
-from rydopt.types import FloatParams
+from rydopt.types import ParamsTuple
 
 
 def plot_pulse(
     pulse_ansatz: PulseAnsatz,
-    params: tuple[FloatParams, ...],
+    params: ParamsTuple,
     plot_detuning: bool = True,
     plot_phase: bool = True,
     plot_rabi: bool = True,

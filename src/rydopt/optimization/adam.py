@@ -11,14 +11,26 @@ import multiprocessing as mp
 import warnings
 from dataclasses import dataclass
 from contextlib import nullcontext
-from rydopt.types import FloatParams, BoolParams
+from rydopt.types import ParamsTuple, FixedParamsTuple
+from typing import Generic, TypeVar, overload, Literal
+
+
+# @dataclass
+# class OptimizationResult(Generic[HistoryType]):
+#     params: ParamsTuple | list[ParamsTuple]
+#     infidelity: float | np.ndarray
+#     history: np.ndarray | None # TODO
+
+ParamsT = TypeVar("ParamsT", covariant=True)
+InfidelityT = TypeVar("InfidelityT", covariant=True)
+HistoryT = TypeVar("HistoryT", covariant=True)
 
 
 @dataclass
-class OptimizationResult:
-    params: tuple[FloatParams, ...] | list[tuple[FloatParams, ...]]
-    infidelity: float | np.ndarray
-    history: np.ndarray | None = None
+class OptimizationResult(Generic[ParamsT, InfidelityT, HistoryT]):
+    params: ParamsT
+    infidelity: InfidelityT
+    history: HistoryT
 
 
 # -----------------------------------------------------------------------------
@@ -231,24 +243,53 @@ def _adam_optimize(
 # -----------------------------------------------------------------------------
 
 
+@overload
 def adam(
     gate: Gate,
     pulse: PulseAnsatz,
-    initial_params: tuple[FloatParams, ...],
-    fixed_initial_params: tuple[BoolParams, ...] | None = None,
+    initial_params: ParamsTuple,
+    fixed_initial_params: FixedParamsTuple | None = ...,
+    num_steps: int = ...,
+    learning_rate: float = ...,
+    tol: float = ...,
+    *,
+    return_history: Literal[True],
+) -> OptimizationResult[ParamsTuple, float, np.ndarray]: ...
+
+
+@overload
+def adam(
+    gate: Gate,
+    pulse: PulseAnsatz,
+    initial_params: ParamsTuple,
+    fixed_initial_params: FixedParamsTuple | None = ...,
+    num_steps: int = ...,
+    learning_rate: float = ...,
+    tol: float = ...,
+    *,
+    return_history: Literal[False] = False,
+) -> OptimizationResult[ParamsTuple, float, None]: ...
+
+
+def adam(
+    gate: Gate,
+    pulse: PulseAnsatz,
+    initial_params: ParamsTuple,
+    fixed_initial_params: FixedParamsTuple | None = None,
     num_steps: int = 1000,
     learning_rate: float = 0.05,
     tol: float = 1e-7,
+    *,
     return_history: bool = False,
-) -> OptimizationResult:
+) -> OptimizationResult[ParamsTuple, float, np.ndarray | None]:
     split_indices = _spec(initial_params)
     params_full = _ravel(initial_params)
 
     if fixed_initial_params is None:
-        trainable_indices = np.arange(len(params_full))
+        trainable_mask = np.ones_like(params_full, dtype=bool)
     else:
-        mask = _ravel(fixed_initial_params).astype(bool)
-        trainable_indices = np.nonzero(~mask)[0]
+        trainable_mask = ~_ravel(fixed_initial_params).astype(bool)
+    trainable_indices = np.nonzero(trainable_mask)[0]
 
     params_trainable = params_full[trainable_indices]
 
@@ -280,45 +321,127 @@ def adam(
     # --- Logging ---
 
     _print_summary("Adam", duration, tol, num_converged)
-    _print_gate("Best gate:", final_params, final_infidelity)
+    _print_gate("Best gate:", final_params, float(final_infidelity))
 
     history_out = history if return_history else None
     return OptimizationResult(
-        params=final_params, infidelity=final_infidelity, history=history_out
+        params=final_params, infidelity=float(final_infidelity), history=history_out
     )
+
+
+@overload
+def multi_start_adam(
+    gate: Gate,
+    pulse: PulseAnsatz,
+    min_initial_params: ParamsTuple,
+    max_initial_params: ParamsTuple,
+    fixed_initial_params: FixedParamsTuple | None = ...,
+    num_steps: int = ...,
+    num_initializations: int = ...,
+    min_converged_initializations: int = ...,
+    learning_rate: float = ...,
+    tol: float = ...,
+    num_workers: int | None = ...,
+    seed: int = ...,
+    *,
+    return_history: Literal[True],
+    return_all: Literal[True],
+) -> OptimizationResult[list[ParamsTuple], np.ndarray, np.ndarray]: ...
+
+
+@overload
+def multi_start_adam(
+    gate: Gate,
+    pulse: PulseAnsatz,
+    min_initial_params: ParamsTuple,
+    max_initial_params: ParamsTuple,
+    fixed_initial_params: FixedParamsTuple | None = ...,
+    num_steps: int = ...,
+    num_initializations: int = ...,
+    min_converged_initializations: int = ...,
+    learning_rate: float = ...,
+    tol: float = ...,
+    num_workers: int | None = ...,
+    seed: int = ...,
+    *,
+    return_history: Literal[False] = False,
+    return_all: Literal[True],
+) -> OptimizationResult[list[ParamsTuple], np.ndarray, None]: ...
+
+
+@overload
+def multi_start_adam(
+    gate: Gate,
+    pulse: PulseAnsatz,
+    min_initial_params: ParamsTuple,
+    max_initial_params: ParamsTuple,
+    fixed_initial_params: FixedParamsTuple | None = ...,
+    num_steps: int = ...,
+    num_initializations: int = ...,
+    min_converged_initializations: int = ...,
+    learning_rate: float = ...,
+    tol: float = ...,
+    num_workers: int | None = ...,
+    seed: int = ...,
+    *,
+    return_history: Literal[True],
+    return_all: Literal[False] = False,
+) -> OptimizationResult[ParamsTuple, float, np.ndarray]: ...
+
+
+@overload
+def multi_start_adam(
+    gate: Gate,
+    pulse: PulseAnsatz,
+    min_initial_params: ParamsTuple,
+    max_initial_params: ParamsTuple,
+    fixed_initial_params: FixedParamsTuple | None = ...,
+    num_steps: int = ...,
+    num_initializations: int = ...,
+    min_converged_initializations: int = ...,
+    learning_rate: float = ...,
+    tol: float = ...,
+    num_workers: int | None = ...,
+    seed: int = ...,
+    *,
+    return_history: Literal[False] = False,
+    return_all: Literal[False] = False,
+) -> OptimizationResult[ParamsTuple, float, None]: ...
 
 
 def multi_start_adam(
     gate: Gate,
     pulse: PulseAnsatz,
-    min_initial_params: tuple[FloatParams, ...],
-    max_initial_params: tuple[FloatParams, ...],
-    fixed_initial_params: tuple[BoolParams, ...] | None = None,
+    min_initial_params: ParamsTuple,
+    max_initial_params: ParamsTuple,
+    fixed_initial_params: FixedParamsTuple | None = None,
     num_steps: int = 1000,
     num_initializations: int = 10,
     min_converged_initializations: int = 1,
     learning_rate: float = 0.05,
     tol: float = 1e-7,
-    seed: int = 0,
-    return_all: bool = False,
-    return_history: bool = False,
     num_workers: int | None = None,
-) -> OptimizationResult:
+    seed: int = 0,
+    *,
+    return_history: bool = False,
+    return_all: bool = False,
+) -> OptimizationResult[
+    ParamsTuple | list[ParamsTuple], float | np.ndarray, np.ndarray | None
+]:
     split_indices = _spec(min_initial_params)
     flat_min = _ravel(min_initial_params)
     flat_max = _ravel(max_initial_params)
     params_full = flat_min.copy()
 
     if fixed_initial_params is None:
-        trainable_indices = np.arange(len(flat_min))
+        trainable_mask = np.ones_like(flat_min, dtype=bool)
     else:
-        mask = _ravel(fixed_initial_params).astype(bool)
-        trainable_indices = np.nonzero(~mask)[0]
-
-        if not np.allclose(flat_min[mask], flat_max[mask]):
+        trainable_mask = ~_ravel(fixed_initial_params).astype(bool)
+        if not np.allclose(flat_min[trainable_mask], flat_max[trainable_mask]):
             raise ValueError(
                 "For fixed parameters, min_initial_params and max_initial_params must have identical values."
             )
+    trainable_indices = np.nonzero(trainable_mask)[0]
 
     use_one_process_per_device = (
         len(jax.devices()) > 1 or jax.devices()[0].platform != "cpu"

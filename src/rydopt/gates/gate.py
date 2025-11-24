@@ -36,7 +36,7 @@ class Gate(ABC):
         ...
 
     @abstractmethod
-    def get_gate_angles(self) -> tuple[float]:
+    def get_gate_angles(self) -> tuple[float | None, ...]:
         r"""
         Returns:
             Gate angles
@@ -44,7 +44,7 @@ class Gate(ABC):
         ...
 
     @abstractmethod
-    def get_interactions(self) -> tuple[float] | float:
+    def get_interactions(self) -> tuple[float | None, ...] | float | None:
         r"""
         Returns:
             Interactions between the atoms

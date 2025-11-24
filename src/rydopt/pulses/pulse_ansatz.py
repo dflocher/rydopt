@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 import jax.numpy as jnp
 from rydopt.pulses.pulse_ansatz_functions import PulseAnsatzFunction, const
-from rydopt.types import FloatParams
+from rydopt.types import ParamsTuple
 
 
 def const_zero(
@@ -42,9 +42,9 @@ class PulseAnsatz:
 
     rabi_ansatz: PulseAnsatzFunction = const_one
 
-    def make_pulses(self, params: tuple[FloatParams, ...]) -> tuple:
+    def make_pulses(self, params: ParamsTuple) -> tuple:
         r"""
-        Create three functions that describe the detuning sweep, the phase sweep, and the rabi sweep.
+        Create three functions that describe the detuning sweep, the phase sweep, and the rabi sweep for fixed parameters.
 
         Args:
             params: pulse parameters

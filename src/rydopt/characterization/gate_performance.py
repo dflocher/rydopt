@@ -2,13 +2,13 @@ from rydopt.gates.gate import Gate
 from rydopt.pulses.pulse_ansatz import PulseAnsatz
 from rydopt.simulation.fidelity import process_fidelity
 from rydopt.simulation.rydberg_time import rydberg_time
-from rydopt.types import FloatParams
+from rydopt.types import ParamsTuple
 
 
 def analyze_gate(
     gate: Gate,
     pulse_ansatz: PulseAnsatz,
-    params: tuple[FloatParams, ...],
+    params: ParamsTuple,
     tol: float = 1e-15,
 ) -> tuple[float, float, float]:
     r"""Function that analyzes the performance of a gate pulse using JAX.

@@ -1,7 +1,7 @@
 from rydopt.gates.gate import Gate
 from rydopt.gates import TwoQubitGate, ThreeQubitGateIsosceles, FourQubitGatePyramidal
 from rydopt.pulses.pulse_ansatz import PulseAnsatz
-from rydopt.types import FloatParams
+from rydopt.types import ParamsTuple
 import numpy as np
 import qutip as qt
 
@@ -365,7 +365,7 @@ def _rydberg_time_qutip(gate, pulse_ansatz, params):
 def analyze_gate_qutip(
     gate: Gate,
     pulse_ansatz: PulseAnsatz,
-    params: tuple[FloatParams, ...],
+    params: ParamsTuple,
 ) -> tuple[float, float, float]:
     r"""Function that analyzes the performance of a gate pulse using QuTiP.
     It determines the gate infidelity, the gate infidelity in the absence of Rydberg state decay, and the Rydberg time.

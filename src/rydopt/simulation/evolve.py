@@ -3,9 +3,10 @@ from rydopt.gates.gate import Gate
 from rydopt.pulses.pulse_ansatz import PulseAnsatz
 import jax
 from functools import partial
+from rydopt.types import ParamsTuple
 
 
-def evolve(gate: Gate, pulse: PulseAnsatz, params: tuple, tol: float = 1e-7):
+def evolve(gate: Gate, pulse: PulseAnsatz, params: ParamsTuple, tol: float = 1e-7):
     # When we import diffrax, at least one jnp array is allocated (see optimistix/_misc.py, line 138). Thus,
     # if we change the default device after we have imported diffrax, some memory is allocated on the
     # wrong device. Hence, we defer the import of diffrax to the latest time possible.
@@ -87,7 +88,7 @@ def evolve(gate: Gate, pulse: PulseAnsatz, params: tuple, tol: float = 1e-7):
 
 
 def _evolve_optimized_for_gpus(
-    gate: Gate, pulse: PulseAnsatz, params: tuple, tol: float = 1e-7
+    gate: Gate, pulse: PulseAnsatz, params: ParamsTuple, tol: float = 1e-7
 ):
     # When we import diffrax, at least one jnp array is allocated (see optimistix/_misc.py, line 138). Thus,
     # if we change the default device after we have imported diffrax, some memory is allocated on the

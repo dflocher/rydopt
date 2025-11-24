@@ -1,11 +1,11 @@
 import jax.numpy as jnp
-from typing import Protocol
+from typing import Callable
 
 
-class PulseAnsatzFunction(Protocol):
-    def __call__(
-        self, t: jnp.ndarray | float, duration: float, params: jnp.ndarray
-    ) -> jnp.ndarray: ...
+PulseAnsatzFunction = Callable[
+    [jnp.ndarray | float, float, jnp.ndarray],
+    jnp.ndarray,
+]
 
 
 def sin_crab(
