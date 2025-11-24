@@ -2,32 +2,19 @@ import jax.numpy as jnp
 
 
 def H_k_atoms_perfect_blockade(Delta, Phi, Omega, decay, k):
-    r"""In the perfect Rydberg blockade regime, the dynamics of :math:`k` atoms initially
-    in state :math:`|1\rangle` can be described using a two-level system
+    r""":math:`k` atoms, infinite Rydberg interaction between all atoms:
 
-    .. image:: ../_static/k_qubits.png
-
-    :math:`k=1:`
-
-    0: :math:`|1\rangle`
-
-    1: :math:`|r\rangle`
-
-    :math:`k=2:`
-
-    0: :math:`|11\rangle`
-
-    1: :math:`|1r\rangle + |r1\rangle`
+    .. image:: ../_static/k_atoms_perfect_blockade.png
 
     Args:
         Delta: Detuning pulse
         Phi: Phase pulse
         Omega: Rabi pulse
-        decay: Decay strength
+        decay: Rydberg decay rate
         k: number of atoms
 
     Returns:
-        Hamitonian describing the two-level system
+        Two-level system Hamiltonian
     """
     return jnp.array(
         [
@@ -38,25 +25,19 @@ def H_k_atoms_perfect_blockade(Delta, Phi, Omega, decay, k):
 
 
 def H_2_atoms(Delta, Phi, Omega, decay, V):
-    r"""Two atoms initially in state :math:`|1\rangle` can be described as follows:
+    r"""Two atoms, Rydberg interaction :math:`V` between atoms:
 
-    .. image:: ../_static/2_qubits.png
-
-    0: :math:`|11\rangle`
-
-    1: :math:`|1r\rangle + |r1\rangle`
-
-    2: :math:`|rr\rangle`
+    .. image:: ../_static/2_atoms.png
 
     Args:
         Delta: Detuning pulse
         Phi: Phase pulse
         Omega: Rabi pulse
-        decay: Decay strength
-        k: number of atoms
+        decay: Rydberg decay rate
+        V: Rydberg Interaction strength
 
     Returns:
-        Hamitonian describing the three-level system
+        Three-level system Hamiltonian
     """
     return jnp.array(
         [
@@ -75,8 +56,22 @@ def H_2_atoms(Delta, Phi, Omega, decay, V):
     )
 
 
-# Hamiltonian for subspace |111> -- (|r11>+|1r1>+|11r>) -- (|11r>+|r11>-2|1r1>) -- |r1r>  (Vnn = infinity)
 def H_3_atoms_inf_V(Delta, Phi, Omega, decay, V):
+    r"""Three atoms arranged in an isosceles triangle,
+    infinite Rydberg interaction between nearest neighbours, Rydberg interaction :math:`V` between next-nearest neighbours:
+
+    .. image:: ../_static/3_atoms_inf_V.png
+
+    Args:
+        Delta: Detuning pulse
+        Phi: Phase pulse
+        Omega: Rabi pulse
+        decay: Rydberg decay rate
+        V: Rydberg interaction strength
+
+    Returns:
+        Four-level system Hamiltonian
+    """
     return jnp.array(
         [
             [0.0, 0.5 * jnp.sqrt(3) * Omega * jnp.exp(-1j * Phi), 0.0, 0.0],
@@ -102,8 +97,22 @@ def H_3_atoms_inf_V(Delta, Phi, Omega, decay, V):
     )
 
 
-# Hamiltonian for subspace |111> -- (|r11>+|1r1>+|11r>) -- (|1rr>+|r1r>+|rr1>) -- |rrr>  (Vnn = Vnnn)
 def H_3_atoms_symmetric(Delta, Phi, Omega, decay, V):
+    r"""Three atoms arranged in an equilateral triangle,
+    Rydberg interaction :math:`V` between atoms:
+
+    .. image:: ../_static/3_atoms_symmetric.png
+
+    Args:
+        Delta: Detuning pulse
+        Phi: Phase pulse
+        Omega: Rabi pulse
+        decay: Rydberg decay rate
+        V: Rydberg interaction strength
+
+    Returns:
+        Four-level system Hamiltonian
+    """
     return jnp.array(
         [
             [0.0, 0.5 * jnp.sqrt(3) * Omega * jnp.exp(-1j * Phi), 0.0, 0.0],
@@ -129,8 +138,23 @@ def H_3_atoms_symmetric(Delta, Phi, Omega, decay, V):
     )
 
 
-# Hamiltonian for subspace |111> -- |W> -- |X> -- |X'> -- |W'> -- |rrr>
 def H_3_atoms(Delta, Phi, Omega, decay, Vnn, Vnnn):
+    r"""Three atoms arranged in an isosceles triangle,
+    Rydberg interaction :math:`V_{\mathrm{nn}}` between nearest neighbours, Rydberg interaction :math:`V_{\mathrm{nnn}}` between next-nearest neighbours:
+
+    .. image:: ../_static/3_atoms.png
+
+    Args:
+        Delta: Detuning pulse
+        Phi: Phase pulse
+        Omega: Rabi pulse
+        decay: Rydberg decay rate
+        Vnn: nearest neighbour Rydberg interaction strength
+        Vnnn: next-nearest neighbour Rydberg interaction strength
+
+    Returns:
+        Six-level system Hamiltonian
+    """
     return jnp.array(
         [
             [
@@ -185,10 +209,22 @@ def H_3_atoms(Delta, Phi, Omega, decay, Vnn, Vnnn):
     )
 
 
-# Hamiltonian for subspace |1111> -- |W> -- |Z> -- |S> -- |rrr1>  (Vnn = infinity)
-# |Z> = sqrt(3)/2 * |111r> - 1/sqrt(12) * (|11r1> + |1r11> + |r111>)
-# |S> = 1/sqrt(3) * (|1rr1> + |r1r1> + |rr11>)
 def H_4_atoms_inf_V(Delta, Phi, Omega, decay, V):
+    r"""Four atoms arranged in a pyramid,
+    infinite Rydberg interaction between nearest neighbours, Rydberg interaction :math:`V` between next-nearest neighbours:
+
+    .. image:: ../_static/4_atoms_inf_V.png
+
+    Args:
+        Delta: Detuning pulse
+        Phi: Phase pulse
+        Omega: Rabi pulse
+        decay: Rydberg decay rate
+        V: Rydberg interaction strength
+
+    Returns:
+        Five-level system Hamiltonian
+    """
     return jnp.array(
         [
             [0.0, Omega * jnp.exp(-1j * Phi), 0.0, 0.0, 0.0],
@@ -224,8 +260,22 @@ def H_4_atoms_inf_V(Delta, Phi, Omega, decay, V):
     )
 
 
-# Hamiltonian for subspace |1111> -- |W> -- ... -- |rrrr>  (Vnn = Vnnn)
 def H_4_atoms_symmetric(Delta, Phi, Omega, decay, V):
+    r"""Four atoms arranged in a tetrahedron,
+    Rydberg interaction :math:`V` between atoms:
+
+    .. image:: ../_static/4_atoms_symmetric.png
+
+    Args:
+        Delta: Detuning pulse
+        Phi: Phase pulse
+        Omega: Rabi pulse
+        decay: Rydberg decay rate
+        V: Rydberg interaction strength
+
+    Returns:
+        Five-level system Hamiltonian
+    """
     return jnp.array(
         [
             [0.0, Omega * jnp.exp(-1j * Phi), 0.0, 0.0, 0.0],
@@ -261,8 +311,23 @@ def H_4_atoms_symmetric(Delta, Phi, Omega, decay, V):
     )
 
 
-# Hamiltonian for subspace |1111> -- |W> -- ... -- |rrrr>
 def H_4_atoms(Delta, Phi, Omega, decay, Vnn, Vnnn):
+    r"""Four atoms arranged in a pyramid,
+    Rydberg interaction :math:`V_{\mathrm{nn}}` between nearest neighbours, Rydberg interaction :math:`V_{\mathrm{nnn}}` between next-nearest neighbours:
+
+    .. image:: ../_static/4_atoms.png
+
+    Args:
+        Delta: Detuning pulse
+        Phi: Phase pulse
+        Omega: Rabi pulse
+        decay: Rydberg decay rate
+        Vnn: nearest neighbour Rydberg interaction strength
+        Vnnn: next-nearest neighbour Rydberg interaction strength
+
+    Returns:
+        Eight-level system Hamiltonian
+    """
     return jnp.array(
         [
             [0.0, Omega * jnp.exp(-1j * Phi), 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],

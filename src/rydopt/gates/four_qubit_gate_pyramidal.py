@@ -20,11 +20,10 @@ class FourQubitGatePyramidal(Gate):
     and the decay strength from Rydberg states, :math:`\gamma`.
     The target gate is specified by the phases :math:`\phi, \theta, \theta', \lambda, \lambda', \kappa`.
     Some phases can remain unspecified if they may take on arbitrary values.
-
-    .. image:: ../_static/4QubitGatePyramidal.png
-
     In the figure, we use the notation :math:`\mathrm{C}_n\mathrm{Z}(\alpha) = \mathrm{diag}(1, ..., 1, e^{i\alpha})` on :math:`n+1` qubits,
     and :math:`\mathrm{Z}(\alpha) = \mathrm{C}_0\mathrm{Z}(\alpha) = \mathrm{diag}(1, e^{i\alpha})`.
+
+    .. image:: ../_static/FourQubitGatePyramidal.png
 
     Args:
         phi: target phase :math:`\phi` of single-qubit gate contribution.

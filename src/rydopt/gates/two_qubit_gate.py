@@ -14,11 +14,10 @@ class TwoQubitGate(Gate):
     and the decay strength from Rydberg states, :math:`\gamma`.
     The target gate is specified by the phases :math:`\phi, \theta`.
     Some phases can remain unspecified if they may take on arbitrary values.
-
-    .. image:: ../_static/2QubitGate.png
-
     In the figure, we use the notation :math:`\mathrm{C}_1\mathrm{Z}(\alpha) = \mathrm{diag}(1, 1, 1, e^{i\alpha})`,
     and :math:`\mathrm{Z}(\alpha) = \mathrm{diag}(1, e^{i\alpha})`.
+
+    .. image:: ../_static/TwoQubitGate.png
 
     Args:
         phi: target phase :math:`\phi` of single-qubit gate contribution.
