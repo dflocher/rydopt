@@ -2,7 +2,7 @@ import rydopt as ro
 import numpy as np
 
 if __name__ == "__main__":
-    # Gate
+    # A CZ gate on two atoms in the perfect Rydberg blockade regime; the atoms exhibit Rydberg state decay
     gate = ro.gates.TwoQubitGate(
         phi=None,
         theta=np.pi,
@@ -10,7 +10,7 @@ if __name__ == "__main__":
         decay=0.0001,
     )
 
-    # Pulse ansatz
+    # Pulse ansatz: constant detuning, sweep of the laser phase according to sin_crab ansatz
     pulse_ansatz = ro.pulses.PulseAnsatz(
         detuning_ansatz=ro.pulses.const, phase_ansatz=ro.pulses.sin_crab
     )

@@ -62,12 +62,12 @@ class PulseAnsatz:
         rabi_params = jnp.asarray(rabi_params)
 
         def detuning_pulse(t):
-            self.detuning_ansatz(t, duration, detuning_params)
+            return self.detuning_ansatz(t, duration, detuning_params)
 
         def phase_pulse(t):
-            self.phase_ansatz(t, duration, phase_params)
+            return self.phase_ansatz(t, duration, phase_params)
 
         def rabi_pulse(t):
-            self.rabi_ansatz(t, duration, rabi_params)
+            return self.rabi_ansatz(t, duration, rabi_params)
 
         return detuning_pulse, phase_pulse, rabi_pulse
