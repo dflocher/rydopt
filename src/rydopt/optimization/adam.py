@@ -301,7 +301,7 @@ def adam(
         return_history: whether or not to return the cost history of the optimization
 
     Returns:
-        OptimizationResult object containing the final paramters, the final cost, and the optimization history
+        OptimizationResult object containing the final parameters, the final cost, and the optimization history
     """
     split_indices = _spec(initial_params)
     params_full = _ravel(initial_params)
@@ -463,13 +463,13 @@ def multi_start_adam(
         min_converged_initializations: this function is terminated if this many runs have reached the specified infidelity
         learning_rate: optimizer learning rate hyperparameter
         tol: desired gate infidelity precision of the ODE solver
-        num_workers: number of parallel workers on a multi-core CPU
+        num_processes: number of parallel workers on a multi-core CPU
         seed: seed for random number generator
         return_history: whether or not to return the cost history of the optimization
-        return_all: whether or not to return all optmization results
+        return_all: whether or not to return all optimization results
 
     Returns:
-        OptimizationResult object containing the final paramters, the final cost, and the optimization history
+        OptimizationResult object containing the final parameters, the final cost, and the optimization history
     """
     split_indices = _spec(min_initial_params)
     flat_min = _ravel(min_initial_params)
