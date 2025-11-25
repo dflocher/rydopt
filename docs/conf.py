@@ -28,7 +28,7 @@ autosummary_ignore_module_all = False
 
 add_module_names = False
 autodoc_class_signature = "mixed"
-autodoc_typehints = "signature"
+autodoc_typehints = "description"
 
 autodoc_default_options = {
     "members": True,

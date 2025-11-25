@@ -23,9 +23,9 @@ HistoryT = TypeVar("HistoryT", covariant=True)
 
 @dataclass
 class OptimizationResult(Generic[ParamsT, InfidelityT, HistoryT]):
-    params: ParamsT
-    infidelity: InfidelityT
-    history: HistoryT
+    params: ParamsT  # type: ignore[misc]
+    infidelity: InfidelityT  # type: ignore[misc]
+    history: HistoryT  # type: ignore[misc]
 
 
 # -----------------------------------------------------------------------------
