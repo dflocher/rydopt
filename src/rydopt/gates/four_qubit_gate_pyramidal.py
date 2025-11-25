@@ -84,6 +84,10 @@ class FourQubitGatePyramidal(Gate):
         self._Vnnn = Vnnn
 
     def dim(self) -> int:
+        r"""
+        Returns:
+            16
+        """
         return 16
 
     def get_gate_angles(

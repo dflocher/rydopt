@@ -48,6 +48,10 @@ class TwoQubitGate(Gate):
         self._Vnn = Vnn
 
     def dim(self) -> int:
+        r"""
+        Returns:
+            4
+        """
         return 4
 
     def get_gate_angles(self) -> tuple[float | None, float | None]:

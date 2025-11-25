@@ -3,6 +3,15 @@ from copy import deepcopy
 
 
 class Gate(ABC):
+    r"""Abstract base class that describes Rydberg gates.
+    A gate consists of (i) the physical details (number of atoms, Rydberg interaction strengths between the atoms, Rydberg state decay rate),
+    and (ii) the target gate angles.
+
+    Args:
+        decay: Rydberg decay strength :math:`\gamma/\Omega_0`.
+
+    """
+
     def __init__(self, decay: float):
         self._decay = decay
 
@@ -31,7 +40,7 @@ class Gate(ABC):
     def dim(self) -> int:
         r"""
         Returns:
-            Dimensionality :math:`2^n`, where :math:`n` is the number of qubits.
+            Dimensionality :math:`2^n`, where :math:`n` is the number of atoms.
         """
         ...
 

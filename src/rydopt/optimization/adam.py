@@ -25,6 +25,15 @@ HistoryT = TypeVar("HistoryT", covariant=True)
 #  One could then set up a 'plot_history' function in the ro.characterization module, which just takes an OptimizationResult object as input
 @dataclass
 class OptimizationResult(Generic[ParamsT, InfidelityT, HistoryT]):
+    r"""Data class that stores the results of a gate pulse optimization.
+
+    Attributes:
+        params: final pulse parameters
+        infidelity: final gate infidelity.
+        history: cost function evaluations during the optimization
+
+    """
+
     params: ParamsT  # type: ignore[misc]
     infidelity: InfidelityT  # type: ignore[misc]
     history: HistoryT  # type: ignore[misc]

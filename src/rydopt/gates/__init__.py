@@ -1,3 +1,4 @@
+from rydopt.gates.gate import Gate
 from rydopt.gates.two_qubit_gate import TwoQubitGate
 from rydopt.gates.three_qubit_gate_isosceles import ThreeQubitGateIsosceles
 from rydopt.gates.four_qubit_gate_pyramidal import FourQubitGatePyramidal
@@ -13,6 +14,7 @@ from rydopt.gates.subsystem_hamiltonians import (
 )
 
 __all__ = [
+    "Gate",
     "TwoQubitGate",
     "ThreeQubitGateIsosceles",
     "FourQubitGatePyramidal",

@@ -71,6 +71,10 @@ class ThreeQubitGateIsosceles(Gate):
         self._Vnnn = Vnnn
 
     def dim(self) -> int:
+        r"""
+        Returns:
+            8
+        """
         return 8
 
     def get_gate_angles(
