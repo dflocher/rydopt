@@ -277,6 +277,21 @@ def adam(
     *,
     return_history: bool = False,
 ) -> OptimizationResult[ParamsTuple, float, np.ndarray | None]:
+    r"""Function that optimizes an initial parameter guess in order to realize the desired gate.
+
+    Args:
+        gate: rydopt Gate object
+        pulse: rydopt PulseAnsatz object
+        initial_params: initial pulse parameters
+        fixed_initial_params: which parameters shall not be optimized
+        num_steps: number of optimization steps
+        learning_rate: optimizer learning rate hyperparameter
+        tol: precision of the ODE solver
+        return_history: whether or not to return the cost history of the optimization
+
+    Returns:
+        OptimizationResult object containing the final paramters, the final cost, and the optimization history
+    """
     split_indices = _spec(initial_params)
     params_full = _ravel(initial_params)
 
@@ -423,6 +438,27 @@ def multi_start_adam(
 ) -> OptimizationResult[
     ParamsTuple | list[ParamsTuple], float | np.ndarray, np.ndarray | None
 ]:
+    r"""Function that optimizes multiple random initial parameter guesses in order to realize the desired gate.
+
+    Args:
+        gate: rydopt Gate object
+        pulse: rydopt PulseAnsatz object
+        min_initial_params: lower bound for the random parameter initialization
+        max_initial_params: upper bound for the random parameter initialization
+        fixed_initial_params: which parameters shall not be optimized
+        num_steps: number of optimization steps
+        num_initializations: number of runs in the search for gate pulses
+        min_converged_initializations: this function is terminated if this many runs have reached the specified infidelity
+        learning_rate: optimizer learning rate hyperparameter
+        tol: desired gate infidelity precision of the ODE solver
+        num_workers: number of parallel workers on a multi-core CPU
+        seed: seed for random number generator
+        return_history: whether or not to return the cost history of the optimization
+        return_all: whether or not to return all optmization results
+
+    Returns:
+        OptimizationResult object containing the final paramters, the final cost, and the optimization history
+    """
     split_indices = _spec(min_initial_params)
     flat_min = _ravel(min_initial_params)
     flat_max = _ravel(max_initial_params)

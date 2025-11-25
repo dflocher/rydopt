@@ -9,6 +9,17 @@ from rydopt.types import ParamsTuple
 
 
 def evolve(gate: Gate, pulse: PulseAnsatz, params: ParamsTuple, tol: float = 1e-7):
+    r"""The function performs the time evolution of the gate pulse for the initial states specified in the Gate object.
+
+    Args:
+        gate: rydopt Gate object
+        pulse: rydopt PulseAnsatz object
+        params: pulse parameters
+        tol: precision of the ODE solver
+
+    Returns:
+        Time-evolved subsystem states
+    """
     # When we import diffrax, at least one jnp array is allocated (see optimistix/_misc.py, line 138). Thus,
     # if we change the default device after we have imported diffrax, some memory is allocated on the
     # wrong device. Hence, we defer the import of diffrax to the latest time possible.

@@ -8,6 +8,13 @@ documentation for details.
 .. toctree::
    :hidden:
    :maxdepth: 2
+   :caption: Tutorials
+
+   tutorials/optimization_example
+
+.. toctree::
+   :hidden:
+   :maxdepth: 2
    :caption: API Reference
 
    api/gates
@@ -15,3 +22,10 @@ documentation for details.
    api/simulation
    api/optimization
    api/characterization
+
+.. toctree::
+   :hidden:
+   :maxdepth: 2
+   :caption: Developer's Guide
+
+   development/subsystem_hamiltonians

@@ -8,7 +8,23 @@ from rydopt.types import ParamsTuple
 
 def process_fidelity(
     gate: Gate, pulse: PulseAnsatz, params: ParamsTuple, tol: float = 1e-7
-):
+) -> float:
+    r"""The function determines the generalized N-qubit Bell state fidelity
+    of the state resulting from a gate pulse :math:`U(T)` w.r.t. the target state :math:`U_{\mathrm{targ}}|+\rangle^{\otimes N}`:
+
+    .. math::
+
+        F = |\! \langle +|^{\otimes N} U_{\mathrm{targ}}^{\dagger} U(T) |+\rangle^{\otimes N}\!|^2 .
+
+    Args:
+        gate: rydopt Gate object
+        pulse: rydopt PulseAnsatz object
+        params: pulse parameters
+        tol: precision of the ODE solver
+
+    Returns:
+        State fidelity :math:`F`
+    """
     final_states = evolve(gate, pulse, params, tol)
     return gate.process_fidelity(final_states)
 
