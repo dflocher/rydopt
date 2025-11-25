@@ -315,7 +315,7 @@ def adam(
         fixed_initial_params: which parameters shall not be optimized
         num_steps: number of optimization steps
         learning_rate: optimizer learning rate hyperparameter
-        tol: precision of the ODE solver
+        tol: target gate infidelity, also sets the ODE solver tolerance
         return_history: whether or not to return the cost history of the optimization
 
     Returns:
@@ -479,10 +479,10 @@ def multi_start_adam(
         fixed_initial_params: which parameters shall not be optimized
         num_steps: number of optimization steps
         num_initializations: number of runs in the search for gate pulses
-        min_converged_initializations: this function is terminated if this many runs have reached the specified infidelity
+        min_converged_initializations: number of runs that must reach ``tol`` for the optimization to stop
         learning_rate: optimizer learning rate hyperparameter
-        tol: desired gate infidelity precision of the ODE solver
-        num_processes: number of parallel workers on a multi-core CPU
+        tol: target gate infidelity, also sets the ODE solver tolerance
+        num_processes: number of parallel processes
         seed: seed for random number generator
         return_history: whether or not to return the cost history of the optimization
         return_all: whether or not to return all optimization results

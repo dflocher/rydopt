@@ -1,6 +1,6 @@
 Subsystem Hamiltonians
 =======================
 
-.. automodule::
+.. automodule:: rydopt.gates.subsystem_hamiltonians
    :members:
    :undoc-members:
