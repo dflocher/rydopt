@@ -21,6 +21,8 @@ InfidelityT = TypeVar("InfidelityT", covariant=True)
 HistoryT = TypeVar("HistoryT", covariant=True)
 
 
+# TODO: Shall we add some optimization parameters such as tol and num_steps to the data class?
+#  One could then set up a 'plot_history' function in the ro.characterization module, which just takes an OptimizationResult object as input
 @dataclass
 class OptimizationResult(Generic[ParamsT, InfidelityT, HistoryT]):
     params: ParamsT  # type: ignore[misc]
@@ -67,13 +69,16 @@ def _make_infidelity(
     def infidelity(params_trainable):
         params = full.at[trainable_indices].set(params_trainable)
         params_tuple = _unravel_jax(params, params_split_indices)
-        return 1 - process_fidelity(gate, pulse, params_tuple, tol)
+        return 1 - process_fidelity(
+            gate, pulse, params_tuple, tol
+        )  # TODO: My IDE's typechecker complains about params_tuple
 
     return infidelity
 
 
 def _print_gate(title: str, params, infidelity: float):
     print(f"\n{title}")
+    # TODO: Already if infidelity \approx tol, the number printed here might not be quite correct (see example gate_optimization_single.py)
     if float(infidelity) < 0:
         print("> infidelity <= numerical precision")
     else:
@@ -277,6 +282,10 @@ def adam(
 ) -> OptimizationResult[ParamsTuple, float, None]: ...
 
 
+# TODO: I'd rename the function to something like 'optimize'.
+#  One could just as well use another optimizer, such as adagrad or nadam.
+#  This would probably just change a single line of code: optax.adam -> optax.adagrad
+#  Being able to specify a concrete optimizer could be a future upgrade of the package
 def adam(
     gate: Gate,
     pulse: PulseAnsatz,
@@ -343,7 +352,7 @@ def adam(
     # --- Logging ---
 
     _print_summary("Adam", duration, tol, num_converged)
-    _print_gate("Best gate:", final_params, float(final_infidelity))
+    _print_gate("Optimized gate:", final_params, float(final_infidelity))
 
     history_out = history if return_history else None
     return OptimizationResult(
@@ -431,19 +440,20 @@ def multi_start_adam(
 ) -> OptimizationResult[ParamsTuple, float, None]: ...
 
 
+# TODO: rename function (see my comment above)
 def multi_start_adam(
     gate: Gate,
     pulse: PulseAnsatz,
     min_initial_params: ParamsTuple,
     max_initial_params: ParamsTuple,
     fixed_initial_params: FixedParamsTuple | None = None,
-    num_steps: int = 1000,
+    num_steps: int = 1000,  # TODO: Do you mind if change the order to ..., num_steps, learning_rate, tol, num_initializations, ... to match the adam function?
     num_initializations: int = 10,
-    min_converged_initializations: int = 1,
+    min_converged_initializations: int = 1,  # TODO: I think a better default value would be min_converged_initializations=num_initializations
     learning_rate: float = 0.05,
     tol: float = 1e-7,
     num_processes: int | None = None,
-    seed: int = 0,
+    seed: int = 0,  # TODO: Can one set the default to a 'random' number such as time.time_ns() ?
     *,
     return_history: bool = False,
     return_all: bool = False,
@@ -618,14 +628,16 @@ def multi_start_adam(
     if return_all:
         sorter = np.argsort(final_infidelities)
         history_out = None
-        history_out = history[:, sorter] if return_history else None
+        history_out = (
+            history[:, sorter] if return_history else None
+        )  # TODO: My IDE says history might be referenced before assignment
         return OptimizationResult(
             params=[_unravel(p, split_indices) for p in final_full[sorter]],
             infidelity=final_infidelities[sorter],
             history=history_out,
         )
 
-    history_out = history[:, fastest_idx] if return_history else None
+    history_out = history[:, fastest_idx] if return_history else None  # TODO: see above
     return OptimizationResult(
         params=fastest_params,
         infidelity=final_infidelities[fastest_idx],

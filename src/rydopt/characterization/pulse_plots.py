@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import numpy as np
+import jax.numpy as jnp
 import matplotlib.pyplot as plt
 from rydopt.pulses.pulse_ansatz import PulseAnsatz
 from rydopt.types import ParamsTuple
@@ -34,7 +34,7 @@ def plot_pulse(
         phase_offset: let the phase pulse begin at 0.
     """
     T = params[0]
-    ts = np.linspace(0, T, 1000)
+    ts = jnp.linspace(0, T, 1000)
     detuning_pulse, phase_pulse, rabi_pulse = pulse_ansatz.make_pulses(params)
 
     if phase_offset:

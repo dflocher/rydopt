@@ -2,12 +2,12 @@ import rydopt as ro
 import numpy as np
 
 if __name__ == "__main__":
-    # Want to perform a CZ gate on two atoms with finite interaction; the atoms exhibit Rydberg state decay
+    # Want to perform a CZ gate on two atoms with finite interaction; no Rydberg state decay
     gate = ro.gates.TwoQubitGate(
         phi=None,
         theta=np.pi,
         Vnn=10.0,
-        decay=0.000,
+        decay=0.0,
     )
 
     # Pulse ansatz: constant detuning, sweep of the laser phase according to sin_crab ansatz

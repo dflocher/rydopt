@@ -6,6 +6,8 @@ from rydopt.pulses.pulse_ansatz import PulseAnsatz
 from rydopt.types import ParamsTuple
 
 
+# TODO: We calculate a generalized Bell state fidelity. I think it's not equivalent to the proces fidelity of the channel, is it?
+#  Thus, I'd rename the function, also in the Gate class
 def process_fidelity(
     gate: Gate, pulse: PulseAnsatz, params: ParamsTuple, tol: float = 1e-7
 ) -> float:
@@ -29,9 +31,10 @@ def process_fidelity(
     return gate.process_fidelity(final_states)
 
 
+# TODO: I don't get the connection to the average gate fidelity. And we never use it. I'd say it could be implemented in a later version.
 def average_gate_fidelity(
     gate: Gate, pulse: PulseAnsatz, params: ParamsTuple, tol: float = 1e-7
-):
+) -> float:
     return (gate.dim() * process_fidelity(gate, pulse, params, tol) + 1.0) / (
         gate.dim() + 1.0
     )

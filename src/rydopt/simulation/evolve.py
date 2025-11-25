@@ -8,6 +8,7 @@ from functools import partial
 from rydopt.types import ParamsTuple
 
 
+# TODO: I don't quite understand how to write the type of the output. Sth. like tuple[jnp.ndarray, ...] ?
 def evolve(gate: Gate, pulse: PulseAnsatz, params: ParamsTuple, tol: float = 1e-7):
     r"""The function performs the time evolution of the gate pulse for the initial states specified in the Gate object.
 
