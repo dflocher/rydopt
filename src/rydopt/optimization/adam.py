@@ -109,6 +109,7 @@ def _adam_scan(
     params_trainable,
     num_steps: int,
     min_converged_initializations: int,
+    process_idx: int,
     tol,
 ):
     opt_state0 = optimizer.init(params_trainable)
@@ -146,13 +147,21 @@ def _adam_scan(
         jax.lax.cond(
             was_not_done & (is_done_now | is_distinct),
             lambda args: jax.debug.print(
-                "Step {step:06d}: min infidelity ={min_infidelity:13.6e}, converged = {converged}",
+                "Step {step:06d} [process{process_idx:02d}]: min infidelity ={min_infidelity:13.6e}, converged = {converged} / {min_converged_initializations}",
                 step=args[0],
-                min_infidelity=args[1],
-                converged=args[2],
+                process_idx=args[1],
+                min_infidelity=args[2],
+                converged=args[3],
+                min_converged_initializations=args[4],
             ),
             lambda _: None,
-            operand=(step, jnp.min(infidelity), converged_initializations),
+            operand=(
+                step,
+                process_idx,
+                jnp.min(infidelity),
+                converged_initializations,
+                min_converged_initializations,
+            ),
         )
 
         return carry, infidelity
@@ -182,6 +191,7 @@ def _adam_optimize(
     min_converged_initializations: int,
     learning_rate: float,
     tol: float,
+    process_idx: int,
     device_idx: int | None = None,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     device_ctx = (
@@ -223,6 +233,7 @@ def _adam_optimize(
                 params_trainable=params_trainable,
                 num_steps=num_steps,
                 min_converged_initializations=min_converged_initializations,
+                process_idx=process_idx,
                 tol=tol_arg,
             )
 
@@ -305,7 +316,7 @@ def adam(
 
     # --- Optimize parameters ---
 
-    print("")
+    print("\nStarted optimization using 1 process")
 
     t0 = time.perf_counter()
     final_params_trainable, final_infidelity, history = _adam_optimize(
@@ -319,6 +330,7 @@ def adam(
         1,
         learning_rate,
         tol,
+        0,
     )
     duration = time.perf_counter() - t0
 
@@ -351,7 +363,7 @@ def multi_start_adam(
     min_converged_initializations: int = ...,
     learning_rate: float = ...,
     tol: float = ...,
-    num_workers: int | None = ...,
+    num_processes: int | None = ...,
     seed: int = ...,
     *,
     return_history: Literal[True],
@@ -371,7 +383,7 @@ def multi_start_adam(
     min_converged_initializations: int = ...,
     learning_rate: float = ...,
     tol: float = ...,
-    num_workers: int | None = ...,
+    num_processes: int | None = ...,
     seed: int = ...,
     *,
     return_history: Literal[False] = False,
@@ -391,7 +403,7 @@ def multi_start_adam(
     min_converged_initializations: int = ...,
     learning_rate: float = ...,
     tol: float = ...,
-    num_workers: int | None = ...,
+    num_processes: int | None = ...,
     seed: int = ...,
     *,
     return_history: Literal[True],
@@ -411,7 +423,7 @@ def multi_start_adam(
     min_converged_initializations: int = ...,
     learning_rate: float = ...,
     tol: float = ...,
-    num_workers: int | None = ...,
+    num_processes: int | None = ...,
     seed: int = ...,
     *,
     return_history: Literal[False] = False,
@@ -430,7 +442,7 @@ def multi_start_adam(
     min_converged_initializations: int = 1,
     learning_rate: float = 0.05,
     tol: float = 1e-7,
-    num_workers: int | None = None,
+    num_processes: int | None = None,
     seed: int = 0,
     *,
     return_history: bool = False,
@@ -477,25 +489,25 @@ def multi_start_adam(
     use_one_process_per_device = (
         len(jax.devices()) > 1 or jax.devices()[0].platform != "cpu"
     )
-    if num_workers is None:
-        num_workers = (
+    if num_processes is None:
+        num_processes = (
             len(jax.devices())
             if use_one_process_per_device
             else max(1, mp.cpu_count() // 2)
         )  # the division by 2 avoids oversubscription
-    elif use_one_process_per_device and num_workers > len(jax.devices()):
+    elif use_one_process_per_device and num_processes > len(jax.devices()):
         raise ValueError(
-            "If multiple devices or a GPU device is visible, num_workers must be smaller or equal "
+            "If multiple devices or a GPU device is visible, num_processes must be smaller or equal "
             "to the number of devices."
         )
 
-    # Pad the number of initial parameter samples to be a multiple of the number of workers
-    pad = (-num_initializations) % num_workers
+    # Pad the number of initial parameter samples to be a multiple of the number of processes
+    pad = (-num_initializations) % num_processes
     padded_num_initializations = num_initializations + pad
     if pad != 0:
         print(
             f"Padding num_initializations from {num_initializations} to "
-            f"{padded_num_initializations} to be a multiple of num_workers={num_workers}."
+            f"{padded_num_initializations} to be a multiple of num_processes={num_processes}."
         )
 
     # Initial parameter samples
@@ -506,11 +518,13 @@ def multi_start_adam(
 
     # --- Optimize parameters ---
 
-    print("")
+    print(
+        f"\nStarted optimization using {num_processes} {'processes' if num_processes > 1 else 'process'}"
+    )
 
     t0 = time.perf_counter()
 
-    if num_workers == 1:
+    if num_processes == 1:
         # Run optimization in main process
         final_params_trainable, final_infidelities, history = _adam_optimize(
             gate,
@@ -523,13 +537,14 @@ def multi_start_adam(
             min_converged_initializations,
             learning_rate,
             tol,
+            0,
         )
 
     else:
-        # Run optimization in spawned worker processes
-        chunks = np.array_split(params_trainable, num_workers, axis=0)
+        # Run optimization in spawned processes
+        chunks = np.array_split(params_trainable, num_processes, axis=0)
         ctx = mp.get_context("spawn")
-        with ctx.Pool(processes=num_workers) as pool:
+        with ctx.Pool(processes=num_processes) as pool:
             results = pool.starmap(
                 _adam_optimize,
                 [
@@ -541,17 +556,18 @@ def multi_start_adam(
                         trainable_indices,
                         split_indices,
                         num_steps,
-                        (min_converged_initializations + num_workers - 1)
-                        // num_workers,
+                        (min_converged_initializations + num_processes - 1)
+                        // num_processes,
                         learning_rate,
                         tol,
+                        device_idx,
                         device_idx if use_one_process_per_device else None,
                     )
                     for device_idx, p in enumerate(chunks)
                 ],
             )
 
-        # Concatenate results from all workers
+        # Concatenate results from all processes
         final_params_trainable_list, final_infidelities_list, histories_list = zip(
             *results
         )
