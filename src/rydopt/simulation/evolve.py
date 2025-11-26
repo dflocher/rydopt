@@ -17,7 +17,7 @@ def evolve(
 
     .. math::
 
-        |\psi_i(T)\rangle = U(T)|\psi_i(0)\rangle = \mathcal{T} \int_0^T e^{-\frac{i}{\hbar}H(t)dt}  |\psi_i(0)\rangle
+        |\psi_i(T)\rangle = U(T)|\psi_i(0)\rangle = \mathcal{T} e^{-\frac{i}{\hbar} \int_0^T H(t)dt}  |\psi_i(0)\rangle
 
     Args:
         gate: rydopt Gate object.

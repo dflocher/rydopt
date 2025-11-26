@@ -3,16 +3,16 @@ from copy import deepcopy
 
 
 class Gate(ABC):
-    r"""Abstract base class that describes Rydberg gates. A Rydberg gate consists of
+    r"""Abstract base class that describes Rydberg gates. A Rydberg gate object consists of
 
-    (i) The physical details (number of atoms, Rydberg interaction strengths between the atoms, Rydberg decay rate).
+    (i) The physical setting (number of atoms, Rydberg interaction strengths between the atoms, Rydberg decay rate).
 
     (ii) The target gate angles.
 
-    The Hamiltonian describing a gate pulse on a group of atoms is block-diagonal.
+    A specific implementation of this base class specifies the number of atoms and their geometric arrangement (see examples below).
+    The reason for this is that the Hamiltonian describing a gate pulse on a group of atoms is block-diagonal.
     The Rydberg interaction strengths determine how many equivalent blocks there are and what their dimensionality is.
     We refer to them as 'subsystems'.
-    A specific implementation of this base class specifies the number of atoms and their geometric arrangement (see below).
 
     Args:
         decay: Rydberg decay strength :math:`\gamma/\Omega_0`.

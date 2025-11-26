@@ -8,7 +8,7 @@ def sin_crab(
 
     .. math::
 
-       \xi(t)
+       f(t)
        = \sum_{n=1}^N \alpha_n
          \sin\!\left(
            \frac{2\pi}{T}\,
@@ -17,13 +17,13 @@ def sin_crab(
          \right)
 
     Args:
-        t: Time samples at which :math:`\xi(t)` is evaluated.
+        t: Time samples at which :math:`f(t)` is evaluated.
         duration: Pulse duration :math:`T`.
         params: Array with :math:`2N` entries
             :math:`(A_1, \alpha_1, \dots, A_N, \alpha_N)`.
 
     Returns:
-        Values of :math:`\xi(t)`.
+        Values of :math:`f(t)`.
     """
     t = jnp.asarray(t)
 
@@ -43,7 +43,7 @@ def cos_crab(
 
     .. math::
 
-       \xi(t)
+       f(t)
        = \sum_{n=1}^N \beta_n
          \cos\!\left(
            \frac{2\pi}{T}\,
@@ -52,13 +52,13 @@ def cos_crab(
          \right)
 
     Args:
-        t: Time samples at which :math:`\xi(t)` is evaluated.
+        t: Time samples at which :math:`f(t)` is evaluated.
         duration: Pulse duration :math:`T`.
         params: Array with :math:`2N` entries
             :math:`(B_1, \beta_1, \dots, B_N, \beta_N)`.
 
     Returns:
-        Values of :math:`\xi(t)`.
+        Values of :math:`f(t)`.
     """
     t = jnp.asarray(t)
 
@@ -78,7 +78,7 @@ def sin_cos_crab(
 
     .. math::
 
-       \xi(t)
+       f(t)
        = \sum_{n=1}^N \alpha_n
          \sin\!\left(
            \frac{2\pi}{T}\,
@@ -95,13 +95,13 @@ def sin_cos_crab(
          \right)
 
     Args:
-        t: Time samples at which :math:`\xi(t)` is evaluated.
+        t: Time samples at which :math:`f(t)` is evaluated.
         duration: Pulse duration :math:`T`.
         params: Array with :math:`4N` entries
             :math:`(A_1, \alpha_1, B_1, \beta_1, \dots, A_N, \alpha_N, B_N, \beta_N)`.
 
     Returns:
-        Values of :math:`\xi(t)`.
+        Values of :math:`f(t)`.
     """
     freq_params_sin = params[0::4]
     coeffs_sin = params[1::4]
@@ -121,7 +121,7 @@ def cos_sin_crab(
 
     .. math::
 
-       \xi(t)
+       f(t)
        = \sum_{n=1}^N \beta_n
          \cos\!\left(
            \frac{2\pi}{T}\,
@@ -138,13 +138,13 @@ def cos_sin_crab(
          \right)
 
     Args:
-        t: Time samples at which :math:`\xi(t)` is evaluated.
+        t: Time samples at which :math:`f(t)` is evaluated.
         duration: Pulse duration :math:`T`.
         params: Array with :math:`4N` entries
             :math:`(B_1, \beta_1, A_1, \alpha_1, \dots, B_N, \beta_N, A_N, \alpha_N)`.
 
     Returns:
-        Values of :math:`\xi(t)`.
+        Values of :math:`f(t)`.
     """
     freq_params_cos = params[0::4]
     coeffs_cos = params[1::4]
@@ -162,15 +162,15 @@ def const(t: jnp.ndarray | float, _duration: float, params: jnp.ndarray) -> jnp.
 
     .. math::
 
-       \xi(t) = c_0
+       f(t) = c_0
 
     Args:
-        t: Time samples at which :math:`\xi(t)` is evaluated.
+        t: Time samples at which :math:`f(t)` is evaluated.
         _duration: Pulse duration :math:`T` (unused).
         params: Array with entry :math:`(c_0)`.
 
     Returns:
-        Values of :math:`\xi(t)`.
+        Values of :math:`f(t)`.
     """
     c0 = params[0]
     return c0 + jnp.zeros_like(t)
@@ -183,7 +183,7 @@ def const_sin_crab(
 
     .. math::
 
-       \xi(t)
+       f(t)
        = c_0
        + \sum_{n=1}^N \alpha_n
          \sin\!\left(
@@ -193,13 +193,13 @@ def const_sin_crab(
          \right)
 
     Args:
-        t: Time samples at which :math:`\xi(t)` is evaluated.
+        t: Time samples at which :math:`f(t)` is evaluated.
         duration: Pulse duration :math:`T`.
         params: Array with :math:`2N+1` entries
             :math:`(c_0, A_1, \alpha_1, \dots, A_N, \alpha_N)`.
 
     Returns:
-        Values of :math:`\xi(t)`.
+        Values of :math:`f(t)`.
     """
     c0 = params[0]
     return c0 + sin_crab(t, duration, params[1:])
@@ -212,7 +212,7 @@ def const_cos_crab(
 
     .. math::
 
-       \xi(t)
+       f(t)
        = c_0
        + \sum_{n=1}^N \beta_n
          \cos\!\left(
@@ -222,13 +222,13 @@ def const_cos_crab(
          \right)
 
     Args:
-        t: Time samples at which :math:`\xi(t)` is evaluated.
+        t: Time samples at which :math:`f(t)` is evaluated.
         duration: Pulse duration :math:`T`.
         params: Array with :math:`2N+1` entries
             :math:`(c_0, B_1, \beta_1, \dots, B_N, \beta_N)`.
 
     Returns:
-        Values of :math:`\xi(t)`.
+        Values of :math:`f(t)`.
     """
     c0 = params[0]
     return c0 + cos_crab(t, duration, params[1:])
@@ -241,7 +241,7 @@ def const_sin_cos_crab(
 
     .. math::
 
-       \xi(t)
+       f(t)
        = c_0
        + \sum_{n=1}^N \alpha_n
          \sin\!\left(
@@ -259,13 +259,13 @@ def const_sin_cos_crab(
          \right)
 
     Args:
-        t: Time samples at which :math:`\xi(t)` is evaluated.
+        t: Time samples at which :math:`f(t)` is evaluated.
         duration: Pulse duration :math:`T`.
         params: Array with :math:`4N+1` entries
             :math:`(c_0, A_1, \alpha_1, B_1, \beta_1, \dots, A_N, \alpha_N, B_N, \beta_N)`.
 
     Returns:
-        Values of :math:`\xi(t)`.
+        Values of :math:`f(t)`.
     """
 
     c0 = params[0]
@@ -279,7 +279,7 @@ def const_cos_sin_crab(
 
     .. math::
 
-       \xi(t)
+       f(t)
        = c_0
        + \sum_{n=1}^N \beta_n
          \cos\!\left(
@@ -297,13 +297,13 @@ def const_cos_sin_crab(
          \right)
 
     Args:
-        t: Time samples at which :math:`\xi(t)` is evaluated.
+        t: Time samples at which :math:`f(t)` is evaluated.
         duration: Pulse duration :math:`T`.
         params: Array with :math:`4N+1` entries
             :math:`(c_0, B_1, \beta_1, A_1, \alpha_1, \dots, B_N, \beta_N, A_N, \alpha_N)`.
 
     Returns:
-        Values of :math:`\xi(t)`.
+        Values of :math:`f(t)`.
     """
     c0 = params[0]
     return c0 + cos_sin_crab(t, duration, params[1:])
@@ -316,7 +316,7 @@ def lin_sin_crab(
 
     .. math::
 
-       \xi(t)
+       f(t)
        = c_1 (t - T/2)
        + \sum_{n=1}^N \alpha_n
          \sin\!\left(
@@ -326,13 +326,13 @@ def lin_sin_crab(
          \right)
 
     Args:
-        t: Time samples at which :math:`\xi(t)` is evaluated.
+        t: Time samples at which :math:`f(t)` is evaluated.
         duration: Pulse duration :math:`T`.
         params: Array with :math:`2N+1` entries
             :math:`(c_1, A_1, \alpha_1, \dots, A_N, \alpha_N)`.
 
     Returns:
-        Values of :math:`\xi(t)`.
+        Values of :math:`f(t)`.
     """
     c1 = params[0]
     return c1 * (t - duration / 2.0) + sin_crab(t, duration, params[1:])
@@ -345,7 +345,7 @@ def lin_cos_crab(
 
     .. math::
 
-       \xi(t)
+       f(t)
        = c_1 (t - T/2)
        + \sum_{n=1}^N \beta_n
          \cos\!\left(
@@ -355,13 +355,13 @@ def lin_cos_crab(
          \right)
 
     Args:
-        t: Time samples at which :math:`\xi(t)` is evaluated.
+        t: Time samples at which :math:`f(t)` is evaluated.
         duration: Pulse duration :math:`T`.
         params: Array with :math:`2N+1` entries
             :math:`(c_1, B_1, \beta_1, \dots, B_N, \beta_N)`.
 
     Returns:
-        Values of :math:`\xi(t)`.
+        Values of :math:`f(t)`.
     """
     c1 = params[0]
     return c1 * (t - duration / 2.0) + cos_crab(t, duration, params[1:])
@@ -374,7 +374,7 @@ def lin_sin_cos_crab(
 
     .. math::
 
-       \xi(t)
+       f(t)
        = c_1 (t - T/2)
        + \sum_{n=1}^N \alpha_n
          \sin\!\left(
@@ -392,13 +392,13 @@ def lin_sin_cos_crab(
          \right)
 
     Args:
-        t: Time samples at which :math:`\xi(t)` is evaluated.
+        t: Time samples at which :math:`f(t)` is evaluated.
         duration: Pulse duration :math:`T`.
         params: Array with :math:`4N+1` entries
             :math:`(c_1, A_1, \alpha_1, B_1, \beta_1, \dots, A_N, \alpha_N, B_N, \beta_N)`.
 
     Returns:
-        Values of :math:`\xi(t)`.
+        Values of :math:`f(t)`.
     """
 
     c1 = params[0]
@@ -412,7 +412,7 @@ def lin_cos_sin_crab(
 
     .. math::
 
-       \xi(t)
+       f(t)
        = c_1 (t - T/2)
        + \sum_{n=1}^N \beta_n
          \cos\!\left(
@@ -430,13 +430,13 @@ def lin_cos_sin_crab(
          \right)
 
     Args:
-        t: Time samples at which :math:`\xi(t)` is evaluated.
+        t: Time samples at which :math:`f(t)` is evaluated.
         duration: Pulse duration :math:`T`.
         params: Array with :math:`4N+1` entries
             :math:`(c_1, B_1, \beta_1, A_1, \alpha_1, \dots, B_N, \beta_N, A_N, \alpha_N)`.
 
     Returns:
-        Values of :math:`\xi(t)`.
+        Values of :math:`f(t)`.
     """
     c1 = params[0]
     return c1 * (t - duration / 2.0) + cos_sin_crab(t, duration, params[1:])

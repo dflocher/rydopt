@@ -15,7 +15,7 @@ def rydberg_time(
 
     .. math::
 
-        T_R = \int_0^T \sum_{i=1}^{N} \bra{+}^{\otimes N}U(t)^{\dagger} |r_i\rangle\!\langle r_i|  U(t)\ket{+}^{\otimes N} dt .
+        \Omega_0 T_R = \Omega_0 \int_0^T \sum_{i=1}^{N} \bra{+}^{\otimes N}U(t)^{\dagger} |r_i\rangle\!\langle r_i|  U(t)\ket{+}^{\otimes N} dt .
 
     Args:
         gate: rydopt Gate object.
