@@ -19,13 +19,13 @@ def process_fidelity(
         F = |\! \langle +|^{\otimes N} U_{\mathrm{targ}}^{\dagger} U(T) |+\rangle^{\otimes N}\!|^2 .
 
     Args:
-        gate: rydopt Gate object
-        pulse: rydopt PulseAnsatz object
-        params: pulse parameters
-        tol: precision of the ODE solver
+        gate: rydopt Gate object.
+        pulse: rydopt PulseAnsatz object.
+        params: Pulse parameters.
+        tol: Precision of the ODE solver, default is 1e-7.
 
     Returns:
-        State fidelity :math:`F`
+        State fidelity :math:`F`.
     """
     final_states = evolve(gate, pulse, params, tol)
     return gate.process_fidelity(final_states)

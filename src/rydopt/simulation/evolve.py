@@ -9,17 +9,24 @@ from rydopt.types import ParamsTuple
 
 
 # TODO: I don't quite understand how to write the type of the output. Sth. like tuple[jnp.ndarray, ...] ?
-def evolve(gate: Gate, pulse: PulseAnsatz, params: ParamsTuple, tol: float = 1e-7):
-    r"""The function performs the time evolution of the gate pulse for the initial states specified in the Gate object.
+def evolve(
+    gate: Gate, pulse: PulseAnsatz, params: ParamsTuple, tol: float = 1e-7
+) -> tuple:
+    r"""The function performs the time evolution of all initial states :math:`|\psi_i(0)\rangle` (specified in the gate object),
+    under the pulse Hamiltonian :math:`H`.
+
+    .. math::
+
+        |\psi_i(T)\rangle = U(T)|\psi_i(0)\rangle = \mathcal{T} \int_0^T e^{-\frac{i}{\hbar}H(t)dt}  |\psi_i(0)\rangle
 
     Args:
-        gate: rydopt Gate object
-        pulse: rydopt PulseAnsatz object
-        params: pulse parameters
-        tol: precision of the ODE solver
+        gate: rydopt Gate object.
+        pulse: rydopt PulseAnsatz object.
+        params: Pulse parameters.
+        tol: Precision of the ODE solver, default is 1e-7.
 
     Returns:
-        Time-evolved subsystem states
+        Time-evolved subsystem states :math:`\{|\psi_i(T)\rangle\}`.
     """
     # When we import diffrax, at least one jnp array is allocated (see optimistix/_misc.py, line 138). Thus,
     # if we change the default device after we have imported diffrax, some memory is allocated on the

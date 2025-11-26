@@ -37,13 +37,13 @@ def analyze_gate(
         >>> analyze_gate(gate, pulse_ansatz, params)
 
     Args:
-        gate: target gate.
-        pulse_ansatz: ansatz of the gate pulse.
-        params: pulse parameters.
-        tol: precision of the ODE solver.
+        gate: Target gate.
+        pulse_ansatz: Ansatz of the gate pulse.
+        params: Pulse parameters.
+        tol: Precision of the ODE solver, default is 1e-15.
 
     Returns:
-        gate infidelity, gate infidelity without decay, Rydberg time
+        Gate infidelity, Gate infidelity without decay, Rydberg time.
     """
     gate_nodecay = gate.copy()
     gate_nodecay.set_decay(0.0)
@@ -82,12 +82,12 @@ def analyze_gate_qutip(
         >>> analyze_gate_qutip(gate, pulse_ansatz, params)
 
     Args:
-        gate: target gate.
-        pulse_ansatz: ansatz of the gate pulse.
-        params: pulse parameters.
+        gate: Target gate.
+        pulse_ansatz: Ansatz of the gate pulse.
+        params: Pulse parameters.
 
     Returns:
-        gate infidelity, gate infidelity without decay, Rydberg time
+        Gate infidelity, Gate infidelity without decay, Rydberg time.
     """
     gate_nodecay = gate.copy()
     gate_nodecay.set_decay(0.0)

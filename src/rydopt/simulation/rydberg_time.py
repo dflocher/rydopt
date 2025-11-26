@@ -18,13 +18,13 @@ def rydberg_time(
         T_R = \int_0^T \sum_{i=1}^{N} \bra{+}^{\otimes N}U(t)^{\dagger} |r_i\rangle\!\langle r_i|  U(t)\ket{+}^{\otimes N} dt .
 
     Args:
-        gate: rydopt Gate object
-        pulse: rydopt PulseAnsatz object
-        params: pulse parameters
-        tol: precision of the ODE solver
+        gate: rydopt Gate object.
+        pulse: rydopt PulseAnsatz object.
+        params: Pulse parameters.
+        tol: Precision of the ODE solver, default is 1e-7.
 
     Returns:
-        Total Rydberg time :math:`T_R`
+        Total Rydberg time :math:`\Omega_0 T_R`.
     """
     # When we import diffrax, at least one jnp array is allocated (see optimistix/_misc.py, line 138). Thus,
     # if we change the default device after we have imported diffrax, some memory is allocated on the

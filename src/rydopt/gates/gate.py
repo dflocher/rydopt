@@ -3,9 +3,16 @@ from copy import deepcopy
 
 
 class Gate(ABC):
-    r"""Abstract base class that describes Rydberg gates.
-    A gate consists of (i) the physical details (number of atoms, Rydberg interaction strengths between the atoms, Rydberg state decay rate),
-    and (ii) the target gate angles.
+    r"""Abstract base class that describes Rydberg gates. A Rydberg gate consists of
+
+    (i) The physical details (number of atoms, Rydberg interaction strengths between the atoms, Rydberg decay rate).
+
+    (ii) The target gate angles.
+
+    The Hamiltonian describing a gate pulse on a group of atoms is block-diagonal.
+    The Rydberg interaction strengths determine how many equivalent blocks there are and what their dimensionality is.
+    We refer to them as 'subsystems'.
+    A specific implementation of this base class specifies the number of atoms and their geometric arrangement (see below).
 
     Args:
         decay: Rydberg decay strength :math:`\gamma/\Omega_0`.
@@ -48,7 +55,7 @@ class Gate(ABC):
     def get_gate_angles(self) -> tuple[float | None, ...]:
         r"""
         Returns:
-            Gate angles
+            Gate angles.
         """
         ...
 
@@ -56,7 +63,7 @@ class Gate(ABC):
     def get_interactions(self) -> tuple[float | None, ...] | float | None:
         r"""
         Returns:
-            Interactions between the atoms
+            Interactions between the atoms.
         """
         ...
 
@@ -98,7 +105,7 @@ class Gate(ABC):
         this function calculates the fidelity with respect to the gate's target state, specified by the gate angles :math:`\phi, \, \theta, \, \ldots`
 
         Args:
-            final_states: states evolved under the subsystem Hamiltonians.
+            final_states: States evolved under the subsystem Hamiltonians.
 
         Returns:
             Fidelity with respect to the target state.

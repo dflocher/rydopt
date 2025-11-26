@@ -13,7 +13,7 @@ def plot_pulse(
     plot_phase: bool = True,
     plot_rabi: bool = True,
     phase_offset: bool = False,
-):
+) -> None:
     r"""Function that plots a pulse, given the pulse ansatz and the pulse parameters.
 
     Example:
@@ -26,12 +26,12 @@ def plot_pulse(
         >>> plot_pulse(pulse_ansatz, params)
 
     Args:
-        pulse_ansatz: ansatz of the gate pulse.
-        params: pulse parameters.
-        plot_detuning: whether to plot the detuning pulse.
-        plot_phase: whether to plot the phase pulse.
-        plot_rabi: whether to plot the rabi pulse.
-        phase_offset: let the phase pulse begin at 0.
+        pulse_ansatz: Ansatz of the gate pulse.
+        params: Pulse parameters.
+        plot_detuning: Whether to plot the detuning pulse, default is True.
+        plot_phase: Whether to plot the phase pulse, default is True.
+        plot_rabi: Whether to plot the rabi pulse, default is True.
+        phase_offset: Whether the phase pulse begins at 0, default is False.
     """
     T = params[0]
     ts = jnp.linspace(0, T, 1000)

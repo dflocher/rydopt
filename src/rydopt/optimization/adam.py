@@ -28,9 +28,9 @@ class OptimizationResult(Generic[ParamsT, InfidelityT, HistoryT]):
     r"""Data class that stores the results of a gate pulse optimization.
 
     Attributes:
-        params: final pulse parameters
-        infidelity: final gate infidelity.
-        history: cost function evaluations during the optimization
+        params: Final pulse parameters.
+        infidelity: Final cost function evaluation.
+        history: Cost function evaluations during the optimization.
 
     """
 
