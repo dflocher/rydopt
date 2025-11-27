@@ -32,7 +32,7 @@ if __name__ == "__main__":
     fixed_initial_params = (False, (False,), (False, False, True, False), ())
 
     # Run optimization
-    r = ro.optimization.multi_start_adam(
+    r = ro.optimization.multi_start_optimize(
         gate,
         pulse,
         min_initial_params,

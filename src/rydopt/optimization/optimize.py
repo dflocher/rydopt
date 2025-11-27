@@ -15,28 +15,33 @@ from dataclasses import dataclass
 from contextlib import nullcontext
 from rydopt.types import ParamsTuple, FixedParamsTuple
 from typing import Generic, TypeVar, overload, Literal
+from collections.abc import Sized
 
-ParamsT = TypeVar("ParamsT", covariant=True)
-InfidelityT = TypeVar("InfidelityT", covariant=True)
-HistoryT = TypeVar("HistoryT", covariant=True)
+ParamsType = TypeVar("ParamsType", covariant=True)
+InfidelityType = TypeVar("InfidelityType", covariant=True)
+HistoryType = TypeVar("HistoryType", covariant=True)
 
 
-# TODO: Shall we add some optimization parameters such as tol and num_steps to the data class?
-#  One could then set up a 'plot_history' function in the ro.characterization module, which just takes an OptimizationResult object as input
 @dataclass
-class OptimizationResult(Generic[ParamsT, InfidelityT, HistoryT]):
+class OptimizationResult(Generic[ParamsType, InfidelityType, HistoryType]):
     r"""Data class that stores the results of a gate pulse optimization.
 
     Attributes:
         params: Final pulse parameters.
         infidelity: Final cost function evaluation.
         history: Cost function evaluations during the optimization.
+        num_steps: Number of optimization steps.
+        tol: Target gate infidelity.
+        duration_in_sec: Duration of the optimization in seconds."
 
     """
 
-    params: ParamsT  # type: ignore[misc]
-    infidelity: InfidelityT  # type: ignore[misc]
-    history: HistoryT  # type: ignore[misc]
+    params: ParamsType  # type: ignore[misc]
+    infidelity: InfidelityType  # type: ignore[misc]
+    history: HistoryType  # type: ignore[misc]
+    num_steps: int
+    tol: float
+    duration_in_sec: float
 
 
 # -----------------------------------------------------------------------------
@@ -44,22 +49,27 @@ class OptimizationResult(Generic[ParamsT, InfidelityT, HistoryT]):
 # -----------------------------------------------------------------------------
 
 
-def _spec(nested):
-    first, *rest = nested
-    return tuple(np.cumsum([1] + [len(p) for p in rest])[:-1].tolist())
+def _spec(nested: ParamsTuple | FixedParamsTuple) -> tuple[int, ...]:
+    return tuple(
+        np.cumsum([len(p) if isinstance(p, Sized) else 1 for p in nested])[:-1].tolist()
+    )
 
 
-def _ravel(nested):
+def _ravel(nested: ParamsTuple | FixedParamsTuple) -> np.ndarray:
     first, *rest = nested
     return np.concatenate([(first,)] + [p for p in rest])
 
 
-def _unravel(flat, split_indices):
+def _unravel(
+    flat: np.ndarray, split_indices: tuple[int, ...]
+) -> ParamsTuple | FixedParamsTuple:
     parts = np.split(flat, split_indices)
     return (parts[0][0],) + tuple(parts[1:])
 
 
-def _unravel_jax(flat, split_indices):
+def _unravel_jax(
+    flat: jnp.ndarray, split_indices: tuple[int, ...]
+) -> ParamsTuple | FixedParamsTuple:
     parts = jnp.split(flat, split_indices)
     return (parts[0][0],) + tuple(parts[1:])
 
@@ -78,17 +88,14 @@ def _make_infidelity(
     def infidelity(params_trainable):
         params = full.at[trainable_indices].set(params_trainable)
         params_tuple = _unravel_jax(params, params_split_indices)
-        return 1 - process_fidelity(
-            gate, pulse, params_tuple, tol
-        )  # TODO: My IDE's typechecker complains about params_tuple
+        return 1 - process_fidelity(gate, pulse, params_tuple, tol)
 
     return infidelity
 
 
-def _print_gate(title: str, params, infidelity: float):
+def _print_gate(title: str, params, infidelity: float, tol: float):
     print(f"\n{title}")
-    # TODO: Already if infidelity \approx tol, the number printed here might not be quite correct (see example gate_optimization_single.py)
-    if float(infidelity) < 0:
+    if abs(float(infidelity)) < tol:
         print("> infidelity <= numerical precision")
     else:
         print(f"> infidelity = {infidelity:.6e}")
@@ -264,46 +271,42 @@ def _adam_optimize(
 
 
 @overload
-def adam(
+def optimize(
     gate: Gate,
     pulse: PulseAnsatz,
     initial_params: ParamsTuple,
     fixed_initial_params: FixedParamsTuple | None = ...,
+    *,
     num_steps: int = ...,
     learning_rate: float = ...,
     tol: float = ...,
-    *,
     return_history: Literal[True],
 ) -> OptimizationResult[ParamsTuple, float, np.ndarray]: ...
 
 
 @overload
-def adam(
+def optimize(
     gate: Gate,
     pulse: PulseAnsatz,
     initial_params: ParamsTuple,
     fixed_initial_params: FixedParamsTuple | None = ...,
+    *,
     num_steps: int = ...,
     learning_rate: float = ...,
     tol: float = ...,
-    *,
     return_history: Literal[False] = False,
 ) -> OptimizationResult[ParamsTuple, float, None]: ...
 
 
-# TODO: I'd rename the function to something like 'optimize'.
-#  One could just as well use another optimizer, such as adagrad or nadam.
-#  This would probably just change a single line of code: optax.adam -> optax.adagrad
-#  Being able to specify a concrete optimizer could be a future upgrade of the package
-def adam(
+def optimize(
     gate: Gate,
     pulse: PulseAnsatz,
     initial_params: ParamsTuple,
     fixed_initial_params: FixedParamsTuple | None = None,
+    *,
     num_steps: int = 1000,
     learning_rate: float = 0.05,
     tol: float = 1e-7,
-    *,
     return_history: bool = False,
 ) -> OptimizationResult[ParamsTuple, float, np.ndarray | None]:
     r"""Function that optimizes an initial parameter guess in order to realize the desired gate.
@@ -361,109 +364,113 @@ def adam(
     # --- Logging ---
 
     _print_summary("Adam", duration, tol, num_converged)
-    _print_gate("Optimized gate:", final_params, float(final_infidelity))
+    _print_gate("Optimized gate:", final_params, float(final_infidelity), tol)
 
     history_out = history if return_history else None
     return OptimizationResult(
-        params=final_params, infidelity=float(final_infidelity), history=history_out
+        params=final_params,
+        infidelity=float(final_infidelity),
+        history=history_out,
+        num_steps=num_steps,
+        tol=tol,
+        duration_in_sec=duration,
     )
 
 
 @overload
-def multi_start_adam(
+def multi_start_optimize(
     gate: Gate,
     pulse: PulseAnsatz,
     min_initial_params: ParamsTuple,
     max_initial_params: ParamsTuple,
     fixed_initial_params: FixedParamsTuple | None = ...,
+    *,
     num_steps: int = ...,
-    num_initializations: int = ...,
-    min_converged_initializations: int = ...,
     learning_rate: float = ...,
     tol: float = ...,
+    num_initializations: int = ...,
+    min_converged_initializations: int | None = ...,
     num_processes: int | None = ...,
-    seed: int = ...,
-    *,
+    seed: int | None = ...,
     return_history: Literal[True],
     return_all: Literal[True],
 ) -> OptimizationResult[list[ParamsTuple], np.ndarray, np.ndarray]: ...
 
 
 @overload
-def multi_start_adam(
+def multi_start_optimize(
     gate: Gate,
     pulse: PulseAnsatz,
     min_initial_params: ParamsTuple,
     max_initial_params: ParamsTuple,
     fixed_initial_params: FixedParamsTuple | None = ...,
+    *,
     num_steps: int = ...,
-    num_initializations: int = ...,
-    min_converged_initializations: int = ...,
     learning_rate: float = ...,
     tol: float = ...,
+    num_initializations: int = ...,
+    min_converged_initializations: int | None = ...,
     num_processes: int | None = ...,
-    seed: int = ...,
-    *,
+    seed: int | None = ...,
     return_history: Literal[False] = False,
     return_all: Literal[True],
 ) -> OptimizationResult[list[ParamsTuple], np.ndarray, None]: ...
 
 
 @overload
-def multi_start_adam(
+def multi_start_optimize(
     gate: Gate,
     pulse: PulseAnsatz,
     min_initial_params: ParamsTuple,
     max_initial_params: ParamsTuple,
     fixed_initial_params: FixedParamsTuple | None = ...,
+    *,
     num_steps: int = ...,
-    num_initializations: int = ...,
-    min_converged_initializations: int = ...,
     learning_rate: float = ...,
     tol: float = ...,
+    num_initializations: int = ...,
+    min_converged_initializations: int | None = ...,
     num_processes: int | None = ...,
-    seed: int = ...,
-    *,
+    seed: int | None = ...,
     return_history: Literal[True],
     return_all: Literal[False] = False,
 ) -> OptimizationResult[ParamsTuple, float, np.ndarray]: ...
 
 
 @overload
-def multi_start_adam(
+def multi_start_optimize(
     gate: Gate,
     pulse: PulseAnsatz,
     min_initial_params: ParamsTuple,
     max_initial_params: ParamsTuple,
     fixed_initial_params: FixedParamsTuple | None = ...,
+    *,
     num_steps: int = ...,
-    num_initializations: int = ...,
-    min_converged_initializations: int = ...,
     learning_rate: float = ...,
     tol: float = ...,
+    num_initializations: int = ...,
+    min_converged_initializations: int | None = ...,
     num_processes: int | None = ...,
-    seed: int = ...,
-    *,
+    seed: int | None = ...,
     return_history: Literal[False] = False,
     return_all: Literal[False] = False,
 ) -> OptimizationResult[ParamsTuple, float, None]: ...
 
 
-# TODO: rename function (see my comment above)
-def multi_start_adam(
+def multi_start_optimize(
     gate: Gate,
     pulse: PulseAnsatz,
     min_initial_params: ParamsTuple,
     max_initial_params: ParamsTuple,
     fixed_initial_params: FixedParamsTuple | None = None,
-    num_steps: int = 1000,  # TODO: Do you mind if change the order to ..., num_steps, learning_rate, tol, num_initializations, ... to match the adam function?
-    num_initializations: int = 10,
-    min_converged_initializations: int = 1,  # TODO: I think a better default value would be min_converged_initializations=num_initializations
+    *,
+    num_steps: int = 1000,
     learning_rate: float = 0.05,
     tol: float = 1e-7,
+    num_initializations: int = 10,
+    min_converged_initializations: int | None = None,
     num_processes: int | None = None,
-    seed: int = 0,  # TODO: Can one set the default to a 'random' number such as time.time_ns() ?
-    *,
+    seed: int | None = None,
     return_history: bool = False,
     return_all: bool = False,
 ) -> OptimizationResult[
@@ -478,12 +485,12 @@ def multi_start_adam(
         max_initial_params: upper bound for the random parameter initialization
         fixed_initial_params: which parameters shall not be optimized
         num_steps: number of optimization steps
-        num_initializations: number of runs in the search for gate pulses
-        min_converged_initializations: number of runs that must reach ``tol`` for the optimization to stop
         learning_rate: optimizer learning rate hyperparameter
         tol: target gate infidelity, also sets the ODE solver tolerance
+        num_initializations: number of runs in the search for gate pulses
+        min_converged_initializations: number of runs that must reach ``tol`` for the optimization to stop
         num_processes: number of parallel processes
-        seed: seed for random number generator
+        seed: seed for the random number generator
         return_history: whether or not to return the cost history of the optimization
         return_all: whether or not to return all optimization results
 
@@ -494,6 +501,9 @@ def multi_start_adam(
     flat_min = _ravel(min_initial_params)
     flat_max = _ravel(max_initial_params)
     params_full = flat_min.copy()
+
+    if min_converged_initializations is None:
+        min_converged_initializations = num_initializations
 
     if fixed_initial_params is None:
         trainable_mask = np.ones_like(flat_min, dtype=bool)
@@ -595,6 +605,8 @@ def multi_start_adam(
 
         if return_history:
             history = np.concatenate(histories_list, axis=1)
+        else:
+            history = None
 
     duration = time.perf_counter() - t0
 
@@ -621,8 +633,8 @@ def multi_start_adam(
         slowest_infidelity = final_infidelities[slowest_idx]
         slowest_params = _unravel(final_full[slowest_idx], split_indices)
 
-        _print_gate("Slowest gate:", slowest_params, slowest_infidelity)
-        _print_gate("Fastest gate:", fastest_params, fastest_infidelity)
+        _print_gate("Slowest gate:", slowest_params, slowest_infidelity, tol)
+        _print_gate("Fastest gate:", fastest_params, fastest_infidelity, tol)
 
         idx = rng.integers(0, num_converged, size=(1024, num_converged))
         mins = np.asarray(durations_converged)[idx].min(axis=1)
@@ -630,25 +642,29 @@ def multi_start_adam(
         print(f"> one-sided bootstrap error on duration: {err:.1g}")
     else:
         # Otherwise, show the gate with the smallest infidelity
-        _print_gate("Best gate:", fastest_params, fastest_infidelity)
+        _print_gate("Best gate:", fastest_params, fastest_infidelity, tol)
 
     # --- Return value(s) ---
 
     if return_all:
         sorter = np.argsort(final_infidelities)
         history_out = None
-        history_out = (
-            history[:, sorter] if return_history else None
-        )  # TODO: My IDE says history might be referenced before assignment
+        history_out = history[:, sorter] if history is not None else None
         return OptimizationResult(
             params=[_unravel(p, split_indices) for p in final_full[sorter]],
             infidelity=final_infidelities[sorter],
             history=history_out,
+            num_steps=num_steps,
+            tol=tol,
+            duration_in_sec=duration,
         )
 
-    history_out = history[:, fastest_idx] if return_history else None  # TODO: see above
+    history_out = history[:, fastest_idx] if history is not None else None
     return OptimizationResult(
         params=fastest_params,
         infidelity=final_infidelities[fastest_idx],
         history=history_out,
+        num_steps=num_steps,
+        tol=tol,
+        duration_in_sec=duration,
     )

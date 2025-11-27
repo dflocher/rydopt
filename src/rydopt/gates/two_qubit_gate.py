@@ -5,6 +5,7 @@ from rydopt.gates.subsystem_hamiltonians import (
     H_k_atoms_perfect_blockade,
     H_2_atoms,
 )
+from rydopt.types import HamiltonianFunction
 from math import isinf
 
 
@@ -68,9 +69,7 @@ class TwoQubitGate(Gate):
         """
         return self._Vnn
 
-    def subsystem_hamiltonians(
-        self,
-    ) -> tuple:  # TODO: I don't know how to specify the type inside the tuple
+    def subsystem_hamiltonians(self) -> tuple[HamiltonianFunction, ...]:
         if isinf(float(self._Vnn)):
             return (
                 partial(H_k_atoms_perfect_blockade, decay=self._decay, k=1),
@@ -81,7 +80,7 @@ class TwoQubitGate(Gate):
             partial(H_2_atoms, decay=self._decay, V=self._Vnn),
         )
 
-    def subsystem_rydberg_population_operators(self) -> tuple:  # TODO: see above
+    def subsystem_rydberg_population_operators(self) -> tuple[jnp.array, ...]:
         if isinf(float(self._Vnn)):
             return (
                 H_k_atoms_perfect_blockade(
@@ -96,7 +95,7 @@ class TwoQubitGate(Gate):
             H_2_atoms(Delta=1.0, Phi=0.0, Omega=0.0, decay=0.0, V=0.0),
         )
 
-    def initial_states(self) -> tuple:  # TODO: see above
+    def subsystem_initial_states(self) -> tuple[jnp.array, ...]:
         if isinf(float(self._Vnn)):
             return (
                 jnp.array([1.0 + 0.0j, 0.0 + 0.0j]),
@@ -136,7 +135,7 @@ class TwoQubitGate(Gate):
             / len(targeted_gate) ** 2
         )
 
-    def rydberg_time(
-        self, expectation_values
-    ):  # TODO: when I add '-> float', the following line gets underlined (expecting float got array instead)
-        return (1 / 4) * jnp.squeeze(2 * expectation_values[0] + expectation_values[1])
+    def rydberg_time(selfrydberg_time, expectation_values) -> float:
+        return (1 / 4) * float(
+            jnp.squeeze(2 * expectation_values[0] + expectation_values[1])
+        )

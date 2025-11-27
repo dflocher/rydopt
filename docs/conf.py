@@ -42,6 +42,7 @@ autodoc_type_aliases = {
     "FixedParamsTuple": "FixedParamsTuple",
     "PulseAnsatzFunction": "PulseAnsatzFunction",
     "PulseFunction": "PulseFunction",
+    "HamiltonianFunction": "HamiltonianFunction",
 }
 
 # -- Options for HTML output -------------------------------------------------

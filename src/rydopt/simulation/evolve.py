@@ -8,10 +8,9 @@ from functools import partial
 from rydopt.types import ParamsTuple
 
 
-# TODO: I don't quite understand how to write the type of the output. Sth. like tuple[jnp.ndarray, ...] ?
 def evolve(
     gate: Gate, pulse: PulseAnsatz, params: ParamsTuple, tol: float = 1e-7
-) -> tuple:
+) -> tuple[jnp.array, ...]:
     r"""The function performs the time evolution of all initial states :math:`|\psi_i(0)\rangle` (specified in the gate object),
     under the pulse Hamiltonian :math:`H`.
 
@@ -45,7 +44,7 @@ def evolve(
     rabi_params = jnp.asarray(rabi_params)
 
     # Collect initial states and pad them to a common dimension so we can stack
-    initial_states = tuple(jnp.asarray(psi) for psi in gate.initial_states())
+    initial_states = gate.subsystem_initial_states()
 
     dims = tuple(len(psi) for psi in initial_states)
     max_dim = max(dims)
@@ -110,7 +109,7 @@ def evolve(
 
 def _evolve_optimized_for_gpus(
     gate: Gate, pulse: PulseAnsatz, params: ParamsTuple, tol: float = 1e-7
-):
+) -> tuple[jnp.array, ...]:
     # When we import diffrax, at least one jnp array is allocated (see optimistix/_misc.py, line 138). Thus,
     # if we change the default device after we have imported diffrax, some memory is allocated on the
     # wrong device. Hence, we defer the import of diffrax to the latest time possible.
@@ -122,16 +121,13 @@ def _evolve_optimized_for_gpus(
     phase_params = jnp.asarray(phase_params)
     rabi_params = jnp.asarray(rabi_params)
 
-    initial_states = tuple(jnp.asarray(psi) for psi in gate.initial_states())
-    subsystem_hamiltonians = tuple(gate.subsystem_hamiltonians())
-
     def schroedinger_eq(t, psi_tuple, _):
         detuning = pulse.detuning_ansatz(t, duration, detuning_params)
         phase = pulse.phase_ansatz(t, duration, phase_params)
         rabi = pulse.rabi_ansatz(t, duration, rabi_params)
         return tuple(
             -1j * (h(detuning, phase, rabi) @ psi)
-            for h, psi in zip(subsystem_hamiltonians, psi_tuple)
+            for h, psi in zip(gate.subsystem_hamiltonians(), psi_tuple)
         )
 
     solver = diffrax.Dopri8()
@@ -145,7 +141,7 @@ def _evolve_optimized_for_gpus(
         t0=0.0,
         t1=duration,
         dt0=None,
-        y0=initial_states,
+        y0=gate.subsystem_initial_states(),
         args=None,
         stepsize_controller=stepsize_controller,
         saveat=saveat,

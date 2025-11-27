@@ -1,5 +1,7 @@
 from abc import ABC, abstractmethod
 from copy import deepcopy
+import jax.numpy as jnp
+from rydopt.types import HamiltonianFunction
 
 
 class Gate(ABC):
@@ -68,7 +70,7 @@ class Gate(ABC):
         ...
 
     @abstractmethod
-    def subsystem_hamiltonians(self) -> tuple:
+    def subsystem_hamiltonians(self) -> tuple[HamiltonianFunction, ...]:
         r"""
         The full gate Hamiltonian can be split into distinct subsystems.
         The number of subsystem Hamiltonians and their dimensionality depends on the interaction strengths.
@@ -79,7 +81,7 @@ class Gate(ABC):
         ...
 
     @abstractmethod
-    def subsystem_rydberg_population_operators(self) -> tuple:
+    def subsystem_rydberg_population_operators(self) -> tuple[jnp.array, ...]:
         r"""
         For each subsytem Hamiltonian, the Rydberg population operators count the number of Rydberg excitations on the diagonal.
 
@@ -89,7 +91,7 @@ class Gate(ABC):
         ...
 
     @abstractmethod
-    def initial_states(self) -> tuple:
+    def subsystem_initial_states(self) -> tuple[jnp.array, ...]:
         r"""
         For each subsytem Hamiltonian, the initial states :math:`(1, 0, ...)` of appropriate dimension are provided.
 

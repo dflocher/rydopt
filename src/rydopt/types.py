@@ -15,3 +15,5 @@ PulseAnsatzFunction = Callable[
 ]
 
 PulseFunction = Callable[[jnp.ndarray | float], jnp.ndarray]
+
+HamiltonianFunction = Callable[[float, float, float], jnp.ndarray]

@@ -1,7 +1,11 @@
-from rydopt.optimization.adam import OptimizationResult, adam, multi_start_adam
+from rydopt.optimization.optimize import (
+    OptimizationResult,
+    optimize,
+    multi_start_optimize,
+)
 
 __all__ = [
     "OptimizationResult",
-    "adam",
-    "multi_start_adam",
+    "optimize",
+    "multi_start_optimize",
 ]

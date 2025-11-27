@@ -39,9 +39,7 @@ class PulseAnsatz:
     """
 
     detuning_ansatz: PulseAnsatzFunction = _const_zero
-
     phase_ansatz: PulseAnsatzFunction = _const_zero
-
     rabi_ansatz: PulseAnsatzFunction = _const_one
 
     def make_pulses(

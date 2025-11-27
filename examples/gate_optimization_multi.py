@@ -20,7 +20,7 @@ if __name__ == "__main__":
     max_initial_params = (9, (2,), (2, 2), ())
 
     # Optimize the pulse parameters
-    opt_result = ro.optimization.multi_start_adam(
+    opt_result = ro.optimization.multi_start_optimize(
         gate,
         pulse_ansatz,
         min_initial_params,

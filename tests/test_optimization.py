@@ -17,7 +17,7 @@ def test_adam() -> None:
     initial_params = (7.6, (-0.1,), (1.8, -0.6), ())
 
     # Run optimization
-    r = ro.optimization.adam(
+    r = ro.optimization.optimize(
         gate, pulse, initial_params, num_steps=200, tol=1e-7, return_history=True
     )
 
@@ -42,7 +42,7 @@ def test_adam_decay() -> None:
     initial_params = (7.6, (-0.1,), (1.8, -0.6), ())
 
     # Run optimization
-    r = ro.optimization.adam(gate, pulse, initial_params, num_steps=200, tol=1e-7)
+    r = ro.optimization.optimize(gate, pulse, initial_params, num_steps=200, tol=1e-7)
 
     # Verify the fidelity
     fidelity = ro.simulation.process_fidelity(gate, pulse, r.params)
@@ -64,7 +64,7 @@ def test_multi_start_adam() -> None:
     max_initial_params = (9, (2, 2, 2), (), ())
 
     # Run optimization
-    r = ro.optimization.multi_start_adam(
+    r = ro.optimization.multi_start_optimize(
         gate,
         pulse,
         min_initial_params,
@@ -105,7 +105,7 @@ def test_multi_start_adam_decay() -> None:
     max_initial_params = (9, (2, 2, 2), (), ())
 
     # Run optimization
-    r = ro.optimization.multi_start_adam(
+    r = ro.optimization.multi_start_optimize(
         gate,
         pulse,
         min_initial_params,
@@ -138,7 +138,7 @@ def test_fastest() -> None:
     max_initial_params = (9, (2,), (2, 2), ())
 
     # Run optimization
-    r = ro.optimization.multi_start_adam(
+    r = ro.optimization.multi_start_optimize(
         gate,
         pulse,
         min_initial_params,
@@ -173,7 +173,7 @@ def test_fixed() -> None:
     fixed_initial_params = (False, (True,), (False, False), ())
 
     # Run optimization
-    r = ro.optimization.adam(
+    r = ro.optimization.optimize(
         gate, pulse, initial_params, fixed_initial_params, num_steps=200
     )
 

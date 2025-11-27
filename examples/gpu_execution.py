@@ -25,7 +25,7 @@ if __name__ == "__main__":
     max_initial_params = (9, (2,), (2, 2, 2, 2, 2, 2), ())
 
     # Run optimization
-    _ = ro.optimization.multi_start_adam(
+    _ = ro.optimization.multi_start_optimize(
         gate,
         pulse,
         min_initial_params,

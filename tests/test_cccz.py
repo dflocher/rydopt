@@ -33,7 +33,7 @@ def test_cccz() -> None:
     )
 
     # Run optimization
-    r = ro.optimization.adam(gate, pulse, initial_params, num_steps=500, tol=1e-7)
+    r = ro.optimization.optimize(gate, pulse, initial_params, num_steps=500, tol=1e-7)
 
     # Compare result to reference
     ref = (

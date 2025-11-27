@@ -38,7 +38,7 @@ def rydberg_time(
     rabi_params = jnp.asarray(rabi_params)
 
     # Collect initial states and pad them to a common dimension so we can stack
-    initial_states = tuple(jnp.asarray(psi) for psi in gate.initial_states())
+    initial_states = gate.subsystem_initial_states()
 
     dims = tuple(len(psi) for psi in initial_states)
     max_dim = max(dims)

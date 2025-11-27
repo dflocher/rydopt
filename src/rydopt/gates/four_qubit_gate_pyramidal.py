@@ -12,6 +12,7 @@ from rydopt.gates.subsystem_hamiltonians import (
     H_4_atoms_symmetric,
     H_4_atoms,
 )
+from rydopt.types import HamiltonianFunction
 
 
 class FourQubitGatePyramidal(Gate):
@@ -120,7 +121,7 @@ class FourQubitGatePyramidal(Gate):
         """
         return self._Vnn, self._Vnnn
 
-    def subsystem_hamiltonians(self) -> tuple:
+    def subsystem_hamiltonians(self) -> tuple[HamiltonianFunction, ...]:
         if isinf(float(self._Vnn)) and isinf(float(self._Vnnn)):
             return (
                 partial(H_k_atoms_perfect_blockade, decay=self._decay, k=1),
@@ -160,7 +161,7 @@ class FourQubitGatePyramidal(Gate):
             partial(H_4_atoms, decay=self._decay, Vnn=self._Vnn, Vnnn=self._Vnnn),
         )
 
-    def subsystem_rydberg_population_operators(self) -> tuple:
+    def subsystem_rydberg_population_operators(self) -> tuple[jnp.array, ...]:
         if isinf(float(self._Vnn)) and isinf(float(self._Vnnn)):
             return (
                 H_k_atoms_perfect_blockade(
@@ -218,7 +219,7 @@ class FourQubitGatePyramidal(Gate):
             H_4_atoms(Delta=1.0, Phi=0.0, Omega=0.0, decay=0.0, Vnn=0.0, Vnnn=0.0),
         )
 
-    def initial_states(self) -> tuple:
+    def subsystem_initial_states(self) -> tuple[jnp.array, ...]:
         if isinf(float(self._Vnn)) and isinf(float(self._Vnnn)):
             return (
                 jnp.array([1.0 + 0.0j, 0.0 + 0.0j]),
@@ -387,27 +388,33 @@ class FourQubitGatePyramidal(Gate):
             / len(targeted_gate) ** 2
         )
 
-    def rydberg_time(self, expectation_values):
+    def rydberg_time(self, expectation_values) -> float:
         if float(self._Vnn) == float(self._Vnnn):
-            return (1 / 16) * jnp.squeeze(
-                4 * expectation_values[0]
-                + 6 * expectation_values[1]
-                + 4 * expectation_values[2]
-                + expectation_values[3]
+            return (1 / 16) * float(
+                jnp.squeeze(
+                    4 * expectation_values[0]
+                    + 6 * expectation_values[1]
+                    + 4 * expectation_values[2]
+                    + expectation_values[3]
+                )
             )
         if isinf(float(self._Vnn)) and float(self._Vnnn) == 0.0:
-            return (1 / 16) * jnp.squeeze(
-                13 * expectation_values[0]
-                + 3 * expectation_values[1]
-                + 3 * expectation_values[2]
-                + expectation_values[3]
+            return (1 / 16) * float(
+                jnp.squeeze(
+                    13 * expectation_values[0]
+                    + 3 * expectation_values[1]
+                    + 3 * expectation_values[2]
+                    + expectation_values[3]
+                )
             )
         else:
-            return (1 / 16) * jnp.squeeze(
-                4 * expectation_values[0]
-                + 3 * expectation_values[1]
-                + 3 * expectation_values[2]
-                + 3 * expectation_values[3]
-                + expectation_values[4]
-                + expectation_values[5]
+            return (1 / 16) * float(
+                jnp.squeeze(
+                    4 * expectation_values[0]
+                    + 3 * expectation_values[1]
+                    + 3 * expectation_values[2]
+                    + 3 * expectation_values[3]
+                    + expectation_values[4]
+                    + expectation_values[5]
+                )
             )

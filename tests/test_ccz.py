@@ -26,7 +26,7 @@ def test_ccz() -> None:
     initial_params = (11.0, (0.2,), (0.4, -1.2, 1.1, -0.7, 0.9, -0.2), ())
 
     # Run optimization
-    r = ro.optimization.adam(gate, pulse, initial_params, num_steps=200, tol=1e-7)
+    r = ro.optimization.optimize(gate, pulse, initial_params, num_steps=200, tol=1e-7)
 
     # Compare result to reference
     ref = (

@@ -19,7 +19,7 @@ if __name__ == "__main__":
     initial_params = (7.0, (0.0,), (0.0, 0.0), ())
 
     # Optimize the pulse parameters
-    opt_result = ro.optimization.adam(
+    opt_result = ro.optimization.optimize(
         gate,
         pulse_ansatz,
         initial_params,
