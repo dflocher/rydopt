@@ -6,13 +6,17 @@ readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
     "diffrax>=0.5.0",
-    "jax>=0.4.26",
-    "jaxlib>=0.4.26",
+    "jax>=0.4.34",
+    "jaxlib>=0.4.34",
     "matplotlib>=3.10.7",
     "numpy>=2.2.6",
     "optax>=0.2.2",
     "qutip>=5.2.2",
 ]
+
+[build-system]
+requires = ["uv_build>=0.9.13,<0.10.0"]
+build-backend = "uv_build"
 
 [project.optional-dependencies]
 dev = [
@@ -23,7 +27,7 @@ dev = [
     "sphinxcontrib-napoleon>=0.7",
 ]
 cuda12 = [
-    "jax[cuda12]>=0.4.26",
+    "jax[cuda12]>=0.4.34",
 ]
 
 [tool.ruff.lint]
