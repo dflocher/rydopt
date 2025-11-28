@@ -7,8 +7,8 @@
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 project = "RydOpt"
-copyright = "2025, RydOpt developers"
-author = "RydOpt developers"
+copyright = "2025, David Locher, Sebastian Weber, Jakob Holschbach"
+author = "David Locher, Sebastian Weber, Jakob Holschbach"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration

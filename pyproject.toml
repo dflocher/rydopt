@@ -30,7 +30,6 @@ dependencies = [
     "jax>=0.4.34",
     "jaxlib>=0.4.34",
     "matplotlib>=3.10.7",
-    "notebook>=7.5.0",
     "numpy>=2.2.6",
     "optax>=0.2.2",
     "qutip>=5.2.2",
@@ -45,6 +44,7 @@ dev = [
     "sphinxcontrib-napoleon>=0.7",
     "nbsphinx>=0.9.7",
     "sphinx-tabs>=3.4.7",
+    "notebook>=7.5.0",
 ]
 cuda12 = [
     "jax[cuda12]>=0.4.34",
