@@ -6,10 +6,10 @@ RydOpt - A Multiqubit Rydberg Gate Optimizer
 [![pypi](https://img.shields.io/pypi/v/rydopt.svg?style=flat)](https://pypi.org/project/rydopt/)
 
 RydOpt is a Python package for the optimization of laser pulses implementing two- and multiqubit Rydberg gates
-in neutral atom quantum computing platforms. The opimization methods support GPUs and multi-core CPUs, using an
+in neutral atom quantum computing platforms. The optimization methods support GPUs and multi-core CPUs, using an
 efficient implementation based on JAX.
 
-Install the software with pip (requires Python ≥ 3.10, for enabling GPU support and tips see our [extended installation instructions](https://rydopt.readthedocs.io/en/latest/install.html)):
+Install the software with pip (requires Python ≥ 3.10; for enabling GPU support and tips, see our [extended installation instructions](https://rydopt.readthedocs.io/en/latest/install.html)):
 
 ```bash
 pip install rydopt

@@ -83,7 +83,7 @@ class Gate(ABC):
     @abstractmethod
     def subsystem_rydberg_population_operators(self) -> tuple[jnp.array, ...]:
         r"""
-        For each subsytem Hamiltonian, the Rydberg population operators count the number of Rydberg excitations on the diagonal.
+        For each subsystem Hamiltonian, the Rydberg population operators count the number of Rydberg excitations on the diagonal.
 
         Returns:
             Tuple of operators.
@@ -93,7 +93,7 @@ class Gate(ABC):
     @abstractmethod
     def subsystem_initial_states(self) -> tuple[jnp.array, ...]:
         r"""
-        For each subsytem Hamiltonian, the initial states :math:`(1, 0, ...)` of appropriate dimension are provided.
+        For each subsystem Hamiltonian, the initial states :math:`(1, 0, ...)` of appropriate dimension are provided.
 
         Returns:
             Tuple of arrays.
@@ -118,7 +118,7 @@ class Gate(ABC):
     def rydberg_time(self, expectation_values) -> float:
         r"""
         Given the expectation values of Rydberg populations for each subsystem Hamiltonian, integrated over the full pulse,
-        this function calculates to average time spent in Rydberg states during the gate.
+        this function calculates the average time spent in Rydberg states during the gate.
 
         Args:
             expectation_values: Expected Rydberg times of the subsystems.

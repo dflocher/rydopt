@@ -32,7 +32,7 @@ class OptimizationResult(Generic[ParamsType, InfidelityType, HistoryType]):
         history: Cost function evaluations during the optimization.
         num_steps: Number of optimization steps.
         tol: Target gate infidelity.
-        duration_in_sec: Duration of the optimization in seconds."
+        duration_in_sec: Duration of the optimization in seconds.
 
     """
 

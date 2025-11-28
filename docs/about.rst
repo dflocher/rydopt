@@ -6,7 +6,7 @@ Neutral Atom Quantum Computing
 
 Neutral atoms trapped in optical tweezer arrays are among the most promising platforms for building a fault-tolerant quantum computer.
 Two low-energy electronic states of an atom encode the computational basis states :math:`|0\rangle` and :math:`|1\rangle`.
-The mechanism underlying entangling operations are strong interactions between atoms in highly excited Rydberg states.
+The mechanism underlying entangling operations is strong interactions between atoms in highly excited Rydberg states.
 These interactions can be turned on and off 'on demand', by exciting atoms to those Rydberg states :math:`|r\rangle` with a laser.
 Two- and multiqubit gates are thus realized by laser pulses, which are variations in time of the laser detuning :math:`\Delta(t)`,
 and the Rabi frequency :math:`|\Omega(t)|e^{i\xi(t)}`, where :math:`\xi(t)` is the laser phase and :math:`|\Omega(t)|` is the
