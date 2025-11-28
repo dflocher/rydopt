@@ -4,7 +4,6 @@ on:
   pull_request:
   push:
 
-
 jobs:
   tests:
     strategy:
@@ -14,7 +13,6 @@ jobs:
         python-version: ["3.10", "3.11", "3.12", "3.13"]
 
     runs-on: ${{ matrix.os }}
-
     steps:
       - uses: actions/checkout@v6
       - uses: astral-sh/setup-uv@v7
@@ -24,3 +22,14 @@ jobs:
       - run: uv sync --extra dev
       - name: Test with Python ${{ matrix.python-version }} on ${{ matrix.os }}
         run: uv run pytest --doctest-modules --ignore=src/rydopt/characterization/plots.py # TODO avoid plt.show() so that the example in plots.py can run in the CI
+
+  tests-min-deps:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: astral-sh/setup-uv@v7
+        with:
+          python-version: "3.12"
+          enable-cache: true
+      - run: uv sync --extra dev --resolution lowest-direct
+      - run: uv run pytest --doctest-modules --ignore=src/rydopt/characterization/plots.py
