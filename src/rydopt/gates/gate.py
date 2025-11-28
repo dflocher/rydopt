@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
 from copy import deepcopy
 import jax.numpy as jnp
@@ -81,7 +83,7 @@ class Gate(ABC):
         ...
 
     @abstractmethod
-    def subsystem_rydberg_population_operators(self) -> tuple[jnp.array, ...]:
+    def subsystem_rydberg_population_operators(self) -> tuple[jnp.ndarray, ...]:
         r"""
         For each subsystem Hamiltonian, the Rydberg population operators count the number of Rydberg excitations on the diagonal.
 
@@ -91,7 +93,7 @@ class Gate(ABC):
         ...
 
     @abstractmethod
-    def subsystem_initial_states(self) -> tuple[jnp.array, ...]:
+    def subsystem_initial_states(self) -> tuple[jnp.ndarray, ...]:
         r"""
         For each subsystem Hamiltonian, the initial states :math:`(1, 0, ...)` of appropriate dimension are provided.
 

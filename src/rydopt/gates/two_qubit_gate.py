@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from functools import partial
 import jax.numpy as jnp
 from rydopt.gates.gate import Gate
@@ -80,7 +82,7 @@ class TwoQubitGate(Gate):
             partial(H_2_atoms, decay=self._decay, V=self._Vnn),
         )
 
-    def subsystem_rydberg_population_operators(self) -> tuple[jnp.array, ...]:
+    def subsystem_rydberg_population_operators(self) -> tuple[jnp.ndarray, ...]:
         if isinf(float(self._Vnn)):
             return (
                 H_k_atoms_perfect_blockade(
@@ -95,7 +97,7 @@ class TwoQubitGate(Gate):
             H_2_atoms(Delta=1.0, Phi=0.0, Omega=0.0, decay=0.0, V=0.0),
         )
 
-    def subsystem_initial_states(self) -> tuple[jnp.array, ...]:
+    def subsystem_initial_states(self) -> tuple[jnp.ndarray, ...]:
         if isinf(float(self._Vnn)):
             return (
                 jnp.array([1.0 + 0.0j, 0.0 + 0.0j]),

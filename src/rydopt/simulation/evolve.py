@@ -10,7 +10,7 @@ from rydopt.types import ParamsTuple
 
 def evolve(
     gate: Gate, pulse: PulseAnsatz, params: ParamsTuple, tol: float = 1e-7
-) -> tuple[jnp.array, ...]:
+) -> tuple[jnp.ndarray, ...]:
     r"""The function performs the time evolution of all initial states :math:`|\psi_i(0)\rangle` (specified in the gate object),
     under the pulse Hamiltonian :math:`H`.
 
@@ -109,7 +109,7 @@ def evolve(
 
 def _evolve_optimized_for_gpus(
     gate: Gate, pulse: PulseAnsatz, params: ParamsTuple, tol: float = 1e-7
-) -> tuple[jnp.array, ...]:
+) -> tuple[jnp.ndarray, ...]:
     # When we import diffrax, at least one jnp array is allocated (see optimistix/_misc.py, line 138). Thus,
     # if we change the default device after we have imported diffrax, some memory is allocated on the
     # wrong device. Hence, we defer the import of diffrax to the latest time possible.

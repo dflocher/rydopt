@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from functools import partial
 import jax.numpy as jnp
 from math import isinf
@@ -161,7 +163,7 @@ class FourQubitGatePyramidal(Gate):
             partial(H_4_atoms, decay=self._decay, Vnn=self._Vnn, Vnnn=self._Vnnn),
         )
 
-    def subsystem_rydberg_population_operators(self) -> tuple[jnp.array, ...]:
+    def subsystem_rydberg_population_operators(self) -> tuple[jnp.ndarray, ...]:
         if isinf(float(self._Vnn)) and isinf(float(self._Vnnn)):
             return (
                 H_k_atoms_perfect_blockade(
@@ -219,7 +221,7 @@ class FourQubitGatePyramidal(Gate):
             H_4_atoms(Delta=1.0, Phi=0.0, Omega=0.0, decay=0.0, Vnn=0.0, Vnnn=0.0),
         )
 
-    def subsystem_initial_states(self) -> tuple[jnp.array, ...]:
+    def subsystem_initial_states(self) -> tuple[jnp.ndarray, ...]:
         if isinf(float(self._Vnn)) and isinf(float(self._Vnnn)):
             return (
                 jnp.array([1.0 + 0.0j, 0.0 + 0.0j]),

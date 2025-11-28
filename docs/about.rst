@@ -19,7 +19,7 @@ The dynamics of a set of :math:`N` atoms subjected to the very same laser pulse 
 
 where :math:`V_{ij}` describes the interaction between atom :math:`i` and atom :math:`j`.
 
-The RydOpt package
+The RydOpt Package
 ------------------
 
 This package provides tools to simulate the dynamics of multiple atoms subjected to a gate pulse.
