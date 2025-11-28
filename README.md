@@ -19,3 +19,5 @@ Citing RydOpt
 
 License
 -------
+
+The RydOpt software is licensed under the [MIT License](https://opensource.org/licenses/MIT).

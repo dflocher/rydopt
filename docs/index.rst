@@ -20,6 +20,8 @@ Install the software using pip (requires Python ≥ 3.10, for enabling GPU suppo
 
    pip install rydopt
 
+The RydOpt software is licensed under the `MIT License <https://opensource.org/licenses/MIT>`_.
+
 .. toctree::
    :maxdepth: 1
    :caption: Getting Started

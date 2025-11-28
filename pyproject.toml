@@ -3,8 +3,10 @@ name = "RydOpt"
 version = "0.1.0"
 description = "Multiqubit Rydberg Gate Optimizer"
 readme = "README.md"
+license = { file = "LICENSE" }
 classifiers = [
   "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: MIT License",
   "Operating System :: MacOS",
   "Operating System :: Microsoft :: Windows",
   "Operating System :: POSIX :: Linux",
