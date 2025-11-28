@@ -1,6 +1,8 @@
 rydopt - A Multiqubit Rydberg Gate Optimizer
 ============================================
 
+[![tests](https://github.com/dflocher/Multiqubit_Rydberg_Gates/actions/workflows/tests.yml/badge.svg)](https://github.com/dflocher/Multiqubit_Rydberg_Gates/actions/workflows/tests.yml)
+
 You can install the software using pip (requires Python ≥ 3.10) by first cloning the repository and then running the following command from within the repository directory:
 ```bash
 pip install -e .
