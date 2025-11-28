@@ -6,9 +6,9 @@
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
-project = "rydopt"
-copyright = "2025, rydopt developers"
-author = "rydopt developers"
+project = "RydOpt"
+copyright = "2025, RydOpt developers"
+author = "RydOpt developers"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
@@ -19,6 +19,8 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx.ext.mathjax",
     "sphinx.ext.viewcode",
+    "nbsphinx",
+    "sphinx_tabs.tabs",
 ]
 
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]

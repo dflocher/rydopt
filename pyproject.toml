@@ -1,5 +1,5 @@
 [project]
-name = "rydopt"
+name = "RydOpt"
 version = "0.1.0"
 description = "Multiqubit Rydberg Gate Optimizer"
 readme = "README.md"
@@ -25,6 +25,8 @@ dev = [
     "sphinx-rtd-theme>=3.0.2",
     "sphinx-autobuild>=2024.10.3",
     "sphinxcontrib-napoleon>=0.7",
+    "nbsphinx>=0.9.7",
+    "sphinx-tabs>=3.4.7",
 ]
 cuda12 = [
     "jax[cuda12]>=0.4.34",

@@ -1,20 +1,35 @@
-rydopt Documentation
-====================
+RydOpt - A Multiqubit Rydberg Gate Optimizer
+============================================
 
-Add your content using ``reStructuredText`` syntax. See the
-`reStructuredText <https://www.sphinx-doc.org/en/master/usage/restructuredtext/index.html>`_
-documentation for details.
+.. image:: https://readthedocs.org/projects/rydopt/badge/?version=latest
+   :target: http://rydopt.readthedocs.io
+   :alt: docs
+
+.. image:: https://github.com/dflocher/Multiqubit_Rydberg_Gates/actions/workflows/tests.yml/badge.svg
+   :target: https://github.com/dflocher/Multiqubit_Rydberg_Gates/actions/workflows/tests.yml
+   :alt: tests
+
+.. image:: https://img.shields.io/pypi/v/rydopt.svg?style=flat
+   :target: https://pypi.org/project/rydopt/
+   :alt: pypi
+
+Install the software using pip (requires Python ≥ 3.10, for enabling GPU support and tips see our
+:doc:`extended installation instructions <install>`):
+
+.. code-block:: bash
+
+   pip install rydopt
 
 .. toctree::
-   :hidden:
-   :maxdepth: 2
-   :caption: Tutorials
+   :maxdepth: 1
+   :caption: Getting Started
 
-   tutorials/optimization_example
+   about
+   install
+   tutorials
 
 .. toctree::
-   :hidden:
-   :maxdepth: 2
+   :maxdepth: 1
    :caption: API Reference
 
    api/gates
@@ -24,8 +39,8 @@ documentation for details.
    api/characterization
 
 .. toctree::
-   :hidden:
-   :maxdepth: 2
-   :caption: Developer's Guide
+   :maxdepth: 1
+   :caption: Contributor Guide
 
-   development/subsystem_hamiltonians
+   contribute/development
+   contribute/internal
