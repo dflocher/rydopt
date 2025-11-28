@@ -47,9 +47,31 @@ autodoc_type_aliases = {
     "HamiltonianFunction": "HamiltonianFunction",
 }
 
+# -- Options for jupyter notebooks -------------------------------------------
+nbsphinx_prolog = """
+{% set docname = env.doc2path(env.docname, base=None).split("/")[-1] %}
+
+.. raw:: html
+
+    <style>
+      .nbinput .prompt,
+      .nboutput .prompt {
+        display: none;
+      }
+    </style>
+
+    <div class="admonition note">
+      This page was generated from the Jupyter notebook
+      <a class="reference external" href="{{ docname|e }}">{{ docname|e }}</a>.
+      Open in
+      <a class="reference external" href="https://colab.research.google.com/github/dflocher/rydopt/blob/main/docs/examples/{{ docname|e }}">Google Colab</a>.
+    </div>
+"""
+
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
 html_theme = "sphinx_rtd_theme"
 # html_logo = "_static/logo.png"
 html_static_path = ["_static"]
+templates_path = ["_templates"]

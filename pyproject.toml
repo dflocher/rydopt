@@ -30,7 +30,7 @@ dependencies = [
     "jax>=0.4.34",
     "jaxlib>=0.4.34",
     "matplotlib>=3.10.7",
-    "numpy>=2.2.6",
+    "numpy>=2.0.2",
     "optax>=0.2.2",
     "qutip>=5.2.2",
 ]
