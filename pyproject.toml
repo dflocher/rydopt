@@ -3,6 +3,8 @@ name = "RydOpt"
 version = "0.1.0"
 description = "Multiqubit Rydberg Gate Optimizer"
 readme = "README.md"
+authors = [ {name = "David F. Locher"}, {name = "Sebastian Weber"}, {name = "Jakob Holschbach"}]
+maintainers = [ {name = "Sebastian Weber", email = "seweber@posteo.de"}, {name = "David F. Locher", email = "david.locher@rwth-aachen.de"} ]
 license = { file = "LICENSE" }
 classifiers = [
   "Intended Audience :: Science/Research",
@@ -28,6 +30,7 @@ dependencies = [
     "jax>=0.4.34",
     "jaxlib>=0.4.34",
     "matplotlib>=3.10.7",
+    "notebook>=7.5.0",
     "numpy>=2.2.6",
     "optax>=0.2.2",
     "qutip>=5.2.2",
