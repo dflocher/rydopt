@@ -7,7 +7,7 @@ if __name__ == "__main__":
     gate = ro.gates.TwoQubitGate(
         phi=None,
         theta=np.pi,
-        Vnn=10.0,
+        Vnn=float("inf"),
         decay=0.0,
     )
 
