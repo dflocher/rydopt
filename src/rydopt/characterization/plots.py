@@ -42,7 +42,6 @@ def plot_pulse(
     else:
         offset = 0
 
-    plt.rcParams["font.sans-serif"] = "Helvetica"
     plt.rcParams["mathtext.fontset"] = "cm"
     fig, ax = plt.subplots(layout="constrained", figsize=(3.4, 1.9))
     fig.set_dpi(300)
