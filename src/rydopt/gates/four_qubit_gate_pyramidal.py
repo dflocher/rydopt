@@ -1,30 +1,33 @@
 from __future__ import annotations
 
 from functools import partial
-import jax.numpy as jnp
 from math import isinf
+
+import jax.numpy as jnp
+
 from rydopt.gates.gate import Gate
 from rydopt.gates.subsystem_hamiltonians import (
-    H_k_atoms_perfect_blockade,
     H_2_atoms,
+    H_3_atoms,
     H_3_atoms_inf_V,
     H_3_atoms_symmetric,
-    H_3_atoms,
+    H_4_atoms,
     H_4_atoms_inf_V,
     H_4_atoms_symmetric,
-    H_4_atoms,
+    H_k_atoms_perfect_blockade,
 )
 from rydopt.types import HamiltonianFunction
 
 
 class FourQubitGatePyramidal(Gate):
     r"""Class that describes a gate on four atoms arranged in a pyramid.
-    The physical setting is described by the interaction strengths between atoms, :math:`V_{\mathrm{nn}}` and :math:`V_{\mathrm{nnn}}`,
-    and the decay strength from Rydberg states, :math:`\gamma`.
+    The physical setting is described by the interaction strengths between atoms, :math:`V_{\mathrm{nn}}`
+    and :math:`V_{\mathrm{nnn}}`, and the decay strength from Rydberg states, :math:`\gamma`.
     The target gate is specified by the phases :math:`\phi, \theta, \theta', \lambda, \lambda', \kappa`.
     Some phases can remain unspecified if they may take on arbitrary values.
-    In the figure, we use the notation :math:`\mathrm{C}_n\mathrm{Z}(\alpha) = \mathrm{diag}(1, ..., 1, e^{i\alpha})` on :math:`n+1` qubits,
-    and :math:`\mathrm{Z}(\alpha) = \mathrm{C}_0\mathrm{Z}(\alpha) = \mathrm{diag}(1, e^{i\alpha})`.
+    In the figure, we use the notation :math:`\mathrm{C}_n\mathrm{Z}(\alpha) = \mathrm{diag}(1, ..., 1, e^{i\alpha})`
+    on :math:`n+1` qubits, and
+    :math:`\mathrm{Z}(\alpha) = \mathrm{C}_0\mathrm{Z}(\alpha) = \mathrm{diag}(1, e^{i\alpha})`.
 
     .. image:: ../_static/FourQubitGatePyramidal.png
 
@@ -56,6 +59,7 @@ class FourQubitGatePyramidal(Gate):
 
     Returns:
         Four-qubit gate object.
+
     """
 
     def __init__(
@@ -72,9 +76,7 @@ class FourQubitGatePyramidal(Gate):
     ):
         super().__init__(decay)
         if (Vnn == Vnnn) and ((theta != theta_prime) or (lamb != lamb_prime)):
-            raise ValueError(
-                "For Vnn=Vnnn, theta=theta_prime and lambda=lamb_prime is required"
-            )
+            raise ValueError("For Vnn=Vnnn, theta=theta_prime and lambda=lamb_prime is required")
         if (Vnnn == 0) and ((theta_prime != 0.0) or (lamb_prime != 0.0)):
             raise ValueError("For Vnnn=0, theta_prime=0 and lamb_prime=0 is required")
         self._phi = phi
@@ -87,9 +89,9 @@ class FourQubitGatePyramidal(Gate):
         self._Vnnn = Vnnn
 
     def dim(self) -> int:
-        r"""
-        Returns:
-            16
+        r"""Returns:
+        16
+
         """
         return 16
 
@@ -103,9 +105,9 @@ class FourQubitGatePyramidal(Gate):
         float | None,
         float | None,
     ]:
-        r"""
-        Returns:
-            Gate phases :math:`\phi, \theta, \theta', \lambda, \lambda', \kappa`.
+        r"""Returns:
+        Gate phases :math:`\phi, \theta, \theta', \lambda, \lambda', \kappa`.
+
         """
         return (
             self._phi,
@@ -117,9 +119,9 @@ class FourQubitGatePyramidal(Gate):
         )
 
     def get_interactions(self) -> tuple[float, float]:
-        r"""
-        Returns:
-            Interaction strengths :math:`V_{\mathrm{nn}}/(\hbar\Omega_0), V_{\mathrm{nnn}}/(\hbar\Omega_0)`.
+        r"""Returns:
+        Interaction strengths :math:`V_{\mathrm{nn}}/(\hbar\Omega_0), V_{\mathrm{nnn}}/(\hbar\Omega_0)`.
+
         """
         return self._Vnn, self._Vnnn
 
@@ -166,47 +168,29 @@ class FourQubitGatePyramidal(Gate):
     def subsystem_rydberg_population_operators(self) -> tuple[jnp.ndarray, ...]:
         if isinf(float(self._Vnn)) and isinf(float(self._Vnnn)):
             return (
-                H_k_atoms_perfect_blockade(
-                    Delta=1.0, Phi=0.0, Omega=0.0, decay=0.0, k=1
-                ),
-                H_k_atoms_perfect_blockade(
-                    Delta=1.0, Phi=0.0, Omega=0.0, decay=0.0, k=1
-                ),
-                H_k_atoms_perfect_blockade(
-                    Delta=1.0, Phi=0.0, Omega=0.0, decay=0.0, k=1
-                ),
-                H_k_atoms_perfect_blockade(
-                    Delta=1.0, Phi=0.0, Omega=0.0, decay=0.0, k=1
-                ),
+                H_k_atoms_perfect_blockade(Delta=1.0, Phi=0.0, Omega=0.0, decay=0.0, k=1),
+                H_k_atoms_perfect_blockade(Delta=1.0, Phi=0.0, Omega=0.0, decay=0.0, k=1),
+                H_k_atoms_perfect_blockade(Delta=1.0, Phi=0.0, Omega=0.0, decay=0.0, k=1),
+                H_k_atoms_perfect_blockade(Delta=1.0, Phi=0.0, Omega=0.0, decay=0.0, k=1),
             )
         if float(self._Vnn) == float(self._Vnnn):
             return (
-                H_k_atoms_perfect_blockade(
-                    Delta=1.0, Phi=0.0, Omega=0.0, decay=0.0, k=1
-                ),
+                H_k_atoms_perfect_blockade(Delta=1.0, Phi=0.0, Omega=0.0, decay=0.0, k=1),
                 H_2_atoms(Delta=1.0, Phi=0.0, Omega=0.0, decay=0.0, V=0.0),
                 H_3_atoms_symmetric(Delta=1.0, Phi=0.0, Omega=0.0, decay=0.0, V=0.0),
                 H_4_atoms_symmetric(Delta=1.0, Phi=0.0, Omega=0.0, decay=0.0, V=0.0),
             )
         if isinf(float(self._Vnn)) and float(self._Vnnn) == 0.0:
             return (
-                H_k_atoms_perfect_blockade(
-                    Delta=1.0, Phi=0.0, Omega=0.0, decay=0.0, k=1
-                ),
-                H_k_atoms_perfect_blockade(
-                    Delta=1.0, Phi=0.0, Omega=0.0, decay=0.0, k=1
-                ),
+                H_k_atoms_perfect_blockade(Delta=1.0, Phi=0.0, Omega=0.0, decay=0.0, k=1),
+                H_k_atoms_perfect_blockade(Delta=1.0, Phi=0.0, Omega=0.0, decay=0.0, k=1),
                 H_3_atoms_inf_V(Delta=1.0, Phi=0.0, Omega=0.0, decay=0.0, V=0.0),
                 H_4_atoms_inf_V(Delta=1.0, Phi=0.0, Omega=0.0, decay=0.0, V=0.0),
             )
         if isinf(float(self._Vnn)):
             return (
-                H_k_atoms_perfect_blockade(
-                    Delta=1.0, Phi=0.0, Omega=0.0, decay=0.0, k=1
-                ),
-                H_k_atoms_perfect_blockade(
-                    Delta=1.0, Phi=0.0, Omega=0.0, decay=0.0, k=1
-                ),
+                H_k_atoms_perfect_blockade(Delta=1.0, Phi=0.0, Omega=0.0, decay=0.0, k=1),
+                H_k_atoms_perfect_blockade(Delta=1.0, Phi=0.0, Omega=0.0, decay=0.0, k=1),
                 H_2_atoms(Delta=1.0, Phi=0.0, Omega=0.0, decay=0.0, V=0.0),
                 H_3_atoms_inf_V(Delta=1.0, Phi=0.0, Omega=0.0, decay=0.0, V=0.0),
                 H_3_atoms_symmetric(Delta=1.0, Phi=0.0, Omega=0.0, decay=0.0, V=0.0),
@@ -256,9 +240,7 @@ class FourQubitGatePyramidal(Gate):
             jnp.array([1.0 + 0.0j, 0.0 + 0.0j]),
             jnp.array([1.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j]),
             jnp.array([1.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j]),
-            jnp.array(
-                [1.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j]
-            ),
+            jnp.array([1.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j]),
             jnp.array([1.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j]),
             jnp.array(
                 [
@@ -343,26 +325,10 @@ class FourQubitGatePyramidal(Gate):
         # Targeted diagonal gate matrix
         p = jnp.angle(obtained_gate[1]) if self._phi is None else self._phi
         t = jnp.angle(obtained_gate[3]) - 2 * p if self._theta is None else self._theta
-        e = (
-            jnp.angle(obtained_gate[6]) - 2 * p
-            if self._theta_prime is None
-            else self._theta_prime
-        )
-        l = (
-            jnp.angle(obtained_gate[7]) - 3 * p - 2 * t - e
-            if self._lamb is None
-            else self._lamb
-        )
-        d = (
-            jnp.angle(obtained_gate[14]) - 3 * p - 3 * e
-            if self._lamb_prime is None
-            else self._lamb_prime
-        )
-        k = (
-            jnp.angle(obtained_gate[15]) - 4 * p - 3 * t - 3 * e - 3 * l - d
-            if self._kappa is None
-            else self._kappa
-        )
+        e = jnp.angle(obtained_gate[6]) - 2 * p if self._theta_prime is None else self._theta_prime
+        l = jnp.angle(obtained_gate[7]) - 3 * p - 2 * t - e if self._lamb is None else self._lamb
+        d = jnp.angle(obtained_gate[14]) - 3 * p - 3 * e if self._lamb_prime is None else self._lamb_prime
+        k = jnp.angle(obtained_gate[15]) - 4 * p - 3 * t - 3 * e - 3 * l - d if self._kappa is None else self._kappa
 
         targeted_gate = jnp.stack(
             [
@@ -385,10 +351,7 @@ class FourQubitGatePyramidal(Gate):
             ]
         )
 
-        return (
-            jnp.abs(jnp.vdot(targeted_gate, obtained_gate)) ** 2
-            / len(targeted_gate) ** 2
-        )
+        return jnp.abs(jnp.vdot(targeted_gate, obtained_gate)) ** 2 / len(targeted_gate) ** 2
 
     def rydberg_time(self, expectation_values) -> float:
         if float(self._Vnn) == float(self._Vnnn):
@@ -409,14 +372,13 @@ class FourQubitGatePyramidal(Gate):
                     + expectation_values[3]
                 )
             )
-        else:
-            return (1 / 16) * float(
-                jnp.squeeze(
-                    4 * expectation_values[0]
-                    + 3 * expectation_values[1]
-                    + 3 * expectation_values[2]
-                    + 3 * expectation_values[3]
-                    + expectation_values[4]
-                    + expectation_values[5]
-                )
+        return (1 / 16) * float(
+            jnp.squeeze(
+                4 * expectation_values[0]
+                + 3 * expectation_values[1]
+                + 3 * expectation_values[2]
+                + 3 * expectation_values[3]
+                + expectation_values[4]
+                + expectation_values[5]
             )
+        )

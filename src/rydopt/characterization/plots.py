@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import jax.numpy as jnp
 import matplotlib.pyplot as plt
+
 from rydopt.pulses.pulse_ansatz import PulseAnsatz
 from rydopt.types import ParamsTuple
 
@@ -18,10 +19,7 @@ def plot_pulse(
 
     Example:
         >>> import rydopt as ro
-        >>> pulse_ansatz = ro.pulses.PulseAnsatz(
-        ...     detuning_ansatz=ro.pulses.const,
-        ...     phase_ansatz=ro.pulses.sin_crab
-        ... )
+        >>> pulse_ansatz = ro.pulses.PulseAnsatz(detuning_ansatz=ro.pulses.const, phase_ansatz=ro.pulses.sin_crab)
         >>> params = (7.61140652, (-0.07842706,), (1.80300902, -0.61792703), ())
         >>> plot_pulse(pulse_ansatz, params)
 
@@ -32,15 +30,13 @@ def plot_pulse(
         plot_phase: Whether to plot the phase pulse, default is True.
         plot_rabi: Whether to plot the rabi pulse, default is True.
         phase_offset: Whether the phase pulse begins at 0, default is False.
+
     """
     T = params[0]
     ts = jnp.linspace(0, T, 1000)
     detuning_pulse, phase_pulse, rabi_pulse = pulse_ansatz.make_pulses(params)
 
-    if phase_offset:
-        offset = phase_pulse(0)
-    else:
-        offset = 0
+    offset = phase_pulse(0) if phase_offset else 0
 
     plt.rcParams["mathtext.fontset"] = "cm"
     fig, ax = plt.subplots(layout="constrained", figsize=(3.4, 1.9))

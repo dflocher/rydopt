@@ -1,18 +1,18 @@
 from __future__ import annotations
 
+from functools import partial
+
+import jax
 import jax.numpy as jnp
+
 from rydopt.gates.gate import Gate
 from rydopt.pulses.pulse_ansatz import PulseAnsatz
-import jax
-from functools import partial
 from rydopt.types import ParamsTuple
 
 
-def evolve(
-    gate: Gate, pulse: PulseAnsatz, params: ParamsTuple, tol: float = 1e-7
-) -> tuple[jnp.ndarray, ...]:
-    r"""The function performs the time evolution of all initial states :math:`|\psi_i(0)\rangle` (specified in the gate object),
-    under the pulse Hamiltonian :math:`H`.
+def evolve(gate: Gate, pulse: PulseAnsatz, params: ParamsTuple, tol: float = 1e-7) -> tuple[jnp.ndarray, ...]:
+    r"""The function performs the time evolution of all initial states :math:`|\psi_i(0)\rangle` (specified in the gate
+    object), under the pulse Hamiltonian :math:`H`.
 
     .. math::
 
@@ -26,6 +26,7 @@ def evolve(
 
     Returns:
         Time-evolved subsystem states :math:`\{|\psi_i(T)\rangle\}`.
+
     """
     # When we import diffrax, at least one jnp array is allocated (see optimistix/_misc.py, line 138). Thus,
     # if we change the default device after we have imported diffrax, some memory is allocated on the
@@ -49,9 +50,7 @@ def evolve(
     dims = tuple(len(psi) for psi in initial_states)
     max_dim = max(dims)
 
-    initial_states_padded = jnp.stack(
-        [jnp.pad(psi, (0, max_dim - dim)) for psi, dim in zip(initial_states, dims)]
-    )
+    initial_states_padded = jnp.stack([jnp.pad(psi, (0, max_dim - dim)) for psi, dim in zip(initial_states, dims)])
 
     # Schrödinger equation for the subsystems. The subsystem Hamiltonian is chosen via lax.switch
     # based on the index of the subsystem, with padding to max_dim × max_dim.
@@ -60,8 +59,7 @@ def evolve(
         return jnp.pad(dpsi_small, (0, psi.shape[0] - dim))
 
     branches = tuple(
-        partial(apply_hamiltonian, hamiltonian=h, dim=d)
-        for h, d in zip(gate.subsystem_hamiltonians(), dims)
+        partial(apply_hamiltonian, hamiltonian=h, dim=d) for h, d in zip(gate.subsystem_hamiltonians(), dims)
     )
 
     def schroedinger_eq(t, psi, args):
@@ -102,9 +100,7 @@ def evolve(
     )
 
     # Remove padding and return original per-subsystem sizes
-    final_states = tuple(s[:d] for s, d in zip(final_states_padded, dims))
-
-    return final_states
+    return tuple(s[:d] for s, d in zip(final_states_padded, dims))
 
 
 def _evolve_optimized_for_gpus(
@@ -125,10 +121,7 @@ def _evolve_optimized_for_gpus(
         detuning = pulse.detuning_ansatz(t, duration, detuning_params)
         phase = pulse.phase_ansatz(t, duration, phase_params)
         rabi = pulse.rabi_ansatz(t, duration, rabi_params)
-        return tuple(
-            -1j * (h(detuning, phase, rabi) @ psi)
-            for h, psi in zip(gate.subsystem_hamiltonians(), psi_tuple)
-        )
+        return tuple(-1j * (h(detuning, phase, rabi) @ psi) for h, psi in zip(gate.subsystem_hamiltonians(), psi_tuple))
 
     solver = diffrax.Dopri8()
     stepsize_controller = diffrax.PIDController(rtol=0.1 * tol, atol=0.1 * tol)
@@ -148,6 +141,4 @@ def _evolve_optimized_for_gpus(
         max_steps=10_000,
     )
 
-    final_states = tuple(psi_t1[0] for psi_t1 in sol.ys)
-
-    return final_states
+    return tuple(psi_t1[0] for psi_t1 in sol.ys)

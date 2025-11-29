@@ -1,6 +1,5 @@
-import qutip as qt
 import numpy as np
-
+import qutip as qt
 
 IrxrI = qt.basis(3, 2).proj()
 I1x1I = qt.basis(3, 1).proj()
@@ -25,16 +24,9 @@ def hamiltonian_TwoQubitGate(detuning_fn, phase_fn, rabi_fn, decay, Vnn):
             proj
             * (
                 Vnn * qt.tensor(IrxrI, IrxrI)
-                + (detuning_fn(t) - 1j * 0.5 * decay)
-                * (qt.tensor(IrxrI, id3) + qt.tensor(id3, IrxrI))
-                + 0.5
-                * rabi_fn(t)
-                * np.cos(phase_fn(t))
-                * (qt.tensor(X_1r, id3) + qt.tensor(id3, X_1r))
-                + 0.5
-                * rabi_fn(t)
-                * np.sin(phase_fn(t))
-                * (qt.tensor(Y_1r, id3) + qt.tensor(id3, Y_1r))
+                + (detuning_fn(t) - 1j * 0.5 * decay) * (qt.tensor(IrxrI, id3) + qt.tensor(id3, IrxrI))
+                + 0.5 * rabi_fn(t) * np.cos(phase_fn(t)) * (qt.tensor(X_1r, id3) + qt.tensor(id3, X_1r))
+                + 0.5 * rabi_fn(t) * np.sin(phase_fn(t)) * (qt.tensor(Y_1r, id3) + qt.tensor(id3, Y_1r))
             )
             * proj
         )
@@ -50,7 +42,5 @@ def target_TwoQubitGate(final_state, phi, theta):
 
     rz = qt.Qobj([[1, 0, 0], [0, np.exp(1j * p), 0], [0, 0, 1]])
     global_z_rotation = qt.tensor(rz, rz)
-    entangling_gate = qt.tensor(id3, id3) + (np.exp(1j * t) - 1) * qt.tensor(
-        I1x1I, I1x1I
-    )
+    entangling_gate = qt.tensor(id3, id3) + (np.exp(1j * t) - 1) * qt.tensor(I1x1I, I1x1I)
     return entangling_gate * global_z_rotation * qt.tensor(plus_state, plus_state)

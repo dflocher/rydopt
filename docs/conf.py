@@ -7,7 +7,7 @@
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 project = "RydOpt"
-copyright = "2025, David Locher, Sebastian Weber, Jakob Holschbach"
+copyright = "2025, David Locher, Sebastian Weber, Jakob Holschbach"  # noqa: A001
 author = "David Locher, Sebastian Weber, Jakob Holschbach"
 
 # -- General configuration ---------------------------------------------------
@@ -66,12 +66,11 @@ nbsphinx_prolog = """
       Open in
       <a class="reference external" href="https://colab.research.google.com/github/dflocher/rydopt/blob/main/docs/examples/{{ docname|e }}">Google Colab</a>.
     </div>
-"""
+"""  # noqa: E501
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
 html_theme = "sphinx_rtd_theme"
-# html_logo = "_static/logo.png"
 html_static_path = ["_static"]
 templates_path = ["_templates"]

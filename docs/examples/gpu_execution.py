@@ -1,4 +1,5 @@
 """The example takes
+
 * 29m 28,732s on AMD Ryzen 7 5700G
 * 4m 49.323s on AMD EPYC 9374F
 * 4m 20.041s on NVIDIA GeForce RTX 4060 Ti
@@ -8,17 +9,16 @@
 import jax
 
 jax.config.update("jax_platforms", "cuda,cpu")
-import rydopt as ro  # noqa: E402
 import numpy as np  # noqa: E402
+
+import rydopt as ro  # noqa: E402
 
 if __name__ == "__main__":
     # Gate
     gate = ro.gates.TwoQubitGate(phi=None, theta=np.pi, Vnn=1.5, decay=0)
 
     # Pulse
-    pulse = ro.pulses.PulseAnsatz(
-        detuning_ansatz=ro.pulses.const, phase_ansatz=ro.pulses.sin_crab
-    )
+    pulse = ro.pulses.PulseAnsatz(detuning_ansatz=ro.pulses.const, phase_ansatz=ro.pulses.sin_crab)
 
     # Parameter bounds for choosing random initial parameters
     min_initial_params = (6, (-2,), (-2, -2, -2, -2, -2, -2), ())

@@ -1,9 +1,10 @@
 from __future__ import annotations
 
+from collections.abc import Callable
 from typing import TypeAlias
-from numpy.typing import ArrayLike
-from typing import Callable
+
 import jax.numpy as jnp
+from numpy.typing import ArrayLike
 
 ParamsTuple: TypeAlias = tuple[float, ArrayLike, ArrayLike, ArrayLike]
 

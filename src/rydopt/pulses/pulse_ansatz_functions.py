@@ -1,9 +1,7 @@
 import jax.numpy as jnp
 
 
-def sin_crab(
-    t: jnp.ndarray | float, duration: float, params: jnp.ndarray
-) -> jnp.ndarray:
+def sin_crab(t: jnp.ndarray | float, duration: float, params: jnp.ndarray) -> jnp.ndarray:
     r"""Sine-only CRAB pulse ansatz.
 
     .. math::
@@ -24,6 +22,7 @@ def sin_crab(
 
     Returns:
         Values of :math:`f(t)`.
+
     """
     t = jnp.asarray(t)
 
@@ -36,9 +35,7 @@ def sin_crab(
     return jnp.sum(coeffs * jnp.sin(phase), axis=-1)
 
 
-def cos_crab(
-    t: jnp.ndarray | float, duration: float, params: jnp.ndarray
-) -> jnp.ndarray:
+def cos_crab(t: jnp.ndarray | float, duration: float, params: jnp.ndarray) -> jnp.ndarray:
     r"""Cosine-only CRAB pulse ansatz.
 
     .. math::
@@ -59,6 +56,7 @@ def cos_crab(
 
     Returns:
         Values of :math:`f(t)`.
+
     """
     t = jnp.asarray(t)
 
@@ -71,9 +69,7 @@ def cos_crab(
     return jnp.sum(coeffs * jnp.cos(phase), axis=-1)
 
 
-def sin_cos_crab(
-    t: jnp.ndarray | float, duration: float, params: jnp.ndarray
-) -> jnp.ndarray:
+def sin_cos_crab(t: jnp.ndarray | float, duration: float, params: jnp.ndarray) -> jnp.ndarray:
     r"""Combined sine and cosine CRAB pulse ansatz.
 
     .. math::
@@ -102,6 +98,7 @@ def sin_cos_crab(
 
     Returns:
         Values of :math:`f(t)`.
+
     """
     freq_params_sin = params[0::4]
     coeffs_sin = params[1::4]
@@ -114,9 +111,7 @@ def sin_cos_crab(
     return sin_crab(t, duration, sin_params) + cos_crab(t, duration, cos_params)
 
 
-def cos_sin_crab(
-    t: jnp.ndarray | float, duration: float, params: jnp.ndarray
-) -> jnp.ndarray:
+def cos_sin_crab(t: jnp.ndarray | float, duration: float, params: jnp.ndarray) -> jnp.ndarray:
     r"""Combined cosine and sine CRAB pulse ansatz.
 
     .. math::
@@ -145,6 +140,7 @@ def cos_sin_crab(
 
     Returns:
         Values of :math:`f(t)`.
+
     """
     freq_params_cos = params[0::4]
     coeffs_cos = params[1::4]
@@ -171,14 +167,13 @@ def const(t: jnp.ndarray | float, _duration: float, params: jnp.ndarray) -> jnp.
 
     Returns:
         Values of :math:`f(t)`.
+
     """
     c0 = params[0]
     return c0 + jnp.zeros_like(t)
 
 
-def const_sin_crab(
-    t: jnp.ndarray | float, duration: float, params: jnp.ndarray
-) -> jnp.ndarray:
+def const_sin_crab(t: jnp.ndarray | float, duration: float, params: jnp.ndarray) -> jnp.ndarray:
     r"""Constant offset plus sine CRAB pulse ansatz.
 
     .. math::
@@ -200,14 +195,13 @@ def const_sin_crab(
 
     Returns:
         Values of :math:`f(t)`.
+
     """
     c0 = params[0]
     return c0 + sin_crab(t, duration, params[1:])
 
 
-def const_cos_crab(
-    t: jnp.ndarray | float, duration: float, params: jnp.ndarray
-) -> jnp.ndarray:
+def const_cos_crab(t: jnp.ndarray | float, duration: float, params: jnp.ndarray) -> jnp.ndarray:
     r"""Constant offset plus cosine CRAB pulse ansatz.
 
     .. math::
@@ -229,14 +223,13 @@ def const_cos_crab(
 
     Returns:
         Values of :math:`f(t)`.
+
     """
     c0 = params[0]
     return c0 + cos_crab(t, duration, params[1:])
 
 
-def const_sin_cos_crab(
-    t: jnp.ndarray | float, duration: float, params: jnp.ndarray
-) -> jnp.ndarray:
+def const_sin_cos_crab(t: jnp.ndarray | float, duration: float, params: jnp.ndarray) -> jnp.ndarray:
     r"""Constant offset plus combined sine and cosine CRAB pulse ansatz.
 
     .. math::
@@ -266,15 +259,13 @@ def const_sin_cos_crab(
 
     Returns:
         Values of :math:`f(t)`.
-    """
 
+    """
     c0 = params[0]
     return c0 + sin_cos_crab(t, duration, params[1:])
 
 
-def const_cos_sin_crab(
-    t: jnp.ndarray | float, duration: float, params: jnp.ndarray
-) -> jnp.ndarray:
+def const_cos_sin_crab(t: jnp.ndarray | float, duration: float, params: jnp.ndarray) -> jnp.ndarray:
     r"""Constant offset plus combined cosine and sine CRAB pulse ansatz.
 
     .. math::
@@ -304,14 +295,13 @@ def const_cos_sin_crab(
 
     Returns:
         Values of :math:`f(t)`.
+
     """
     c0 = params[0]
     return c0 + cos_sin_crab(t, duration, params[1:])
 
 
-def lin_sin_crab(
-    t: jnp.ndarray | float, duration: float, params: jnp.ndarray
-) -> jnp.ndarray:
+def lin_sin_crab(t: jnp.ndarray | float, duration: float, params: jnp.ndarray) -> jnp.ndarray:
     r"""Straight line plus sine CRAB pulse ansatz.
 
     .. math::
@@ -333,14 +323,13 @@ def lin_sin_crab(
 
     Returns:
         Values of :math:`f(t)`.
+
     """
     c1 = params[0]
     return c1 * (t - duration / 2.0) + sin_crab(t, duration, params[1:])
 
 
-def lin_cos_crab(
-    t: jnp.ndarray | float, duration: float, params: jnp.ndarray
-) -> jnp.ndarray:
+def lin_cos_crab(t: jnp.ndarray | float, duration: float, params: jnp.ndarray) -> jnp.ndarray:
     r"""Straight line plus cosine CRAB pulse ansatz.
 
     .. math::
@@ -362,14 +351,13 @@ def lin_cos_crab(
 
     Returns:
         Values of :math:`f(t)`.
+
     """
     c1 = params[0]
     return c1 * (t - duration / 2.0) + cos_crab(t, duration, params[1:])
 
 
-def lin_sin_cos_crab(
-    t: jnp.ndarray | float, duration: float, params: jnp.ndarray
-) -> jnp.ndarray:
+def lin_sin_cos_crab(t: jnp.ndarray | float, duration: float, params: jnp.ndarray) -> jnp.ndarray:
     r"""Straight line plus combined sine and cosine CRAB pulse ansatz.
 
     .. math::
@@ -399,15 +387,13 @@ def lin_sin_cos_crab(
 
     Returns:
         Values of :math:`f(t)`.
-    """
 
+    """
     c1 = params[0]
     return c1 * (t - duration / 2.0) + sin_cos_crab(t, duration, params[1:])
 
 
-def lin_cos_sin_crab(
-    t: jnp.ndarray | float, duration: float, params: jnp.ndarray
-) -> jnp.ndarray:
+def lin_cos_sin_crab(t: jnp.ndarray | float, duration: float, params: jnp.ndarray) -> jnp.ndarray:
     r"""Straight line plus combined cosine and sine CRAB pulse ansatz.
 
     .. math::
@@ -437,6 +423,7 @@ def lin_cos_sin_crab(
 
     Returns:
         Values of :math:`f(t)`.
+
     """
     c1 = params[0]
     return c1 * (t - duration / 2.0) + cos_sin_crab(t, duration, params[1:])

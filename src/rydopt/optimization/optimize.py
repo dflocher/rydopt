@@ -1,21 +1,23 @@
 from __future__ import annotations
 
+import multiprocessing as mp
+import time
+import warnings
+from collections.abc import Sized
+from contextlib import nullcontext
+from dataclasses import dataclass
+from functools import partial
+from typing import Generic, Literal, TypeVar, overload
+
+import jax
+import jax.numpy as jnp
+import numpy as np
+import optax
+
 from rydopt.gates.gate import Gate
 from rydopt.pulses.pulse_ansatz import PulseAnsatz
 from rydopt.simulation.fidelity import process_fidelity
-from functools import partial
-import jax.numpy as jnp
-import jax
-import time
-import optax
-import numpy as np
-import multiprocessing as mp
-import warnings
-from dataclasses import dataclass
-from contextlib import nullcontext
-from rydopt.types import ParamsTuple, FixedParamsTuple
-from typing import Generic, TypeVar, overload, Literal
-from collections.abc import Sized
+from rydopt.types import FixedParamsTuple, ParamsTuple
 
 ParamsType = TypeVar("ParamsType", covariant=True)
 InfidelityType = TypeVar("InfidelityType", covariant=True)
@@ -50,28 +52,22 @@ class OptimizationResult(Generic[ParamsType, InfidelityType, HistoryType]):
 
 
 def _spec(nested: ParamsTuple | FixedParamsTuple) -> tuple[int, ...]:
-    return tuple(
-        np.cumsum([len(p) if isinstance(p, Sized) else 1 for p in nested])[:-1].tolist()
-    )
+    return tuple(np.cumsum([len(p) if isinstance(p, Sized) else 1 for p in nested])[:-1].tolist())
 
 
 def _ravel(nested: ParamsTuple | FixedParamsTuple) -> np.ndarray:
     first, *rest = nested
-    return np.concatenate([(first,)] + [p for p in rest])
+    return np.concatenate([(first,), *list(rest)])
 
 
-def _unravel(
-    flat: np.ndarray, split_indices: tuple[int, ...]
-) -> ParamsTuple | FixedParamsTuple:
+def _unravel(flat: np.ndarray, split_indices: tuple[int, ...]) -> ParamsTuple | FixedParamsTuple:
     parts = np.split(flat, split_indices)
-    return (parts[0][0],) + tuple(parts[1:])
+    return (parts[0][0], *tuple(parts[1:]))
 
 
-def _unravel_jax(
-    flat: jnp.ndarray, split_indices: tuple[int, ...]
-) -> ParamsTuple | FixedParamsTuple:
+def _unravel_jax(flat: jnp.ndarray, split_indices: tuple[int, ...]) -> ParamsTuple | FixedParamsTuple:
     parts = jnp.split(flat, split_indices)
-    return (parts[0][0],) + tuple(parts[1:])
+    return (parts[0][0], *tuple(parts[1:]))
 
 
 def _make_infidelity(
@@ -168,7 +164,8 @@ def _adam_scan(
         jax.lax.cond(
             was_not_done & (is_done_now | is_distinct),
             lambda args: jax.debug.print(
-                "Step {step:06d} [process{process_idx:02d}]: min infidelity ={min_infidelity:13.6e}, converged = {converged} / {min_converged_initializations}",
+                "Step {step:06d} [process{process_idx:02d}]: min infidelity ={min_infidelity:13.6e}, "
+                "converged = {converged} / {min_converged_initializations}",
                 step=args[0],
                 process_idx=args[1],
                 min_infidelity=args[2],
@@ -215,11 +212,7 @@ def _adam_optimize(
     process_idx: int,
     device_idx: int | None = None,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-    device_ctx = (
-        nullcontext()
-        if device_idx is None
-        else jax.default_device(jax.devices()[device_idx])
-    )
+    device_ctx = nullcontext() if device_idx is None else jax.default_device(jax.devices()[device_idx])
 
     with device_ctx:
         params_trainable = jax.device_put(params_trainable)
@@ -323,6 +316,7 @@ def optimize(
 
     Returns:
         OptimizationResult object containing the final parameters, the final cost, and the optimization history
+
     """
     split_indices = _spec(initial_params)
     params_full = _ravel(initial_params)
@@ -340,7 +334,7 @@ def optimize(
     print("\nStarted optimization using 1 process")
 
     t0 = time.perf_counter()
-    final_params_trainable, final_infidelity, history = _adam_optimize(
+    final_params_trainable, final_infidelity, complete_history = _adam_optimize(
         gate,
         pulse,
         params_full,
@@ -353,6 +347,7 @@ def optimize(
         tol,
         0,
     )
+    history = complete_history if return_history else None
     duration = time.perf_counter() - t0
 
     final_full = params_full.copy()
@@ -366,11 +361,10 @@ def optimize(
     _print_summary("Adam", duration, tol, num_converged)
     _print_gate("Optimized gate:", final_params, float(final_infidelity), tol)
 
-    history_out = history if return_history else None
     return OptimizationResult(
         params=final_params,
         infidelity=float(final_infidelity),
-        history=history_out,
+        history=history,
         num_steps=num_steps,
         tol=tol,
         duration_in_sec=duration,
@@ -473,9 +467,7 @@ def multi_start_optimize(
     seed: int | None = None,
     return_history: bool = False,
     return_all: bool = False,
-) -> OptimizationResult[
-    ParamsTuple | list[ParamsTuple], float | np.ndarray, np.ndarray | None
-]:
+) -> OptimizationResult[ParamsTuple | list[ParamsTuple], float | np.ndarray, np.ndarray | None]:
     r"""Function that optimizes multiple random initial parameter guesses in order to realize the desired gate.
 
     Args:
@@ -496,6 +488,7 @@ def multi_start_optimize(
 
     Returns:
         OptimizationResult object containing the final parameters, the final cost, and the optimization history
+
     """
     split_indices = _spec(min_initial_params)
     flat_min = _ravel(min_initial_params)
@@ -515,14 +508,10 @@ def multi_start_optimize(
             )
     trainable_indices = np.nonzero(trainable_mask)[0]
 
-    use_one_process_per_device = (
-        len(jax.devices()) > 1 or jax.devices()[0].platform != "cpu"
-    )
+    use_one_process_per_device = len(jax.devices()) > 1 or jax.devices()[0].platform != "cpu"
     if num_processes is None:
         num_processes = (
-            len(jax.devices())
-            if use_one_process_per_device
-            else max(1, mp.cpu_count() // 2)
+            len(jax.devices()) if use_one_process_per_device else max(1, mp.cpu_count() // 2)
         )  # the division by 2 avoids oversubscription
     elif use_one_process_per_device and num_processes > len(jax.devices()):
         raise ValueError(
@@ -547,15 +536,13 @@ def multi_start_optimize(
 
     # --- Optimize parameters ---
 
-    print(
-        f"\nStarted optimization using {num_processes} {'processes' if num_processes > 1 else 'process'}"
-    )
+    print(f"\nStarted optimization using {num_processes} {'processes' if num_processes > 1 else 'process'}")
 
     t0 = time.perf_counter()
 
     if num_processes == 1:
         # Run optimization in main process
-        final_params_trainable, final_infidelities, history = _adam_optimize(
+        final_params_trainable, final_infidelities, complete_history = _adam_optimize(
             gate,
             pulse,
             params_full,
@@ -568,6 +555,7 @@ def multi_start_optimize(
             tol,
             0,
         )
+        history = complete_history if return_history else None
 
     else:
         # Run optimization in spawned processes
@@ -585,8 +573,7 @@ def multi_start_optimize(
                         trainable_indices,
                         split_indices,
                         num_steps,
-                        (min_converged_initializations + num_processes - 1)
-                        // num_processes,
+                        (min_converged_initializations + num_processes - 1) // num_processes,
                         learning_rate,
                         tol,
                         device_idx,
@@ -597,16 +584,10 @@ def multi_start_optimize(
             )
 
         # Concatenate results from all processes
-        final_params_trainable_list, final_infidelities_list, histories_list = zip(
-            *results
-        )
+        final_params_trainable_list, final_infidelities_list, histories_list = zip(*results)
         final_params_trainable = np.concatenate(final_params_trainable_list, axis=0)
         final_infidelities = np.concatenate(final_infidelities_list, axis=0)
-
-        if return_history:
-            history = np.concatenate(histories_list, axis=1)
-        else:
-            history = None
+        history = np.concatenate(histories_list, axis=1) if return_history else None
 
     duration = time.perf_counter() - t0
 

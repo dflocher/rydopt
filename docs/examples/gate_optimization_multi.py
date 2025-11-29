@@ -1,5 +1,6 @@
-import rydopt as ro
 import numpy as np
+
+import rydopt as ro
 
 if __name__ == "__main__":
     # Want to perform a CZ gate on two atoms with finite interaction; no Rydberg state decay
@@ -11,9 +12,7 @@ if __name__ == "__main__":
     )
 
     # Pulse ansatz: constant detuning, sweep of the laser phase according to sin_crab ansatz
-    pulse_ansatz = ro.pulses.PulseAnsatz(
-        detuning_ansatz=ro.pulses.const, phase_ansatz=ro.pulses.sin_crab
-    )
+    pulse_ansatz = ro.pulses.PulseAnsatz(detuning_ansatz=ro.pulses.const, phase_ansatz=ro.pulses.sin_crab)
 
     # Bounds for the initial pulse parameter guesses
     min_initial_params = (6, (-2,), (-2, -2), ())
@@ -32,10 +31,9 @@ if __name__ == "__main__":
     )
     optimized_params = opt_result.params
 
-    # Determine the gate's infidelity, infidelity without decay, and Rydberg time using the subsystem Hamiltonians and jax
-    infidelity, infidelity_nodecay, ryd_time = ro.characterization.analyze_gate(
-        gate, pulse_ansatz, optimized_params
-    )
+    # Determine the gate's infidelity, infidelity without decay, and Rydberg time using
+    # the subsystem Hamiltonians and jax
+    infidelity, infidelity_nodecay, ryd_time = ro.characterization.analyze_gate(gate, pulse_ansatz, optimized_params)
 
     # Print the gate performance measures
     print("\n=== Performance analysis of the best/fastest optimized gate pulse ===\n")

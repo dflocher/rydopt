@@ -1,7 +1,9 @@
-import numpy as np
-import rydopt as ro
 import time
+
 import jax
+import numpy as np
+
+import rydopt as ro
 
 
 def test_fidelity_calculation() -> None:
@@ -45,7 +47,7 @@ def test_evolution_performance() -> None:
 
     t0 = time.perf_counter()
     for i in range(num_runs):
-        result = evolve_jit((params[0] + i * 1e-3,) + params[1:])
+        result = evolve_jit((params[0] + i * 0.001, *params[1:]))
         _ = jax.block_until_ready(result)
     t1 = time.perf_counter()
 

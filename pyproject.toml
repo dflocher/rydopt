@@ -54,5 +54,37 @@ cuda12 = [
 requires = ["uv_build>=0.9.13,<0.10.0"]
 build-backend = "uv_build"
 
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+extend-include = ["*.ipynb"]
+
 [tool.ruff.lint]
-ignore = ["E741"]
+select = ["E", "F", "W", "I", "UP", "N", "B", "A", "C4", "SIM", "PT", "RET", "RUF", "TID", "ERA", "D"] # TODO add "ANN" once we have typed everything
+ignore = [
+    "E741",
+    "B905",
+    "N803",
+    "N802",
+    "N806",
+    "RUF003",
+    "D415",
+    "D203",
+    "D213",
+    "D205", # TODO every docstring should start with a one-line description
+    "D400", # TODO first line of docstrings should end with a period
+    "D401", # TODO first line of docstring should be in imperative mood
+    "D102", # TODO add docstrings in all public methods
+    "D103", # TODO add docstrings in all public functions
+    "D100", # TODO add docstrings in all public modules
+    "D104", # TODO add docstrings in public package
+    "D101", # TODO add docstrings in public class
+    "D107", # TODO add docstrings in __init__
+]
+
+[tool.ruff.lint.isort]
+combine-as-imports = true
+force-wrap-aliases = true
+
+[tool.ruff.format]
+docstring-code-format = true

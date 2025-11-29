@@ -1,6 +1,7 @@
 import numpy as np
-import rydopt as ro
 import pytest
+
+import rydopt as ro
 
 
 @pytest.mark.optimization

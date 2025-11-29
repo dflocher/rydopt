@@ -1,28 +1,28 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+
 import jax.numpy as jnp
+
 from rydopt.pulses.pulse_ansatz_functions import const
 from rydopt.types import ParamsTuple, PulseAnsatzFunction, PulseFunction
 
 
-def _const_zero(
-    t: jnp.ndarray | float, _duration: float, _params: jnp.ndarray
-) -> jnp.ndarray:
+def _const_zero(t: jnp.ndarray | float, _duration: float, _params: jnp.ndarray) -> jnp.ndarray:
     return const(t, _duration, jnp.array([0.0]))
 
 
-def _const_one(
-    t: jnp.ndarray | float, _duration: float, _params: jnp.ndarray
-) -> jnp.ndarray:
+def _const_one(t: jnp.ndarray | float, _duration: float, _params: jnp.ndarray) -> jnp.ndarray:
     return const(t, _duration, jnp.array([1.0]))
 
 
 @dataclass
 class PulseAnsatz:
-    r"""Data class that stores ansatz functions for the laser pulse that couples the qubit state :math:`|1\rangle` to the Rydberg state :math:`|r\rangle`.
+    r"""Data class that stores ansatz functions for the laser pulse that couples the qubit state :math:`|1\rangle` to
+    the Rydberg state :math:`|r\rangle`.
 
-    For available ansatz functions, see below. The parameters of the ansatz functions and duration of the laser pulse will be optimized to maximize the gate fidelity.
+    For available ansatz functions, see below. The parameters of the ansatz functions and duration of the laser pulse
+    will be optimized to maximize the gate fidelity.
 
     Example:
         >>> import rydopt as ro
@@ -42,17 +42,16 @@ class PulseAnsatz:
     phase_ansatz: PulseAnsatzFunction = _const_zero
     rabi_ansatz: PulseAnsatzFunction = _const_one
 
-    def make_pulses(
-        self, params: ParamsTuple
-    ) -> tuple[PulseFunction, PulseFunction, PulseFunction]:
-        r"""
-        Create three functions that describe the detuning sweep, the phase sweep, and the rabi sweep for fixed parameters.
+    def make_pulses(self, params: ParamsTuple) -> tuple[PulseFunction, PulseFunction, PulseFunction]:
+        r"""Create three functions that describe the detuning sweep, the phase sweep, and the rabi sweep for fixed
+        parameters.
 
         Args:
             params: pulse parameters
 
         Returns:
             Three functions :math:`\Delta(t), \, \xi(t), \, |\Omega(t)|`
+
         """
         duration, detuning_params, phase_params, rabi_params = params
         detuning_params = jnp.asarray(detuning_params)

@@ -1,14 +1,12 @@
 from __future__ import annotations
 
 from rydopt.gates.gate import Gate
-from rydopt.simulation.evolve import evolve
 from rydopt.pulses.pulse_ansatz import PulseAnsatz
+from rydopt.simulation.evolve import evolve
 from rydopt.types import ParamsTuple
 
 
-def process_fidelity(
-    gate: Gate, pulse: PulseAnsatz, params: ParamsTuple, tol: float = 1e-7
-) -> float:
+def process_fidelity(gate: Gate, pulse: PulseAnsatz, params: ParamsTuple, tol: float = 1e-7) -> float:
     r"""The function provides the process fidelity of the unitary resulting from a gate pulse :math:`U(T)` w.r.t. the
     target unitary :math:`U_{\mathrm{targ}}`:
 
@@ -31,14 +29,13 @@ def process_fidelity(
 
     Returns:
         State fidelity :math:`F_{pro}`.
+
     """
     final_states = evolve(gate, pulse, params, tol)
     return gate.process_fidelity(final_states)
 
 
-def average_gate_fidelity(
-    gate: Gate, pulse: PulseAnsatz, params: ParamsTuple, tol: float = 1e-7
-) -> float:
+def average_gate_fidelity(gate: Gate, pulse: PulseAnsatz, params: ParamsTuple, tol: float = 1e-7) -> float:
     r"""The function provides the average gate fidelity calculated from the process fidelity:
 
     .. math::
@@ -60,6 +57,4 @@ def average_gate_fidelity(
     # The average gate fidelity is calculated from the process fidelity (which is also known as the entanglement
     # fidelity) as described by https://arxiv.org/abs/quant-ph/0205035, equation (3), and
     # https://quantum.cloud.ibm.com/docs/en/api/qiskit/quantum_info#average_gate_fidelity.
-    return (gate.dim() * process_fidelity(gate, pulse, params, tol) + 1.0) / (
-        gate.dim() + 1.0
-    )
+    return (gate.dim() * process_fidelity(gate, pulse, params, tol) + 1.0) / (gate.dim() + 1.0)

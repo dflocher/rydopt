@@ -1,9 +1,7 @@
 import jax.numpy as jnp
 
 
-def H_k_atoms_perfect_blockade(
-    Delta: float, Phi: float, Omega: float, decay: float, k: int
-) -> jnp.ndarray:
+def H_k_atoms_perfect_blockade(Delta: float, Phi: float, Omega: float, decay: float, k: int) -> jnp.ndarray:
     r""":math:`k` atoms, infinite Rydberg interaction between all atoms:
 
     .. image:: ../_static/k_atoms_perfect_blockade.png
@@ -16,9 +14,7 @@ def H_k_atoms_perfect_blockade(
     )
 
 
-def H_2_atoms(
-    Delta: float, Phi: float, Omega: float, decay: float, V: float
-) -> jnp.ndarray:
+def H_2_atoms(Delta: float, Phi: float, Omega: float, decay: float, V: float) -> jnp.ndarray:
     r"""Two atoms, Rydberg interaction :math:`V` between atoms:
 
     .. image:: ../_static/2_atoms.png
@@ -40,11 +36,10 @@ def H_2_atoms(
     )
 
 
-def H_3_atoms_inf_V(
-    Delta: float, Phi: float, Omega: float, decay: float, V: float
-) -> jnp.ndarray:
+def H_3_atoms_inf_V(Delta: float, Phi: float, Omega: float, decay: float, V: float) -> jnp.ndarray:
     r"""Three atoms arranged in an isosceles triangle,
-    infinite Rydberg interaction between nearest neighbours, Rydberg interaction :math:`V` between next-nearest neighbours:
+    infinite Rydberg interaction between nearest neighbours, Rydberg interaction :math:`V` between next-nearest
+    neighbours:
 
     .. image:: ../_static/3_atoms_inf_V.png
     """
@@ -73,9 +68,7 @@ def H_3_atoms_inf_V(
     )
 
 
-def H_3_atoms_symmetric(
-    Delta: float, Phi: float, Omega: float, decay: float, V: float
-) -> jnp.ndarray:
+def H_3_atoms_symmetric(Delta: float, Phi: float, Omega: float, decay: float, V: float) -> jnp.ndarray:
     r"""Three atoms arranged in an equilateral triangle,
     Rydberg interaction :math:`V` between atoms:
 
@@ -106,11 +99,10 @@ def H_3_atoms_symmetric(
     )
 
 
-def H_3_atoms(
-    Delta: float, Phi: float, Omega: float, decay: float, Vnn: float, Vnnn: float
-) -> jnp.ndarray:
+def H_3_atoms(Delta: float, Phi: float, Omega: float, decay: float, Vnn: float, Vnnn: float) -> jnp.ndarray:
     r"""Three atoms arranged in an isosceles triangle,
-    Rydberg interaction :math:`V_{\mathrm{nn}}` between nearest neighbours, Rydberg interaction :math:`V_{\mathrm{nnn}}` between next-nearest neighbours:
+    Rydberg interaction :math:`V_{\mathrm{nn}}` between nearest neighbours, Rydberg interaction
+    :math:`V_{\mathrm{nnn}}` between next-nearest neighbours:
 
     .. image:: ../_static/3_atoms.png
     """
@@ -168,11 +160,10 @@ def H_3_atoms(
     )
 
 
-def H_4_atoms_inf_V(
-    Delta: float, Phi: float, Omega: float, decay: float, V: float
-) -> jnp.ndarray:
+def H_4_atoms_inf_V(Delta: float, Phi: float, Omega: float, decay: float, V: float) -> jnp.ndarray:
     r"""Four atoms arranged in a pyramid,
-    infinite Rydberg interaction between nearest neighbours, Rydberg interaction :math:`V` between next-nearest neighbours:
+    infinite Rydberg interaction between nearest neighbours, Rydberg interaction :math:`V` between
+    next-nearest neighbours:
 
     .. image:: ../_static/4_atoms_inf_V.png
     """
@@ -211,9 +202,7 @@ def H_4_atoms_inf_V(
     )
 
 
-def H_4_atoms_symmetric(
-    Delta: float, Phi: float, Omega: float, decay: float, V: float
-) -> jnp.ndarray:
+def H_4_atoms_symmetric(Delta: float, Phi: float, Omega: float, decay: float, V: float) -> jnp.ndarray:
     r"""Four atoms arranged in a tetrahedron,
     Rydberg interaction :math:`V` between atoms:
 
@@ -254,11 +243,10 @@ def H_4_atoms_symmetric(
     )
 
 
-def H_4_atoms(
-    Delta: float, Phi: float, Omega: float, decay: float, Vnn: float, Vnnn: float
-) -> jnp.ndarray:
+def H_4_atoms(Delta: float, Phi: float, Omega: float, decay: float, Vnn: float, Vnnn: float) -> jnp.ndarray:
     r"""Four atoms arranged in a pyramid,
-    Rydberg interaction :math:`V_{\mathrm{nn}}` between nearest neighbours, Rydberg interaction :math:`V_{\mathrm{nnn}}` between next-nearest neighbours:
+    Rydberg interaction :math:`V_{\mathrm{nn}}` between nearest neighbours, Rydberg interaction
+    :math:`V_{\mathrm{nnn}}` between next-nearest neighbours:
 
     .. image:: ../_static/4_atoms.png
     """

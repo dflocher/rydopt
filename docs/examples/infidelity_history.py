@@ -1,9 +1,10 @@
 import jax
 
 jax.config.update("jax_platforms", "cuda,cpu")
-import rydopt as ro  # noqa: E402
-import numpy as np  # noqa: E402
 import matplotlib.pyplot as plt  # noqa: E402
+import numpy as np  # noqa: E402
+
+import rydopt as ro  # noqa: E402
 
 if __name__ == "__main__":
     tol = 1e-8
@@ -22,9 +23,7 @@ if __name__ == "__main__":
     )
 
     # Pulse
-    pulse = ro.pulses.PulseAnsatz(
-        detuning_ansatz=ro.pulses.const, phase_ansatz=ro.pulses.sin_crab
-    )
+    pulse = ro.pulses.PulseAnsatz(detuning_ansatz=ro.pulses.const, phase_ansatz=ro.pulses.sin_crab)
 
     # Parameter bounds for choosing random initial parameters
     min_initial_params = (10, (-3,), (-3, -3, 100, -3), ())

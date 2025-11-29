@@ -1,27 +1,30 @@
 from __future__ import annotations
 
 from functools import partial
+from math import isinf
+
 import jax.numpy as jnp
+
 from rydopt.gates.gate import Gate
 from rydopt.gates.subsystem_hamiltonians import (
-    H_k_atoms_perfect_blockade,
     H_2_atoms,
+    H_3_atoms,
     H_3_atoms_inf_V,
     H_3_atoms_symmetric,
-    H_3_atoms,
+    H_k_atoms_perfect_blockade,
 )
-from math import isinf
 from rydopt.types import HamiltonianFunction
 
 
 class ThreeQubitGateIsosceles(Gate):
     r"""Class that describes a gate on three atoms arranged in an isosceles triangle.
-    The physical setting is described by the interaction strengths between atoms, :math:`V_{\mathrm{nn}}` and :math:`V_{\mathrm{nnn}}`,
-    and the decay strength from Rydberg states, :math:`\gamma`.
+    The physical setting is described by the interaction strengths between atoms, :math:`V_{\mathrm{nn}}` and
+    :math:`V_{\mathrm{nnn}}`, and the decay strength from Rydberg states, :math:`\gamma`.
     The target gate is specified by the phases :math:`\phi, \theta, \theta', \lambda`.
     Some phases can remain unspecified if they may take on arbitrary values.
-    In the figure, we use the notation :math:`\mathrm{C}_n\mathrm{Z}(\alpha) = \mathrm{diag}(1, ..., 1, e^{i\alpha})` on :math:`n+1` qubits,
-    and :math:`\mathrm{Z}(\alpha) = \mathrm{C}_0\mathrm{Z}(\alpha) = \mathrm{diag}(1, e^{i\alpha})`.
+    In the figure, we use the notation :math:`\mathrm{C}_n\mathrm{Z}(\alpha) = \mathrm{diag}(1, ..., 1, e^{i\alpha})`
+    on :math:`n+1` qubits, and
+    :math:`\mathrm{Z}(\alpha) = \mathrm{C}_0\mathrm{Z}(\alpha) = \mathrm{diag}(1, e^{i\alpha})`.
 
     .. image:: ../_static/ThreeQubitGateIsosceles.png
 
@@ -49,6 +52,7 @@ class ThreeQubitGateIsosceles(Gate):
 
     Returns:
         Three-qubit gate object.
+
     """
 
     def __init__(
@@ -74,25 +78,25 @@ class ThreeQubitGateIsosceles(Gate):
         self._Vnnn = Vnnn
 
     def dim(self) -> int:
-        r"""
-        Returns:
-            8
+        r"""Returns:
+        8
+
         """
         return 8
 
     def get_gate_angles(
         self,
     ) -> tuple[float | None, float | None, float | None, float | None]:
-        r"""
-        Returns:
-            Gate phases :math:`\phi, \theta, \theta', \lambda`.
+        r"""Returns:
+        Gate phases :math:`\phi, \theta, \theta', \lambda`.
+
         """
         return self._phi, self._theta, self._theta_prime, self._lamb
 
     def get_interactions(self) -> tuple[float, float]:
-        r"""
-        Returns:
-            Interaction strengths :math:`V_{\mathrm{nn}}/(\hbar\Omega_0), V_{\mathrm{nnn}}/(\hbar\Omega_0)`.
+        r"""Returns:
+        Interaction strengths :math:`V_{\mathrm{nn}}/(\hbar\Omega_0), V_{\mathrm{nnn}}/(\hbar\Omega_0)`.
+
         """
         return self._Vnn, self._Vnnn
 
@@ -132,42 +136,26 @@ class ThreeQubitGateIsosceles(Gate):
     def subsystem_rydberg_population_operators(self) -> tuple[jnp.ndarray, ...]:
         if isinf(float(self._Vnn)) and isinf(float(self._Vnnn)):
             return (
-                H_k_atoms_perfect_blockade(
-                    Delta=1.0, Phi=0.0, Omega=0.0, decay=0.0, k=1
-                ),
-                H_k_atoms_perfect_blockade(
-                    Delta=1.0, Phi=0.0, Omega=0.0, decay=0.0, k=1
-                ),
-                H_k_atoms_perfect_blockade(
-                    Delta=1.0, Phi=0.0, Omega=0.0, decay=0.0, k=1
-                ),
+                H_k_atoms_perfect_blockade(Delta=1.0, Phi=0.0, Omega=0.0, decay=0.0, k=1),
+                H_k_atoms_perfect_blockade(Delta=1.0, Phi=0.0, Omega=0.0, decay=0.0, k=1),
+                H_k_atoms_perfect_blockade(Delta=1.0, Phi=0.0, Omega=0.0, decay=0.0, k=1),
             )
         if float(self._Vnn) == float(self._Vnnn):
             return (
-                H_k_atoms_perfect_blockade(
-                    Delta=1.0, Phi=0.0, Omega=0.0, decay=0.0, k=1
-                ),
+                H_k_atoms_perfect_blockade(Delta=1.0, Phi=0.0, Omega=0.0, decay=0.0, k=1),
                 H_2_atoms(Delta=1.0, Phi=0.0, Omega=0.0, decay=0.0, V=0.0),
                 H_3_atoms_symmetric(Delta=1.0, Phi=0.0, Omega=0.0, decay=0.0, V=0.0),
             )
         if isinf(float(self._Vnn)) and float(self._Vnnn) == 0.0:
             return (
-                H_k_atoms_perfect_blockade(
-                    Delta=1.0, Phi=0.0, Omega=0.0, decay=0.0, k=1
-                ),
-                H_k_atoms_perfect_blockade(
-                    Delta=1.0, Phi=0.0, Omega=0.0, decay=0.0, k=1
-                ),
+                H_k_atoms_perfect_blockade(Delta=1.0, Phi=0.0, Omega=0.0, decay=0.0, k=1),
+                H_k_atoms_perfect_blockade(Delta=1.0, Phi=0.0, Omega=0.0, decay=0.0, k=1),
                 H_3_atoms_inf_V(Delta=1.0, Phi=0.0, Omega=0.0, decay=0.0, V=0.0),
             )
         if isinf(float(self._Vnn)):
             return (
-                H_k_atoms_perfect_blockade(
-                    Delta=1.0, Phi=0.0, Omega=0.0, decay=0.0, k=1
-                ),
-                H_k_atoms_perfect_blockade(
-                    Delta=1.0, Phi=0.0, Omega=0.0, decay=0.0, k=1
-                ),
+                H_k_atoms_perfect_blockade(Delta=1.0, Phi=0.0, Omega=0.0, decay=0.0, k=1),
+                H_k_atoms_perfect_blockade(Delta=1.0, Phi=0.0, Omega=0.0, decay=0.0, k=1),
                 H_2_atoms(Delta=1.0, Phi=0.0, Omega=0.0, decay=0.0, V=0.0),
                 H_3_atoms_inf_V(Delta=1.0, Phi=0.0, Omega=0.0, decay=0.0, V=0.0),
             )
@@ -208,9 +196,7 @@ class ThreeQubitGateIsosceles(Gate):
             jnp.array([1.0 + 0.0j, 0.0 + 0.0j]),
             jnp.array([1.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j]),
             jnp.array([1.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j]),
-            jnp.array(
-                [1.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j]
-            ),
+            jnp.array([1.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j]),
         )
 
     def process_fidelity(self, final_states) -> float:
@@ -258,16 +244,8 @@ class ThreeQubitGateIsosceles(Gate):
         # Targeted diagonal gate matrix
         p = jnp.angle(obtained_gate[1]) if self._phi is None else self._phi
         t = jnp.angle(obtained_gate[3]) - 2 * p if self._theta is None else self._theta
-        e = (
-            jnp.angle(obtained_gate[5]) - 2 * p
-            if self._theta_prime is None
-            else self._theta_prime
-        )
-        l = (
-            jnp.angle(obtained_gate[7]) - 3 * p - 2 * t - e
-            if self._lamb is None
-            else self._lamb
-        )
+        e = jnp.angle(obtained_gate[5]) - 2 * p if self._theta_prime is None else self._theta_prime
+        l = jnp.angle(obtained_gate[7]) - 3 * p - 2 * t - e if self._lamb is None else self._lamb
 
         targeted_gate = jnp.stack(
             [
@@ -282,34 +260,19 @@ class ThreeQubitGateIsosceles(Gate):
             ]
         )
 
-        return (
-            jnp.abs(jnp.vdot(targeted_gate, obtained_gate)) ** 2
-            / len(targeted_gate) ** 2
-        )
+        return jnp.abs(jnp.vdot(targeted_gate, obtained_gate)) ** 2 / len(targeted_gate) ** 2
 
     def rydberg_time(self, expectation_values) -> float:
         if float(self._Vnn) == float(self._Vnnn):
             return (1 / 8) * float(
-                jnp.squeeze(
-                    3 * expectation_values[0]
-                    + 3 * expectation_values[1]
-                    + expectation_values[2]
-                )
+                jnp.squeeze(3 * expectation_values[0] + 3 * expectation_values[1] + expectation_values[2])
             )
         if isinf(float(self._Vnn)) and float(self._Vnnn) == 0.0:
             return (1 / 8) * float(
-                jnp.squeeze(
-                    5 * expectation_values[0]
-                    + 2 * expectation_values[1]
-                    + expectation_values[2]
-                )
+                jnp.squeeze(5 * expectation_values[0] + 2 * expectation_values[1] + expectation_values[2])
             )
-        else:
-            return (1 / 8) * float(
-                jnp.squeeze(
-                    3 * expectation_values[0]
-                    + 2 * expectation_values[1]
-                    + expectation_values[2]
-                    + expectation_values[3]
-                )
+        return (1 / 8) * float(
+            jnp.squeeze(
+                3 * expectation_values[0] + 2 * expectation_values[1] + expectation_values[2] + expectation_values[3]
             )
+        )

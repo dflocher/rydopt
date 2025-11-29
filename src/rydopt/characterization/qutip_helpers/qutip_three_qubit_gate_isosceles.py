@@ -1,6 +1,5 @@
-import qutip as qt
 import numpy as np
-
+import qutip as qt
 
 IrxrI = qt.basis(3, 2).proj()
 I1x1I = qt.basis(3, 1).proj()
@@ -14,9 +13,7 @@ Y_1r = 1j * Irx1I - 1j * I1xrI
 plus_state = (qt.basis(3, 0) + qt.basis(3, 1)).unit()
 
 
-def hamiltonian_ThreeQubitGateIsosceles(
-    detuning_fn, phase_fn, rabi_fn, decay, Vnn, Vnnn
-):
+def hamiltonian_ThreeQubitGateIsosceles(detuning_fn, phase_fn, rabi_fn, decay, Vnn, Vnnn):
     proj = qt.tensor(qt.tensor(id3, id3), id3)
     if Vnn == float("inf"):
         Vnn = 0
@@ -27,21 +24,14 @@ def hamiltonian_ThreeQubitGateIsosceles(
         )
     if Vnnn == float("inf"):
         Vnnn = 0
-        proj = proj * (
-            qt.tensor(qt.tensor(id3, id3), id3)
-            - qt.tensor(qt.tensor(IrxrI, id3), IrxrI)
-        )
+        proj = proj * (qt.tensor(qt.tensor(id3, id3), id3) - qt.tensor(qt.tensor(IrxrI, id3), IrxrI))
 
     def H(t):
         return (
             proj
             * (
                 Vnnn * qt.tensor(qt.tensor(IrxrI, id3), IrxrI)
-                + Vnn
-                * (
-                    qt.tensor(qt.tensor(IrxrI, IrxrI), id3)
-                    + qt.tensor(qt.tensor(id3, IrxrI), IrxrI)
-                )
+                + Vnn * (qt.tensor(qt.tensor(IrxrI, IrxrI), id3) + qt.tensor(qt.tensor(id3, IrxrI), IrxrI))
                 + (detuning_fn(t) - 1j * 0.5 * decay)
                 * (
                     qt.tensor(qt.tensor(IrxrI, id3), id3)
@@ -90,11 +80,6 @@ def target_ThreeQubitGateIsosceles(final_state, phi, theta, theta_prime, lamb):
         + (np.exp(1j * t) - 1) * qt.tensor(qt.tensor(I1x1I, I1x1I), I0x0I + IrxrI)
         + (np.exp(1j * t) - 1) * qt.tensor(qt.tensor(I0x0I + IrxrI, I1x1I), I1x1I)
         + (np.exp(1j * e) - 1) * qt.tensor(qt.tensor(I1x1I, I0x0I + IrxrI), I1x1I)
-        + (np.exp(1j * l + 2j * t + 1j * e) - 1)
-        * qt.tensor(qt.tensor(I1x1I, I1x1I), I1x1I)
+        + (np.exp(1j * l + 2j * t + 1j * e) - 1) * qt.tensor(qt.tensor(I1x1I, I1x1I), I1x1I)
     )
-    return (
-        entangling_gate
-        * global_z_rotation
-        * qt.tensor(qt.tensor(plus_state, plus_state), plus_state)
-    )
+    return entangling_gate * global_z_rotation * qt.tensor(qt.tensor(plus_state, plus_state), plus_state)

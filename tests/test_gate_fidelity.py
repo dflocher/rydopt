@@ -1,7 +1,8 @@
-import rydopt as ro
 import jax
 import jax.numpy as jnp
 import numpy as np
+
+import rydopt as ro
 
 
 def test_two_qubit_gate_fidelity():

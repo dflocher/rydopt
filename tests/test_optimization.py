@@ -1,6 +1,7 @@
 import numpy as np
-import rydopt as ro
 import pytest
+
+import rydopt as ro
 
 
 @pytest.mark.optimization
@@ -9,17 +10,13 @@ def test_adam() -> None:
     gate = ro.gates.TwoQubitGate(phi=None, theta=np.pi, Vnn=float("inf"), decay=0)
 
     # Pulse
-    pulse = ro.pulses.PulseAnsatz(
-        detuning_ansatz=ro.pulses.const, phase_ansatz=ro.pulses.sin_crab
-    )
+    pulse = ro.pulses.PulseAnsatz(detuning_ansatz=ro.pulses.const, phase_ansatz=ro.pulses.sin_crab)
 
     # Initial parameters
     initial_params = (7.6, (-0.1,), (1.8, -0.6), ())
 
     # Run optimization
-    r = ro.optimization.optimize(
-        gate, pulse, initial_params, num_steps=200, tol=1e-7, return_history=True
-    )
+    r = ro.optimization.optimize(gate, pulse, initial_params, num_steps=200, tol=1e-7, return_history=True)
 
     # Verify the fidelity
     fidelity = ro.simulation.process_fidelity(gate, pulse, r.params)
@@ -34,9 +31,7 @@ def test_adam_decay() -> None:
     gate = ro.gates.TwoQubitGate(phi=None, theta=np.pi, Vnn=float("inf"), decay=0.01)
 
     # Pulse
-    pulse = ro.pulses.PulseAnsatz(
-        detuning_ansatz=ro.pulses.const, phase_ansatz=ro.pulses.sin_crab
-    )
+    pulse = ro.pulses.PulseAnsatz(detuning_ansatz=ro.pulses.const, phase_ansatz=ro.pulses.sin_crab)
 
     # Initial parameters
     initial_params = (7.6, (-0.1,), (1.8, -0.6), ())
@@ -129,9 +124,7 @@ def test_fastest() -> None:
     gate = ro.gates.TwoQubitGate(phi=None, theta=np.pi, Vnn=float("inf"), decay=0)
 
     # Pulse
-    pulse = ro.pulses.PulseAnsatz(
-        detuning_ansatz=ro.pulses.const, phase_ansatz=ro.pulses.sin_crab
-    )
+    pulse = ro.pulses.PulseAnsatz(detuning_ansatz=ro.pulses.const, phase_ansatz=ro.pulses.sin_crab)
 
     # Parameter bounds for choosing random initial parameters
     min_initial_params = (6, (-2,), (-2, -2), ())
@@ -164,18 +157,14 @@ def test_fixed() -> None:
     gate = ro.gates.TwoQubitGate(phi=None, theta=np.pi, Vnn=float("inf"), decay=0)
 
     # Pulse
-    pulse = ro.pulses.PulseAnsatz(
-        detuning_ansatz=ro.pulses.const, phase_ansatz=ro.pulses.sin_crab
-    )
+    pulse = ro.pulses.PulseAnsatz(detuning_ansatz=ro.pulses.const, phase_ansatz=ro.pulses.sin_crab)
 
     # Initial parameters
     initial_params = (7.6, (0.0,), (1.8, -0.6), ())
     fixed_initial_params = (False, (True,), (False, False), ())
 
     # Run optimization
-    r = ro.optimization.optimize(
-        gate, pulse, initial_params, fixed_initial_params, num_steps=200
-    )
+    r = ro.optimization.optimize(gate, pulse, initial_params, fixed_initial_params, num_steps=200)
 
     # Verify the fidelity
     fidelity = ro.simulation.process_fidelity(gate, pulse, r.params)

@@ -1,6 +1,5 @@
-import qutip as qt
 import numpy as np
-
+import qutip as qt
 
 IrxrI = qt.basis(3, 2).proj()
 I1x1I = qt.basis(3, 1).proj()
@@ -14,9 +13,7 @@ Y_1r = 1j * Irx1I - 1j * I1xrI
 plus_state = (qt.basis(3, 0) + qt.basis(3, 1)).unit()
 
 
-def hamiltonian_FourQubitGatePyramidal(
-    detuning_fn, phase_fn, rabi_fn, decay, Vnn, Vnnn
-):
+def hamiltonian_FourQubitGatePyramidal(detuning_fn, phase_fn, rabi_fn, decay, Vnn, Vnnn):
     proj = qt.tensor(qt.tensor(qt.tensor(id3, id3), id3), id3)
     if Vnn == float("inf"):
         Vnn = 0
@@ -80,9 +77,7 @@ def hamiltonian_FourQubitGatePyramidal(
             * proj
         )
 
-    psi_in = qt.tensor(
-        qt.tensor(qt.tensor(plus_state, plus_state), plus_state), plus_state
-    )
+    psi_in = qt.tensor(qt.tensor(qt.tensor(plus_state, plus_state), plus_state), plus_state)
     TR_op = (
         qt.tensor(qt.tensor(qt.tensor(IrxrI, id3), id3), id3)
         + qt.tensor(qt.tensor(qt.tensor(id3, IrxrI), id3), id3)
@@ -92,55 +87,33 @@ def hamiltonian_FourQubitGatePyramidal(
     return H, psi_in, TR_op
 
 
-def target_FourQubitGatePyramidal(
-    final_state, phi, theta, theta_prime, lamb, lamb_prime, kappa
-):
+def target_FourQubitGatePyramidal(final_state, phi, theta, theta_prime, lamb, lamb_prime, kappa):
     p = np.angle(final_state[1, 0]) if phi is None else phi
     t = np.angle(final_state[4, 0]) - 2 * p if theta is None else theta
     e = np.angle(final_state[12, 0]) - 2 * p if theta_prime is None else theta_prime
     l = np.angle(final_state[13, 0]) - 3 * p - 2 * t - e if lamb is None else lamb
-    d = (
-        np.angle(final_state[39, 0]) - 3 * p - 3 * e
-        if lamb_prime is None
-        else lamb_prime
-    )
-    k = (
-        np.angle(final_state[40, 0]) - 4 * p - 3 * t - 3 * e - 3 * l - d
-        if kappa is None
-        else kappa
-    )
+    d = np.angle(final_state[39, 0]) - 3 * p - 3 * e if lamb_prime is None else lamb_prime
+    k = np.angle(final_state[40, 0]) - 4 * p - 3 * t - 3 * e - 3 * l - d if kappa is None else kappa
 
     rz = qt.Qobj([[1, 0, 0], [0, np.exp(1j * p), 0], [0, 0, 1]])
     global_z_rotation = qt.tensor(qt.tensor(qt.tensor(rz, rz), rz), rz)
     entangling_gate = (
         qt.tensor(qt.tensor(qt.tensor(id3, id3), id3), id3)
-        + (np.exp(1j * t) - 1)
-        * qt.tensor(qt.tensor(qt.tensor(I1x1I, I0x0I + IrxrI), I0x0I + IrxrI), I1x1I)
-        + (np.exp(1j * t) - 1)
-        * qt.tensor(qt.tensor(qt.tensor(I0x0I + IrxrI, I1x1I), I0x0I + IrxrI), I1x1I)
-        + (np.exp(1j * t) - 1)
-        * qt.tensor(qt.tensor(qt.tensor(I0x0I + IrxrI, I0x0I + IrxrI), I1x1I), I1x1I)
-        + (np.exp(1j * e) - 1)
-        * qt.tensor(qt.tensor(qt.tensor(I1x1I, I1x1I), I0x0I + IrxrI), I0x0I + IrxrI)
-        + (np.exp(1j * e) - 1)
-        * qt.tensor(qt.tensor(qt.tensor(I1x1I, I0x0I + IrxrI), I1x1I), I0x0I + IrxrI)
-        + (np.exp(1j * e) - 1)
-        * qt.tensor(qt.tensor(qt.tensor(I0x0I + IrxrI, I1x1I), I1x1I), I0x0I + IrxrI)
-        + (np.exp(1j * (d + 3 * e)) - 1)
-        * qt.tensor(qt.tensor(qt.tensor(I1x1I, I1x1I), I1x1I), I0x0I + IrxrI)
-        + (np.exp(1j * (l + 2 * t + e)) - 1)
-        * qt.tensor(qt.tensor(qt.tensor(I1x1I, I1x1I), I0x0I + IrxrI), I1x1I)
-        + (np.exp(1j * (l + 2 * t + e)) - 1)
-        * qt.tensor(qt.tensor(qt.tensor(I1x1I, I0x0I + IrxrI), I1x1I), I1x1I)
-        + (np.exp(1j * (l + 2 * t + e)) - 1)
-        * qt.tensor(qt.tensor(qt.tensor(I0x0I + IrxrI, I1x1I), I1x1I), I1x1I)
+        + (np.exp(1j * t) - 1) * qt.tensor(qt.tensor(qt.tensor(I1x1I, I0x0I + IrxrI), I0x0I + IrxrI), I1x1I)
+        + (np.exp(1j * t) - 1) * qt.tensor(qt.tensor(qt.tensor(I0x0I + IrxrI, I1x1I), I0x0I + IrxrI), I1x1I)
+        + (np.exp(1j * t) - 1) * qt.tensor(qt.tensor(qt.tensor(I0x0I + IrxrI, I0x0I + IrxrI), I1x1I), I1x1I)
+        + (np.exp(1j * e) - 1) * qt.tensor(qt.tensor(qt.tensor(I1x1I, I1x1I), I0x0I + IrxrI), I0x0I + IrxrI)
+        + (np.exp(1j * e) - 1) * qt.tensor(qt.tensor(qt.tensor(I1x1I, I0x0I + IrxrI), I1x1I), I0x0I + IrxrI)
+        + (np.exp(1j * e) - 1) * qt.tensor(qt.tensor(qt.tensor(I0x0I + IrxrI, I1x1I), I1x1I), I0x0I + IrxrI)
+        + (np.exp(1j * (d + 3 * e)) - 1) * qt.tensor(qt.tensor(qt.tensor(I1x1I, I1x1I), I1x1I), I0x0I + IrxrI)
+        + (np.exp(1j * (l + 2 * t + e)) - 1) * qt.tensor(qt.tensor(qt.tensor(I1x1I, I1x1I), I0x0I + IrxrI), I1x1I)
+        + (np.exp(1j * (l + 2 * t + e)) - 1) * qt.tensor(qt.tensor(qt.tensor(I1x1I, I0x0I + IrxrI), I1x1I), I1x1I)
+        + (np.exp(1j * (l + 2 * t + e)) - 1) * qt.tensor(qt.tensor(qt.tensor(I0x0I + IrxrI, I1x1I), I1x1I), I1x1I)
         + (np.exp(1j * (k + d + 3 * l + 3 * t + 3 * e)) - 1)
         * qt.tensor(qt.tensor(qt.tensor(I1x1I, I1x1I), I1x1I), I1x1I)
     )
     return (
         entangling_gate
         * global_z_rotation
-        * qt.tensor(
-            qt.tensor(qt.tensor(plus_state, plus_state), plus_state), plus_state
-        )
+        * qt.tensor(qt.tensor(qt.tensor(plus_state, plus_state), plus_state), plus_state)
     )
