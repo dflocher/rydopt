@@ -24,10 +24,10 @@ if __name__ == "__main__":
         pulse_ansatz,
         min_initial_params,
         max_initial_params,
-        num_initializations=100,
-        min_converged_initializations=100,
-        num_processes=None,
         tol=1e-7,
+        num_initializations=100,
+        num_processes=None,
+        return_history=True,
     )
     optimized_params = opt_result.params
 
@@ -40,3 +40,5 @@ if __name__ == "__main__":
     print(f"Gate infidelity:             {infidelity:.4e}")
     print(f"Gate infidelity (no decay):  {infidelity_nodecay:.4e}")
     print(f"Rydberg time:                {ryd_time:.4f}")
+
+    ro.characterization.plot_optimization_history(opt_result)

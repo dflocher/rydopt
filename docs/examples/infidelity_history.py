@@ -1,7 +1,6 @@
 import jax
 
 jax.config.update("jax_platforms", "cuda,cpu")
-import matplotlib.pyplot as plt  # noqa: E402
 import numpy as np  # noqa: E402
 
 import rydopt as ro  # noqa: E402
@@ -45,10 +44,4 @@ if __name__ == "__main__":
         return_history=True,
     )
 
-    plt.plot(r.history)
-    plt.yscale("log")
-    plt.xlim(0, num_steps)
-    plt.ylim(tol, 1)
-    plt.xlabel("Optimization step")
-    plt.ylabel("Infidelity")
-    plt.savefig("infidelity_history.png")
+    ro.characterization.plot_optimization_history(r)
