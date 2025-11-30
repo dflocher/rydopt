@@ -19,8 +19,8 @@ def rydberg_time(gate: Gate, pulse: PulseAnsatz, params: ParamsTuple, tol: float
         |r_i\rangle\!\langle r_i|  U(t)\ket{+}^{\otimes N} dt .
 
     Args:
-        gate: rydopt Gate object.
-        pulse: rydopt PulseAnsatz object.
+        gate: RydOpt Gate object.
+        pulse: RydOpt PulseAnsatz object.
         params: Pulse parameters.
         tol: Precision of the ODE solver, default is 1e-7.
 

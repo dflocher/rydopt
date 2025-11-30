@@ -16,9 +16,9 @@ import rydopt.pulses as pulses
 import rydopt.simulation as simulation
 
 __all__ = [
-    "characterization",
     "gates",
-    "optimization",
     "pulses",
     "simulation",
+    "optimization",
+    "characterization",
 ]

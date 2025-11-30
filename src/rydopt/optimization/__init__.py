@@ -5,7 +5,7 @@ from rydopt.optimization.optimize import (
 )
 
 __all__ = [
-    "OptimizationResult",
-    "multi_start_optimize",
     "optimize",
+    "multi_start_optimize",
+    "OptimizationResult",
 ]

@@ -305,8 +305,8 @@ def optimize(
     r"""Function that optimizes an initial parameter guess in order to realize the desired gate.
 
     Args:
-        gate: rydopt Gate object
-        pulse: rydopt PulseAnsatz object
+        gate: RydOpt Gate object
+        pulse: RydOpt PulseAnsatz object
         initial_params: initial pulse parameters
         fixed_initial_params: which parameters shall not be optimized
         num_steps: number of optimization steps
@@ -471,8 +471,8 @@ def multi_start_optimize(
     r"""Function that optimizes multiple random initial parameter guesses in order to realize the desired gate.
 
     Args:
-        gate: rydopt Gate object
-        pulse: rydopt PulseAnsatz object
+        gate: RydOpt Gate object
+        pulse: RydOpt PulseAnsatz object
         min_initial_params: lower bound for the random parameter initialization
         max_initial_params: upper bound for the random parameter initialization
         fixed_initial_params: which parameters shall not be optimized

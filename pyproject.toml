@@ -71,6 +71,7 @@ ignore = [
     "D415",
     "D203",
     "D213",
+    "RUF022",
     "D205", # TODO every docstring should start with a one-line description
     "D400", # TODO first line of docstrings should end with a period
     "D401", # TODO first line of docstring should be in imperative mood

@@ -4,6 +4,6 @@ from rydopt.characterization.plots import plot_optimization_history, plot_pulse
 __all__ = [
     "analyze_gate",
     "analyze_gate_qutip",
-    "plot_optimization_history",
     "plot_pulse",
+    "plot_optimization_history",
 ]

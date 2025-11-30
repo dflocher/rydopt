@@ -21,11 +21,11 @@ def process_fidelity(gate: Gate, pulse: PulseAnsatz, params: ParamsTuple, tol: f
     Note that if both :math:`U(T)` and :math:`U_{\mathrm{targ}}` are diagonal, the process fidelity is equivalent to
     the generalized N-qubit Bell state fidelity
     :math:`F_{+} = |\! \langle +|^{\otimes N} U_{\mathrm{targ}}^{\dagger} U(T) |+\rangle^{\otimes N}\!|^2`. For the
-    Rydberg gates that are currently implemented in rydopt, this is the case.
+    Rydberg gates that are currently implemented in RydOpt, this is the case.
 
     Args:
-        gate: rydopt Gate object.
-        pulse: rydopt PulseAnsatz object.
+        gate: RydOpt Gate object.
+        pulse: RydOpt PulseAnsatz object.
         params: Pulse parameters.
         tol: Precision of the ODE solver, default is 1e-7.
 
@@ -47,8 +47,8 @@ def average_gate_fidelity(gate: Gate, pulse: PulseAnsatz, params: ParamsTuple, t
     where :math:`d` is the dimension of the Hilbert space.
 
     Args:
-        gate: rydopt Gate object.
-        pulse: rydopt PulseAnsatz object.
+        gate: RydOpt Gate object.
+        pulse: RydOpt PulseAnsatz object.
         params: Pulse parameters.
         tol: Precision of the ODE solver, default is 1e-7.
 

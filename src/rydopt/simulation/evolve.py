@@ -19,8 +19,8 @@ def evolve(gate: Gate, pulse: PulseAnsatz, params: ParamsTuple, tol: float = 1e-
         |\psi_i(T)\rangle = U(T)|\psi_i(0)\rangle = \mathcal{T} e^{-\frac{i}{\hbar} \int_0^T H(t)dt}  |\psi_i(0)\rangle
 
     Args:
-        gate: rydopt Gate object.
-        pulse: rydopt PulseAnsatz object.
+        gate: RydOpt Gate object.
+        pulse: RydOpt PulseAnsatz object.
         params: Pulse parameters.
         tol: Precision of the ODE solver, default is 1e-7.
 
