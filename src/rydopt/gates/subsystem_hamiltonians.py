@@ -5,6 +5,17 @@ def H_k_atoms_perfect_blockade(Delta: float, Phi: float, Omega: float, decay: fl
     r""":math:`k` atoms, infinite Rydberg interaction between all atoms:
 
     .. image:: ../_static/k_atoms_perfect_blockade.png
+
+    Args:
+        Delta: Laser detuning.
+        Phi: Laser phase.
+        Omega: Rabi frequency amplitude.
+        decay: Rydberg-decay rate.
+        k: Number of atoms.
+
+    Returns:
+        2-level system Hamiltonian.
+
     """
     return jnp.array(
         [
@@ -18,6 +29,17 @@ def H_2_atoms(Delta: float, Phi: float, Omega: float, decay: float, V: float) ->
     r"""Two atoms, Rydberg interaction :math:`V` between atoms:
 
     .. image:: ../_static/2_atoms.png
+
+    Args:
+        Delta: Laser detuning.
+        Phi: Laser phase.
+        Omega: Rabi frequency amplitude.
+        decay: Rydberg-decay rate.
+        V: Rydberg interaction strength.
+
+    Returns:
+        3-level system Hamiltonian.
+
     """
     return jnp.array(
         [
@@ -42,6 +64,17 @@ def H_3_atoms_inf_V(Delta: float, Phi: float, Omega: float, decay: float, V: flo
     neighbours:
 
     .. image:: ../_static/3_atoms_inf_V.png
+
+    Args:
+        Delta: Laser detuning.
+        Phi: Laser phase.
+        Omega: Rabi frequency amplitude.
+        decay: Rydberg-decay rate.
+        V: Rydberg interaction strength between next-nearest neighbours.
+
+    Returns:
+        4-level system Hamiltonian.
+
     """
     return jnp.array(
         [
@@ -73,6 +106,17 @@ def H_3_atoms_symmetric(Delta: float, Phi: float, Omega: float, decay: float, V:
     Rydberg interaction :math:`V` between atoms:
 
     .. image:: ../_static/3_atoms_symmetric.png
+
+    Args:
+        Delta: Laser detuning.
+        Phi: Laser phase.
+        Omega: Rabi frequency amplitude.
+        decay: Rydberg-decay rate.
+        V: Rydberg interaction strength.
+
+    Returns:
+        4-level system Hamiltonian.
+
     """
     return jnp.array(
         [
@@ -105,6 +149,18 @@ def H_3_atoms(Delta: float, Phi: float, Omega: float, decay: float, Vnn: float, 
     :math:`V_{\mathrm{nnn}}` between next-nearest neighbours:
 
     .. image:: ../_static/3_atoms.png
+
+    Args:
+        Delta: Laser detuning.
+        Phi: Laser phase.
+        Omega: Rabi frequency amplitude.
+        decay: Rydberg-decay rate.
+        Vnn: Rydberg interaction strength between nearest neighbours.
+        Vnnn: Rydberg interaction strength between next-nearest neighbours.
+
+    Returns:
+        6-level system Hamiltonian.
+
     """
     return jnp.array(
         [
@@ -166,6 +222,17 @@ def H_4_atoms_inf_V(Delta: float, Phi: float, Omega: float, decay: float, V: flo
     next-nearest neighbours:
 
     .. image:: ../_static/4_atoms_inf_V.png
+
+    Args:
+        Delta: Laser detuning.
+        Phi: Laser phase.
+        Omega: Rabi frequency amplitude.
+        decay: Rydberg-decay rate.
+        V: Rydberg interaction strength between next-nearest neighbours.
+
+    Returns:
+        5-level system Hamiltonian.
+
     """
     return jnp.array(
         [
@@ -207,6 +274,17 @@ def H_4_atoms_symmetric(Delta: float, Phi: float, Omega: float, decay: float, V:
     Rydberg interaction :math:`V` between atoms:
 
     .. image:: ../_static/4_atoms_symmetric.png
+
+    Args:
+        Delta: Laser detuning.
+        Phi: Laser phase.
+        Omega: Rabi frequency amplitude.
+        decay: Rydberg-decay rate.
+        V: Rydberg interaction strength.
+
+    Returns:
+        5-level system Hamiltonian.
+
     """
     return jnp.array(
         [
@@ -249,6 +327,18 @@ def H_4_atoms(Delta: float, Phi: float, Omega: float, decay: float, Vnn: float, 
     :math:`V_{\mathrm{nnn}}` between next-nearest neighbours:
 
     .. image:: ../_static/4_atoms.png
+
+    Args:
+        Delta: Laser detuning.
+        Phi: Laser phase.
+        Omega: Rabi frequency amplitude.
+        decay: Rydberg-decay rate.
+        Vnn: Rydberg interaction strength between nearest neighbours.
+        Vnnn: Rydberg interaction strength between next-nearest neighbours.
+
+    Returns:
+        8-level system Hamiltonian.
+
     """
     return jnp.array(
         [

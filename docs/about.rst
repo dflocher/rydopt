@@ -14,7 +14,7 @@ Rabi frequency amplitude.
 The dynamics of a set of :math:`N` atoms subjected to the very same laser pulse is described by the Hamiltonian
 
 .. math::
-    H(t) = \hbar \sum_{i=1}^{N} \frac{1}{2} \big( \Omega(t) |r_i \rangle \langle 1_i| + \mathrm{h.c.} \big)
+    H(t) = \hbar \sum_{i=1}^{N} \frac{1}{2} \big( \Omega(t) |r_i \rangle \langle 1_i| + \mathrm{h.\!c.} \big)
     + \Delta(t) |r_i\rangle \langle r_i| + \sum_{i,j<i} V_{ij} | r_i r_j \rangle \langle r_i r_j | ,
 
 where :math:`V_{ij}` describes the interaction between atom :math:`i` and atom :math:`j`.
@@ -22,5 +22,6 @@ where :math:`V_{ij}` describes the interaction between atom :math:`i` and atom :
 The RydOpt Package
 ------------------
 
-This package provides tools to simulate the dynamics of multiple atoms subjected to a gate pulse.
-In particular, an optimization tool can identify pulses that implement a desired target gate on a set of atoms.
+RydOpt is a Python package for the optimization of laser pulses implementing two- and multiqubit Rydberg gates in
+neutral atom quantum computing platforms. The optimization methods support GPUs and multi-core CPUs, using an
+efficient implementation based on JAX.
