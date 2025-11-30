@@ -22,8 +22,7 @@ if __name__ == "__main__":
     # Plot the pulse
     ro.characterization.plot_pulse(pulse_ansatz, pulse_params)
 
-    # Determine the gate's infidelity, infidelity without decay, and Rydberg time using
-    # the subsystem Hamiltonians and jax
+    # Determine the gate's infidelity, infidelity without decay, and Rydberg time
     infidelity, infidelity_nodecay, ryd_time = ro.characterization.analyze_gate(
         gate, pulse_ansatz, pulse_params
     )

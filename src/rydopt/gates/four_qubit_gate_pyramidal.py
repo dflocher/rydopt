@@ -125,7 +125,7 @@ class FourQubitGatePyramidal(Gate):
         """
         return self._Vnn, self._Vnnn
 
-    def subsystem_hamiltonians(self) -> tuple[HamiltonianFunction, ...]:
+    def hamiltonians_for_basis_states(self) -> tuple[HamiltonianFunction, ...]:
         if isinf(float(self._Vnn)) and isinf(float(self._Vnnn)):
             return (
                 partial(H_k_atoms_perfect_blockade, decay=self._decay, k=1),
@@ -165,7 +165,7 @@ class FourQubitGatePyramidal(Gate):
             partial(H_4_atoms, decay=self._decay, Vnn=self._Vnn, Vnnn=self._Vnnn),
         )
 
-    def subsystem_rydberg_population_operators(self) -> tuple[jnp.ndarray, ...]:
+    def rydberg_population_operators_for_basis_states(self) -> tuple[jnp.ndarray, ...]:
         if isinf(float(self._Vnn)) and isinf(float(self._Vnnn)):
             return (
                 H_k_atoms_perfect_blockade(Delta=1.0, Phi=0.0, Omega=0.0, decay=0.0, k=1),
@@ -205,7 +205,7 @@ class FourQubitGatePyramidal(Gate):
             H_4_atoms(Delta=1.0, Phi=0.0, Omega=0.0, decay=0.0, Vnn=0.0, Vnnn=0.0),
         )
 
-    def subsystem_initial_states(self) -> tuple[jnp.ndarray, ...]:
+    def initial_basis_states(self) -> tuple[jnp.ndarray, ...]:
         if isinf(float(self._Vnn)) and isinf(float(self._Vnnn)):
             return (
                 jnp.array([1.0 + 0.0j, 0.0 + 0.0j]),
@@ -256,69 +256,69 @@ class FourQubitGatePyramidal(Gate):
             ),
         )
 
-    def process_fidelity(self, final_states) -> jnp.ndarray:
+    def process_fidelity(self, final_basis_states) -> jnp.ndarray:
         # Obtained diagonal gate matrix
         if float(self._Vnn) == float(self._Vnnn):
             obtained_gate = jnp.array(
                 [
                     1,
-                    final_states[0][0],
-                    final_states[0][0],
-                    final_states[1][0],
-                    final_states[0][0],
-                    final_states[1][0],
-                    final_states[1][0],
-                    final_states[2][0],
-                    final_states[0][0],
-                    final_states[1][0],
-                    final_states[1][0],
-                    final_states[2][0],
-                    final_states[1][0],
-                    final_states[2][0],
-                    final_states[2][0],
-                    final_states[3][0],
+                    final_basis_states[0][0],
+                    final_basis_states[0][0],
+                    final_basis_states[1][0],
+                    final_basis_states[0][0],
+                    final_basis_states[1][0],
+                    final_basis_states[1][0],
+                    final_basis_states[2][0],
+                    final_basis_states[0][0],
+                    final_basis_states[1][0],
+                    final_basis_states[1][0],
+                    final_basis_states[2][0],
+                    final_basis_states[1][0],
+                    final_basis_states[2][0],
+                    final_basis_states[2][0],
+                    final_basis_states[3][0],
                 ]
             )
         elif isinf(float(self._Vnn)) and float(self._Vnnn) == 0.0:
             obtained_gate = jnp.array(
                 [
                     1,
-                    final_states[0][0],
-                    final_states[0][0],
-                    final_states[1][0],
-                    final_states[0][0],
-                    final_states[1][0],
-                    final_states[0][0] ** 2,
-                    final_states[2][0],
-                    final_states[0][0],
-                    final_states[1][0],
-                    final_states[0][0] ** 2,
-                    final_states[2][0],
-                    final_states[0][0] ** 2,
-                    final_states[2][0],
-                    final_states[0][0] ** 3,
-                    final_states[3][0],
+                    final_basis_states[0][0],
+                    final_basis_states[0][0],
+                    final_basis_states[1][0],
+                    final_basis_states[0][0],
+                    final_basis_states[1][0],
+                    final_basis_states[0][0] ** 2,
+                    final_basis_states[2][0],
+                    final_basis_states[0][0],
+                    final_basis_states[1][0],
+                    final_basis_states[0][0] ** 2,
+                    final_basis_states[2][0],
+                    final_basis_states[0][0] ** 2,
+                    final_basis_states[2][0],
+                    final_basis_states[0][0] ** 3,
+                    final_basis_states[3][0],
                 ]
             )
         else:
             obtained_gate = jnp.array(
                 [
                     1,
-                    final_states[0][0],
-                    final_states[0][0],
-                    final_states[1][0],
-                    final_states[0][0],
-                    final_states[1][0],
-                    final_states[2][0],
-                    final_states[3][0],
-                    final_states[0][0],
-                    final_states[1][0],
-                    final_states[2][0],
-                    final_states[3][0],
-                    final_states[2][0],
-                    final_states[3][0],
-                    final_states[4][0],
-                    final_states[5][0],
+                    final_basis_states[0][0],
+                    final_basis_states[0][0],
+                    final_basis_states[1][0],
+                    final_basis_states[0][0],
+                    final_basis_states[1][0],
+                    final_basis_states[2][0],
+                    final_basis_states[3][0],
+                    final_basis_states[0][0],
+                    final_basis_states[1][0],
+                    final_basis_states[2][0],
+                    final_basis_states[3][0],
+                    final_basis_states[2][0],
+                    final_basis_states[3][0],
+                    final_basis_states[4][0],
+                    final_basis_states[5][0],
                 ]
             )
 
@@ -353,26 +353,26 @@ class FourQubitGatePyramidal(Gate):
 
         return jnp.abs(jnp.vdot(targeted_gate, obtained_gate)) ** 2 / len(targeted_gate) ** 2
 
-    def rydberg_time(self, expectation_values) -> jnp.ndarray:
+    def rydberg_time(self, expectation_values_of_basis_states) -> jnp.ndarray:
         if float(self._Vnn) == float(self._Vnnn):
             return (1 / 16) * jnp.squeeze(
-                4 * expectation_values[0]
-                + 6 * expectation_values[1]
-                + 4 * expectation_values[2]
-                + expectation_values[3]
+                4 * expectation_values_of_basis_states[0]
+                + 6 * expectation_values_of_basis_states[1]
+                + 4 * expectation_values_of_basis_states[2]
+                + expectation_values_of_basis_states[3]
             )
         if isinf(float(self._Vnn)) and float(self._Vnnn) == 0.0:
             return (1 / 16) * jnp.squeeze(
-                13 * expectation_values[0]
-                + 3 * expectation_values[1]
-                + 3 * expectation_values[2]
-                + expectation_values[3]
+                13 * expectation_values_of_basis_states[0]
+                + 3 * expectation_values_of_basis_states[1]
+                + 3 * expectation_values_of_basis_states[2]
+                + expectation_values_of_basis_states[3]
             )
         return (1 / 16) * jnp.squeeze(
-            4 * expectation_values[0]
-            + 3 * expectation_values[1]
-            + 3 * expectation_values[2]
-            + 3 * expectation_values[3]
-            + expectation_values[4]
-            + expectation_values[5]
+            4 * expectation_values_of_basis_states[0]
+            + 3 * expectation_values_of_basis_states[1]
+            + 3 * expectation_values_of_basis_states[2]
+            + 3 * expectation_values_of_basis_states[3]
+            + expectation_values_of_basis_states[4]
+            + expectation_values_of_basis_states[5]
         )

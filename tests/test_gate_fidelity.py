@@ -12,7 +12,7 @@ def test_two_qubit_gate_fidelity():
     gate = ro.gates.TwoQubitGate(phi=phi, theta=theta, Vnn=float("inf"), decay=0)
 
     # Create a jitted process fidelity function for the created gate
-    fidelity_jit = jax.jit(lambda final_states: gate.process_fidelity(final_states))
+    fidelity_jit = jax.jit(lambda final_basis_states: gate.process_fidelity(final_basis_states))
 
     # Create the expected final states
     target_states = (
@@ -52,7 +52,7 @@ def test_two_qubit_gate_fidelity_free_phi():
     gate = ro.gates.TwoQubitGate(phi=phi, theta=theta, Vnn=float("inf"), decay=0)
 
     # Create a jitted process fidelity function for the created gate
-    fidelity_jit = jax.jit(lambda final_states: gate.process_fidelity(final_states))
+    fidelity_jit = jax.jit(lambda final_basis_states: gate.process_fidelity(final_basis_states))
 
     # Create the expected final states
     target_states = (
@@ -77,7 +77,7 @@ def test_two_qubit_gate_fidelity_free_theta():
     gate = ro.gates.TwoQubitGate(phi=phi, theta=theta, Vnn=float("inf"), decay=0)
 
     # Create a jitted process fidelity function for the created gate
-    fidelity_jit = jax.jit(lambda final_states: gate.process_fidelity(final_states))
+    fidelity_jit = jax.jit(lambda final_basis_states: gate.process_fidelity(final_basis_states))
 
     # Create the expected final states
     target_states = (

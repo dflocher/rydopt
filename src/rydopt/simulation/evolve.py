@@ -25,7 +25,7 @@ def evolve(gate: Gate, pulse: PulseAnsatz, params: ParamsTuple, tol: float = 1e-
         tol: Precision of the ODE solver, default is 1e-7.
 
     Returns:
-        Time-evolved subsystem states :math:`\{|\psi_i(T)\rangle\}`.
+        Time-evolved basis states :math:`\{|\psi_i(T)\rangle\}`.
 
     """
     # When we import diffrax, at least one jnp array is allocated (see optimistix/_misc.py, line 138). Thus,
@@ -45,21 +45,21 @@ def evolve(gate: Gate, pulse: PulseAnsatz, params: ParamsTuple, tol: float = 1e-
     rabi_params = jnp.asarray(rabi_params)
 
     # Collect initial states and pad them to a common dimension so we can stack
-    initial_states = gate.subsystem_initial_states()
+    initial_states = gate.initial_basis_states()
 
     dims = tuple(len(psi) for psi in initial_states)
     max_dim = max(dims)
 
     initial_states_padded = jnp.stack([jnp.pad(psi, (0, max_dim - dim)) for psi, dim in zip(initial_states, dims)])
 
-    # Schrödinger equation for the subsystems. The subsystem Hamiltonian is chosen via lax.switch
-    # based on the index of the subsystem, with padding to max_dim × max_dim.
+    # Schrödinger equation for the basis states. The Hamiltonian is chosen via lax.switch
+    # based on the index of the basis state, with padding to max_dim × max_dim.
     def apply_hamiltonian(detuning, phase, rabi, psi, hamiltonian, dim):
         dpsi_small = -1j * hamiltonian(detuning, phase, rabi) @ psi[:dim]
         return jnp.pad(dpsi_small, (0, psi.shape[0] - dim))
 
     branches = tuple(
-        partial(apply_hamiltonian, hamiltonian=h, dim=d) for h, d in zip(gate.subsystem_hamiltonians(), dims)
+        partial(apply_hamiltonian, hamiltonian=h, dim=d) for h, d in zip(gate.hamiltonians_for_basis_states(), dims)
     )
 
     def schroedinger_eq(t, psi, args):
@@ -93,13 +93,13 @@ def evolve(gate: Gate, pulse: PulseAnsatz, params: ParamsTuple, tol: float = 1e-
         )
         return sol.ys[0]
 
-    # Run the propagator for each subsystem
+    # Run the propagator for each basis state
     final_states_padded = jax.lax.map(
         propagate,
         (initial_states_padded, jnp.arange(len(branches))),
     )
 
-    # Remove padding and return original per-subsystem sizes
+    # Remove padding and return original state sizes
     return tuple(s[:d] for s, d in zip(final_states_padded, dims))
 
 
@@ -121,7 +121,9 @@ def _evolve_optimized_for_gpus(
         detuning = pulse.detuning_ansatz(t, duration, detuning_params)
         phase = pulse.phase_ansatz(t, duration, phase_params)
         rabi = pulse.rabi_ansatz(t, duration, rabi_params)
-        return tuple(-1j * (h(detuning, phase, rabi) @ psi) for h, psi in zip(gate.subsystem_hamiltonians(), psi_tuple))
+        return tuple(
+            -1j * (h(detuning, phase, rabi) @ psi) for h, psi in zip(gate.hamiltonians_for_basis_states(), psi_tuple)
+        )
 
     solver = diffrax.Dopri8()
     stepsize_controller = diffrax.PIDController(rtol=0.1 * tol, atol=0.1 * tol)
@@ -134,7 +136,7 @@ def _evolve_optimized_for_gpus(
         t0=0.0,
         t1=duration,
         dt0=None,
-        y0=gate.subsystem_initial_states(),
+        y0=gate.initial_basis_states(),
         args=None,
         stepsize_controller=stepsize_controller,
         saveat=saveat,

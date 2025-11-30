@@ -19,7 +19,6 @@ class Gate(ABC):
     (see examples below).
     The reason for this is that the Hamiltonian describing a gate pulse on a group of atoms is block-diagonal.
     The Rydberg interaction strengths determine how many equivalent blocks there are and what their dimensionality is.
-    We refer to them as 'subsystems'.
 
     Args:
         decay: Rydberg decay strength :math:`\gamma/\Omega_0`.
@@ -75,19 +74,19 @@ class Gate(ABC):
         ...
 
     @abstractmethod
-    def subsystem_hamiltonians(self) -> tuple[HamiltonianFunction, ...]:
-        r"""The full gate Hamiltonian can be split into distinct subsystems.
-        The number of subsystem Hamiltonians and their dimensionality depends on the interaction strengths.
+    def hamiltonians_for_basis_states(self) -> tuple[HamiltonianFunction, ...]:
+        r"""The full gate Hamiltonian can be split into distinct blocks that describe the time evolution
+        of basis states. The number of blocks and their dimensionality depends on the interaction strengths.
 
         Returns:
-            Tuple of subsystem Hamiltonian functions.
+            Tuple of Hamiltonian functions.
 
         """
         ...
 
     @abstractmethod
-    def subsystem_rydberg_population_operators(self) -> tuple[jnp.ndarray, ...]:
-        r"""For each subsystem Hamiltonian, the Rydberg population operators count the number of Rydberg excitations on
+    def rydberg_population_operators_for_basis_states(self) -> tuple[jnp.ndarray, ...]:
+        r"""For each basis state, the Rydberg population operators count the number of Rydberg excitations on
         the diagonal.
 
         Returns:
@@ -97,8 +96,8 @@ class Gate(ABC):
         ...
 
     @abstractmethod
-    def subsystem_initial_states(self) -> tuple[jnp.ndarray, ...]:
-        r"""For each subsystem Hamiltonian, the initial states :math:`(1, 0, ...)` of appropriate dimension are
+    def initial_basis_states(self) -> tuple[jnp.ndarray, ...]:
+        r"""The initial basis states :math:`(1, 0, ...)` of appropriate dimension are
         provided.
 
         Returns:
@@ -108,13 +107,13 @@ class Gate(ABC):
         ...
 
     @abstractmethod
-    def process_fidelity(self, final_states) -> jnp.ndarray:
-        r"""Given the states evolved under the pulse subsystem Hamiltonians,
+    def process_fidelity(self, final_basis_states) -> jnp.ndarray:
+        r"""Given the basis states evolved under the pulse,
         this function calculates the fidelity with respect to the gate's target state, specified by the gate angles
         :math:`\phi, \, \theta, \, \ldots`
 
         Args:
-            final_states: States evolved under the subsystem Hamiltonians.
+            final_basis_states: Time-evolved basis states.
 
         Returns:
             Fidelity with respect to the target state.
@@ -123,12 +122,12 @@ class Gate(ABC):
         ...
 
     @abstractmethod
-    def rydberg_time(self, expectation_values) -> jnp.ndarray:
-        r"""Given the expectation values of Rydberg populations for each subsystem Hamiltonian, integrated over the full
+    def rydberg_time(self, expectation_values_of_basis_states) -> jnp.ndarray:
+        r"""Given the expectation values of Rydberg populations for each basis state, integrated over the full
         pulse, this function calculates the average time spent in Rydberg states during the gate.
 
         Args:
-            expectation_values: Expected Rydberg times of the subsystems.
+            expectation_values_of_basis_states: Expected Rydberg times for each basis state.
 
         Returns:
             Averaged Rydberg time :math:`T_R`.

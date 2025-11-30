@@ -72,7 +72,7 @@ class TwoQubitGate(Gate):
         """
         return self._Vnn
 
-    def subsystem_hamiltonians(self) -> tuple[HamiltonianFunction, ...]:
+    def hamiltonians_for_basis_states(self) -> tuple[HamiltonianFunction, ...]:
         if isinf(float(self._Vnn)):
             return (
                 partial(H_k_atoms_perfect_blockade, decay=self._decay, k=1),
@@ -83,7 +83,7 @@ class TwoQubitGate(Gate):
             partial(H_2_atoms, decay=self._decay, V=self._Vnn),
         )
 
-    def subsystem_rydberg_population_operators(self) -> tuple[jnp.ndarray, ...]:
+    def rydberg_population_operators_for_basis_states(self) -> tuple[jnp.ndarray, ...]:
         if isinf(float(self._Vnn)):
             return (
                 H_k_atoms_perfect_blockade(Delta=1.0, Phi=0.0, Omega=0.0, decay=0.0, k=1),
@@ -94,7 +94,7 @@ class TwoQubitGate(Gate):
             H_2_atoms(Delta=1.0, Phi=0.0, Omega=0.0, decay=0.0, V=0.0),
         )
 
-    def subsystem_initial_states(self) -> tuple[jnp.ndarray, ...]:
+    def initial_basis_states(self) -> tuple[jnp.ndarray, ...]:
         if isinf(float(self._Vnn)):
             return (
                 jnp.array([1.0 + 0.0j, 0.0 + 0.0j]),
@@ -105,14 +105,14 @@ class TwoQubitGate(Gate):
             jnp.array([1.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0j]),
         )
 
-    def process_fidelity(self, final_states) -> jnp.ndarray:
+    def process_fidelity(self, final_basis_states) -> jnp.ndarray:
         # Obtained diagonal gate matrix
         obtained_gate = jnp.array(
             [
                 1,
-                final_states[0][0],
-                final_states[0][0],
-                final_states[1][0],
+                final_basis_states[0][0],
+                final_basis_states[0][0],
+                final_basis_states[1][0],
             ]
         )
 
@@ -131,5 +131,5 @@ class TwoQubitGate(Gate):
 
         return jnp.abs(jnp.vdot(targeted_gate, obtained_gate)) ** 2 / len(targeted_gate) ** 2
 
-    def rydberg_time(self, expectation_values) -> jnp.ndarray:
-        return (1 / 4) * jnp.squeeze(2 * expectation_values[0] + expectation_values[1])
+    def rydberg_time(self, expectation_values_of_basis_states) -> jnp.ndarray:
+        return (1 / 4) * jnp.squeeze(2 * expectation_values_of_basis_states[0] + expectation_values_of_basis_states[1])

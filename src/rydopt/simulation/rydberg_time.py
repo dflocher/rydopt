@@ -40,15 +40,15 @@ def rydberg_time(gate: Gate, pulse: PulseAnsatz, params: ParamsTuple, tol: float
     rabi_params = jnp.asarray(rabi_params)
 
     # Collect initial states and pad them to a common dimension so we can stack
-    initial_states = gate.subsystem_initial_states()
+    initial_states = gate.initial_basis_states()
 
     dims = tuple(len(psi) for psi in initial_states)
     max_dim = max(dims)
 
     initial_states_padded = jnp.stack([jnp.pad(psi, (0, max_dim - dim)) for psi, dim in zip(initial_states, dims)])
 
-    # Schrödinger equation for the subsystems. The subsystem Hamiltonian is chosen via lax.switch
-    # based on the index of the subsystem, with padding to max_dim × max_dim.
+    # Schrödinger equation for the basis states. The Hamiltonian is chosen via lax.switch
+    # based on the index of the basis state, with padding to max_dim × max_dim.
     def apply_hamiltonian(detuning, phase, rabi, y, hamiltonian, rydberg_operator, dim):
         psi, _expectation = y
         psi_small = psi[:dim]
@@ -62,8 +62,8 @@ def rydberg_time(gate: Gate, pulse: PulseAnsatz, params: ParamsTuple, tol: float
     branches = tuple(
         partial(apply_hamiltonian, hamiltonian=h, rydberg_operator=r, dim=d)
         for h, r, d in zip(
-            gate.subsystem_hamiltonians(),
-            gate.subsystem_rydberg_population_operators(),
+            gate.hamiltonians_for_basis_states(),
+            gate.rydberg_population_operators_for_basis_states(),
             dims,
         )
     )
@@ -99,7 +99,7 @@ def rydberg_time(gate: Gate, pulse: PulseAnsatz, params: ParamsTuple, tol: float
         )
         return jnp.real(sol.ys[1])
 
-    # Run the propagator for each subsystem
+    # Run the propagator for each basis state
     expectation_values = jax.lax.map(
         propagate,
         (initial_states_padded, jnp.arange(len(branches))),
