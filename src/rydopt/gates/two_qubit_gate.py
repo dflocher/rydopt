@@ -105,7 +105,7 @@ class TwoQubitGate(Gate):
             jnp.array([1.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0j]),
         )
 
-    def process_fidelity(self, final_states) -> float:
+    def process_fidelity(self, final_states) -> jnp.ndarray:
         # Obtained diagonal gate matrix
         obtained_gate = jnp.array(
             [
@@ -131,5 +131,5 @@ class TwoQubitGate(Gate):
 
         return jnp.abs(jnp.vdot(targeted_gate, obtained_gate)) ** 2 / len(targeted_gate) ** 2
 
-    def rydberg_time(self, expectation_values) -> float:
-        return (1 / 4) * float(jnp.squeeze(2 * expectation_values[0] + expectation_values[1]))
+    def rydberg_time(self, expectation_values) -> jnp.ndarray:
+        return (1 / 4) * jnp.squeeze(2 * expectation_values[0] + expectation_values[1])

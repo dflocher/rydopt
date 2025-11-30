@@ -108,7 +108,7 @@ class Gate(ABC):
         ...
 
     @abstractmethod
-    def process_fidelity(self, final_states) -> float:
+    def process_fidelity(self, final_states) -> jnp.ndarray:
         r"""Given the states evolved under the pulse subsystem Hamiltonians,
         this function calculates the fidelity with respect to the gate's target state, specified by the gate angles
         :math:`\phi, \, \theta, \, \ldots`
@@ -123,7 +123,7 @@ class Gate(ABC):
         ...
 
     @abstractmethod
-    def rydberg_time(self, expectation_values) -> float:
+    def rydberg_time(self, expectation_values) -> jnp.ndarray:
         r"""Given the expectation values of Rydberg populations for each subsystem Hamiltonian, integrated over the full
         pulse, this function calculates the average time spent in Rydberg states during the gate.
 

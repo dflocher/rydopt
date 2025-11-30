@@ -1,6 +1,5 @@
+import os
 import warnings
-
-import jax
 
 
 def pytest_configure(config):
@@ -11,5 +10,5 @@ def pytest_configure(config):
         category=UserWarning,
         module=r"^equinox\._jit$",
     )
-
-    jax.config.update("jax_platforms", "cpu")  # "cpu", "cuda,cpu"
+    os.environ["JAX_ENABLE_X64"] = "true"
+    os.environ["JAX_PLATFORMS"] = "cpu"  # "cuda,cpu"

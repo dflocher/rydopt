@@ -88,3 +88,11 @@ force-wrap-aliases = true
 
 [tool.ruff.format]
 docstring-code-format = true
+
+[[tool.mypy.overrides]]
+module = "qutip"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "optax"
+ignore_missing_imports = true

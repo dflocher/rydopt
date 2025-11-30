@@ -58,6 +58,15 @@ nbsphinx_prolog = """
       .nboutput .prompt {
         display: none;
       }
+
+      .rst-content p {
+        margin-bottom: 15px;
+      }
+
+      .rst-content div.nbinput.nblast.docutils.container + p,
+      .rst-content div.nboutput.nblast.docutils.container + p {
+        margin-top: 15px;
+      }
     </style>
 
     <div class="admonition note">
@@ -67,6 +76,8 @@ nbsphinx_prolog = """
       <a class="reference external" href="https://colab.research.google.com/github/dflocher/rydopt/blob/main/docs/examples/{{ docname|e }}">Google Colab</a>.
     </div>
 """  # noqa: E501
+
+pygments_style = "friendly"
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output

@@ -67,7 +67,7 @@ def _unravel(flat: np.ndarray, split_indices: tuple[int, ...]) -> ParamsTuple | 
 
 def _unravel_jax(flat: jnp.ndarray, split_indices: tuple[int, ...]) -> ParamsTuple | FixedParamsTuple:
     parts = jnp.split(flat, split_indices)
-    return (parts[0][0], *tuple(parts[1:]))
+    return (parts[0][0], *tuple(parts[1:]))  # type: ignore[return-value]
 
 
 def _make_infidelity(
@@ -127,7 +127,7 @@ def _adam_scan(
     num_steps: int,
     min_converged_initializations: int,
     process_idx: int,
-    tol,
+    tol: float | jnp.ndarray,
 ):
     opt_state0 = optimizer.init(params_trainable)
 
@@ -228,7 +228,7 @@ def _adam_optimize(
 
         if params_trainable.ndim == 1:
             infidelity_and_grad = jax.value_and_grad(infidelity)
-            tol_arg = tol
+            tol_arg: float | jnp.ndarray = tol
         else:
             infidelity_and_grad = jax.vmap(jax.value_and_grad(infidelity))
             tol_arg = jnp.full((params_trainable.shape[0],), tol)
@@ -495,9 +495,6 @@ def multi_start_optimize(
     flat_max = _ravel(max_initial_params)
     params_full = flat_min.copy()
 
-    if min_converged_initializations is None:
-        min_converged_initializations = num_initializations
-
     if fixed_initial_params is None:
         trainable_mask = np.ones_like(flat_min, dtype=bool)
     else:
@@ -527,6 +524,9 @@ def multi_start_optimize(
             f"Padding num_initializations from {num_initializations} to "
             f"{padded_num_initializations} to be a multiple of num_processes={num_processes}."
         )
+
+    if min_converged_initializations is None:
+        min_converged_initializations = padded_num_initializations
 
     # Initial parameter samples
     rng = np.random.default_rng(seed)

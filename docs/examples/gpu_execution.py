@@ -6,19 +6,20 @@
 * 2m 10.97s on NVIDIA H100 PCIe
 """
 
-import jax
+import os
 
-jax.config.update("jax_platforms", "cuda,cpu")
-import numpy as np  # noqa: E402
-
-import rydopt as ro  # noqa: E402
+os.environ["JAX_PLATFORMS"] = "cuda,cpu"
+import numpy as np
+import rydopt as ro
 
 if __name__ == "__main__":
     # Gate
     gate = ro.gates.TwoQubitGate(phi=None, theta=np.pi, Vnn=1.5, decay=0)
 
     # Pulse
-    pulse = ro.pulses.PulseAnsatz(detuning_ansatz=ro.pulses.const, phase_ansatz=ro.pulses.sin_crab)
+    pulse = ro.pulses.PulseAnsatz(
+        detuning_ansatz=ro.pulses.const, phase_ansatz=ro.pulses.sin_crab
+    )
 
     # Parameter bounds for choosing random initial parameters
     min_initial_params = (6, (-2,), (-2, -2, -2, -2, -2, -2), ())

@@ -10,7 +10,7 @@ from rydopt.pulses.pulse_ansatz import PulseAnsatz
 from rydopt.types import ParamsTuple
 
 
-def rydberg_time(gate: Gate, pulse: PulseAnsatz, params: ParamsTuple, tol: float = 1e-7) -> float:
+def rydberg_time(gate: Gate, pulse: PulseAnsatz, params: ParamsTuple, tol: float = 1e-7) -> jnp.ndarray:
     r"""The function determines the total time spent in Rydberg states during a gate pulse:
 
     .. math::

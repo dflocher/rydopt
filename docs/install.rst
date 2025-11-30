@@ -73,7 +73,8 @@ To enable GPU execution in your scripts, add at the very top:
 
 .. code-block:: python
 
-    import jax
-    jax.config.update("jax_platforms", "cuda,cpu")
+    import os
+
+    os.environ["JAX_PLATFORMS"] = "cuda,cpu"
 
 **Note:** While GPUs can provide orders-of-magnitude speed-ups for large and challenging optimization problems, they may slow down smaller tasks that would complete in a few seconds on a CPU.

@@ -256,7 +256,7 @@ class FourQubitGatePyramidal(Gate):
             ),
         )
 
-    def process_fidelity(self, final_states) -> float:
+    def process_fidelity(self, final_states) -> jnp.ndarray:
         # Obtained diagonal gate matrix
         if float(self._Vnn) == float(self._Vnnn):
             obtained_gate = jnp.array(
@@ -353,32 +353,26 @@ class FourQubitGatePyramidal(Gate):
 
         return jnp.abs(jnp.vdot(targeted_gate, obtained_gate)) ** 2 / len(targeted_gate) ** 2
 
-    def rydberg_time(self, expectation_values) -> float:
+    def rydberg_time(self, expectation_values) -> jnp.ndarray:
         if float(self._Vnn) == float(self._Vnnn):
-            return (1 / 16) * float(
-                jnp.squeeze(
-                    4 * expectation_values[0]
-                    + 6 * expectation_values[1]
-                    + 4 * expectation_values[2]
-                    + expectation_values[3]
-                )
+            return (1 / 16) * jnp.squeeze(
+                4 * expectation_values[0]
+                + 6 * expectation_values[1]
+                + 4 * expectation_values[2]
+                + expectation_values[3]
             )
         if isinf(float(self._Vnn)) and float(self._Vnnn) == 0.0:
-            return (1 / 16) * float(
-                jnp.squeeze(
-                    13 * expectation_values[0]
-                    + 3 * expectation_values[1]
-                    + 3 * expectation_values[2]
-                    + expectation_values[3]
-                )
-            )
-        return (1 / 16) * float(
-            jnp.squeeze(
-                4 * expectation_values[0]
+            return (1 / 16) * jnp.squeeze(
+                13 * expectation_values[0]
                 + 3 * expectation_values[1]
                 + 3 * expectation_values[2]
-                + 3 * expectation_values[3]
-                + expectation_values[4]
-                + expectation_values[5]
+                + expectation_values[3]
             )
+        return (1 / 16) * jnp.squeeze(
+            4 * expectation_values[0]
+            + 3 * expectation_values[1]
+            + 3 * expectation_values[2]
+            + 3 * expectation_values[3]
+            + expectation_values[4]
+            + expectation_values[5]
         )

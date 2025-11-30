@@ -51,7 +51,7 @@ def analyze_gate(
     infidelity_nodecay = 1 - process_fidelity(gate_nodecay, pulse_ansatz, params, tol=tol)
     ryd_time = rydberg_time(gate_nodecay, pulse_ansatz, params, tol=tol)
 
-    return infidelity, infidelity_nodecay, ryd_time
+    return float(infidelity), float(infidelity_nodecay), float(ryd_time)
 
 
 def analyze_gate_qutip(
