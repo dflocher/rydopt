@@ -26,8 +26,8 @@ Install the software with pip (requires Python ≥ 3.10; for enabling GPU suppor
 
 If you find this library useful for your research, please cite:
 
-    David F. Locher, Josias Old, Katharina Brechtelsbauer, Jakob Holschbach, Hans Peter Büchler, Sebastian Weber, and Markus Müller,
-    *Multiqubit Rydberg Gates for Quantum Error Correction* (publication pending)
+    David F. Locher, Josias Old, Katharina Brechtelsbauer, Jakob Holschbach, Hans Peter Büchler, Sebastian Weber, Markus Müller,
+    *Multiqubit Rydberg Gates for Quantum Error Correction*, `arXiv:2512.00843 <https://doi.org/10.48550/arXiv.2512.00843>`_
 
 The RydOpt software is licensed under the `MIT License <https://opensource.org/licenses/MIT>`_.
 
