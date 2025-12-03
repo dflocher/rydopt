@@ -19,6 +19,6 @@ repos:
     rev: v1.18.2
     hooks:
       - id: mypy
-        additional_dependencies: ["numpy >= 2.0.2", "jax>=0.4.34", "diffrax>=0.5.0", "matplotlib>=3.9.0"]
+        additional_dependencies: ["numpy >= 2.0.2", "jax>=0.4.34", "diffrax>=0.5.0", "matplotlib>=3.9.0", "types-tqdm>=4.65.0"]
         pass_filenames: false
         args: ["src/rydopt"]

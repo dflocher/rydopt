@@ -1,23 +1,29 @@
 from __future__ import annotations
 
 import multiprocessing as mp
+import threading
 import time
 import warnings
-from collections.abc import Sized
+from collections.abc import Callable, Sized
 from contextlib import nullcontext
 from dataclasses import dataclass
 from functools import partial
-from typing import Generic, Literal, TypeVar, overload
+from queue import SimpleQueue
+from types import TracebackType
+from typing import Any, Generic, Literal, Protocol, TypeVar, overload
 
 import jax
 import jax.numpy as jnp
 import numpy as np
 import optax
+from tqdm.auto import tqdm
 
 from rydopt.gates.gate import Gate
 from rydopt.pulses.pulse_ansatz import PulseAnsatz
 from rydopt.simulation.fidelity import process_fidelity
 from rydopt.types import FixedParamsTuple, ParamsTuple
+
+tqdm.monitor_interval = 0
 
 ParamsType = TypeVar("ParamsType", covariant=True)
 InfidelityType = TypeVar("InfidelityType", covariant=True)
@@ -44,6 +50,114 @@ class OptimizationResult(Generic[ParamsType, InfidelityType, HistoryType]):
     num_steps: int
     tol: float
     duration_in_sec: float
+
+
+# -----------------------------------------------------------------------------
+# Progress bar
+# -----------------------------------------------------------------------------
+
+
+class _ProgressQueue(Protocol):
+    def put(self, item: Any) -> None: ...
+    def get(self) -> Any: ...
+
+
+class _ProgressBar:
+    def __init__(
+        self,
+        num_processes: int,
+        num_steps: int,
+        min_converged_initializations: int,
+        queue: _ProgressQueue | None = None,
+        enable: bool = True,
+    ) -> None:
+        self._num_processes = num_processes
+        self._num_steps = num_steps
+        self._min_converged_initializations = min_converged_initializations
+        self._external_queue = queue
+        self._queue: _ProgressQueue = queue or SimpleQueue()
+        self._listener: threading.Thread | None = None
+        self._enable = enable
+
+    def __enter__(self) -> _ProgressQueue | None:
+        if not self._enable:
+            return None
+        self._listener = threading.Thread(
+            target=self._progress_listener,
+            daemon=True,
+        )
+        self._listener.start()
+        return self._queue
+
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc: BaseException | None,
+        tb: TracebackType | None,
+    ) -> None:
+        if not self._enable:
+            return
+        for proc_idx in range(self._num_processes):
+            self._queue.put(("done", proc_idx, 0, 0, 0))
+        if self._listener is not None:
+            self._listener.join()
+
+    @staticmethod
+    def make_progress_hook(
+        queue: _ProgressQueue | None,
+    ) -> Callable[[tuple[int, int, float, int]], None] | None:
+        if queue is None:
+            return None
+
+        def progress_hook(args: tuple[int, int, float, int]) -> None:
+            process_idx, step, infidelity, converged = args
+            queue.put(
+                (
+                    "update",
+                    int(process_idx),
+                    int(step),
+                    float(infidelity),
+                    int(converged),
+                )
+            )
+
+        return progress_hook
+
+    def _progress_listener(self) -> None:
+        bars: dict[int, tqdm] = {}
+        finished: set[int] = set()
+
+        while len(finished) < self._num_processes:
+            kind, proc_idx, step, min_inf, converged = self._queue.get()
+
+            if kind == "update":
+                bar = bars.get(proc_idx)
+                if bar is None:
+                    bar = tqdm(
+                        total=self._num_steps,
+                        desc=f"process{proc_idx:02d}",
+                        position=proc_idx,
+                        leave=True,
+                    )
+                    bars[proc_idx] = bar
+
+                bar.n = step + 1
+                bar.set_postfix(
+                    {
+                        "infidelity": f"{min_inf:.2e}",
+                        "converged": f"{converged}/{self._min_converged_initializations}",
+                    },
+                    refresh=False,
+                )
+                bar.refresh()
+
+            elif kind == "done":
+                finished.add(proc_idx)
+                bar = bars.pop(proc_idx, None)
+                if bar is not None:
+                    if bar.n < bar.total:
+                        bar.n = bar.total
+                    bar.close()
 
 
 # -----------------------------------------------------------------------------
@@ -84,7 +198,7 @@ def _make_infidelity(
     def infidelity(params_trainable):
         params = full.at[trainable_indices].set(params_trainable)
         params_tuple = _unravel_jax(params, params_split_indices)
-        return 1 - process_fidelity(gate, pulse, params_tuple, tol)
+        return jnp.abs(1 - process_fidelity(gate, pulse, params_tuple, tol))
 
     return infidelity
 
@@ -117,6 +231,7 @@ def _print_summary(method_name: str, duration: float, tol: float, num_converged:
         "optimizer",
         "num_steps",
         "min_converged_initializations",
+        "progress_hook",
     ],
     donate_argnames=["params_trainable"],
 )
@@ -128,6 +243,7 @@ def _adam_scan(
     min_converged_initializations: int,
     process_idx: int,
     tol: float | jnp.ndarray,
+    progress_hook,
 ):
     opt_state0 = optimizer.init(params_trainable)
 
@@ -161,26 +277,36 @@ def _adam_scan(
         # Log intermediate results at distinct steps
         is_done_now = converged_initializations >= min_converged_initializations
         is_distinct = (step % 20 == 0) | (step == num_steps - 1)
-        jax.lax.cond(
-            was_not_done & (is_done_now | is_distinct),
-            lambda args: jax.debug.print(
-                "Step {step:06d} [process{process_idx:02d}]: min infidelity ={min_infidelity:13.6e}, "
-                "converged = {converged} / {min_converged_initializations}",
-                step=args[0],
-                process_idx=args[1],
-                min_infidelity=args[2],
-                converged=args[3],
-                min_converged_initializations=args[4],
-            ),
-            lambda _: None,
-            operand=(
-                step,
-                process_idx,
-                jnp.min(infidelity),
-                converged_initializations,
-                min_converged_initializations,
-            ),
-        )
+        should_log = was_not_done & (is_done_now | is_distinct)
+
+        if progress_hook is not None:
+            jax.lax.cond(
+                should_log,
+                lambda args: jax.debug.callback(progress_hook, args),
+                lambda _: None,
+                operand=(process_idx, step, jnp.min(infidelity), converged_initializations),
+            )
+        else:
+            jax.lax.cond(
+                should_log,
+                lambda args: jax.debug.print(
+                    "Step {step:06d} [process{process_idx:02d}]: infidelity ={min_infidelity:13.6e}, "
+                    "converged = {converged} / {min_converged_initializations}",
+                    step=args[0],
+                    process_idx=args[1],
+                    min_infidelity=args[2],
+                    converged=args[3],
+                    min_converged_initializations=args[4],
+                ),
+                lambda _: None,
+                operand=(
+                    step,
+                    process_idx,
+                    jnp.min(infidelity),
+                    converged_initializations,
+                    min_converged_initializations,
+                ),
+            )
 
         return carry, infidelity
 
@@ -210,9 +336,12 @@ def _adam_optimize(
     learning_rate: float,
     tol: float,
     process_idx: int,
-    device_idx: int | None = None,
+    device_idx: int | None,
+    progress_queue: _ProgressQueue | None,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     device_ctx = nullcontext() if device_idx is None else jax.default_device(jax.devices()[device_idx])
+
+    progress_hook = _ProgressBar.make_progress_hook(progress_queue)
 
     with device_ctx:
         params_trainable = jax.device_put(params_trainable)
@@ -249,13 +378,10 @@ def _adam_optimize(
                 min_converged_initializations=min_converged_initializations,
                 process_idx=process_idx,
                 tol=tol_arg,
+                progress_hook=progress_hook,
             )
 
-        return (
-            np.array(final_params),
-            np.array(final_infidelities),
-            np.array(infidelity_history),
-        )
+        return np.array(final_params), np.array(final_infidelities), np.array(infidelity_history)
 
 
 # -----------------------------------------------------------------------------
@@ -274,6 +400,7 @@ def optimize(
     learning_rate: float = ...,
     tol: float = ...,
     return_history: Literal[True],
+    verbose: bool = ...,
 ) -> OptimizationResult[ParamsTuple, float, np.ndarray]: ...
 
 
@@ -288,6 +415,7 @@ def optimize(
     learning_rate: float = ...,
     tol: float = ...,
     return_history: Literal[False] = False,
+    verbose: bool = ...,
 ) -> OptimizationResult[ParamsTuple, float, None]: ...
 
 
@@ -301,6 +429,7 @@ def optimize(
     learning_rate: float = 0.05,
     tol: float = 1e-7,
     return_history: bool = False,
+    verbose: bool = False,
 ) -> OptimizationResult[ParamsTuple, float, np.ndarray | None]:
     r"""Function that optimizes an initial parameter guess in order to realize the desired gate.
 
@@ -313,6 +442,7 @@ def optimize(
         learning_rate: optimizer learning rate hyperparameter
         tol: target gate infidelity, also sets the ODE solver tolerance
         return_history: whether or not to return the cost history of the optimization
+        verbose: whether detail information is printed or only a progress bar is shown
 
     Returns:
         OptimizationResult object containing the final parameters, the final cost, and the optimization history
@@ -331,23 +461,28 @@ def optimize(
 
     # --- Optimize parameters ---
 
-    print("\nStarted optimization using 1 process")
+    print("\nStarted optimization using 1 process\n")
 
     t0 = time.perf_counter()
-    final_params_trainable, final_infidelity, complete_history = _adam_optimize(
-        gate,
-        pulse,
-        params_full,
-        params_trainable,
-        trainable_indices,
-        split_indices,
-        num_steps,
-        1,
-        learning_rate,
-        tol,
-        0,
-    )
-    history = complete_history if return_history else None
+    with _ProgressBar(
+        num_processes=1, num_steps=num_steps, min_converged_initializations=1, enable=not verbose
+    ) as progress_queue:
+        final_params_trainable, final_infidelity, complete_history = _adam_optimize(
+            gate,
+            pulse,
+            params_full,
+            params_trainable,
+            trainable_indices,
+            split_indices,
+            num_steps,
+            1,
+            learning_rate,
+            tol,
+            0,
+            None,
+            progress_queue,
+        )
+        history = complete_history if return_history else None
     duration = time.perf_counter() - t0
 
     final_full = params_full.copy()
@@ -388,6 +523,7 @@ def multi_start_optimize(
     seed: int | None = ...,
     return_history: Literal[True],
     return_all: Literal[True],
+    verbose: bool = ...,
 ) -> OptimizationResult[list[ParamsTuple], np.ndarray, np.ndarray]: ...
 
 
@@ -408,6 +544,7 @@ def multi_start_optimize(
     seed: int | None = ...,
     return_history: Literal[False] = False,
     return_all: Literal[True],
+    verbose: bool = ...,
 ) -> OptimizationResult[list[ParamsTuple], np.ndarray, None]: ...
 
 
@@ -428,6 +565,7 @@ def multi_start_optimize(
     seed: int | None = ...,
     return_history: Literal[True],
     return_all: Literal[False] = False,
+    verbose: bool = ...,
 ) -> OptimizationResult[ParamsTuple, float, np.ndarray]: ...
 
 
@@ -448,6 +586,7 @@ def multi_start_optimize(
     seed: int | None = ...,
     return_history: Literal[False] = False,
     return_all: Literal[False] = False,
+    verbose: bool = ...,
 ) -> OptimizationResult[ParamsTuple, float, None]: ...
 
 
@@ -467,6 +606,7 @@ def multi_start_optimize(
     seed: int | None = None,
     return_history: bool = False,
     return_all: bool = False,
+    verbose: bool = False,
 ) -> OptimizationResult[ParamsTuple | list[ParamsTuple], float | np.ndarray, np.ndarray | None]:
     r"""Function that optimizes multiple random initial parameter guesses in order to realize the desired gate.
 
@@ -485,6 +625,7 @@ def multi_start_optimize(
         seed: seed for the random number generator
         return_history: whether or not to return the cost history of the optimization
         return_all: whether or not to return all optimization results
+        verbose: whether detail information is printed or only a progress bar is shown
 
     Returns:
         OptimizationResult object containing the final parameters, the final cost, and the optimization history
@@ -536,32 +677,53 @@ def multi_start_optimize(
 
     # --- Optimize parameters ---
 
-    print(f"\nStarted optimization using {num_processes} {'processes' if num_processes > 1 else 'process'}")
+    print(f"\nStarted optimization using {num_processes} {'processes' if num_processes > 1 else 'process'}\n")
 
     t0 = time.perf_counter()
 
+    min_converged_initializations_local = (min_converged_initializations + num_processes - 1) // num_processes
+
     if num_processes == 1:
         # Run optimization in main process
-        final_params_trainable, final_infidelities, complete_history = _adam_optimize(
-            gate,
-            pulse,
-            params_full,
-            params_trainable,
-            trainable_indices,
-            split_indices,
-            num_steps,
-            min_converged_initializations,
-            learning_rate,
-            tol,
-            0,
-        )
-        history = complete_history if return_history else None
+        with _ProgressBar(
+            num_processes=1,
+            num_steps=num_steps,
+            min_converged_initializations=min_converged_initializations_local,
+            enable=not verbose,
+        ) as progress_queue:
+            final_params_trainable, final_infidelities, complete_history = _adam_optimize(
+                gate,
+                pulse,
+                params_full,
+                params_trainable,
+                trainable_indices,
+                split_indices,
+                num_steps,
+                min_converged_initializations_local,
+                learning_rate,
+                tol,
+                0,
+                None,
+                progress_queue,
+            )
+            history = complete_history if return_history else None
 
     else:
         # Run optimization in spawned processes
         chunks = np.array_split(params_trainable, num_processes, axis=0)
+
         ctx = mp.get_context("spawn")
-        with ctx.Pool(processes=num_processes) as pool:
+        with (
+            ctx.Manager() as manager,
+            _ProgressBar(
+                num_processes=1,
+                num_steps=num_steps,
+                min_converged_initializations=min_converged_initializations_local,
+                queue=manager.Queue(),
+                enable=not verbose,
+            ) as progress_queue,
+            ctx.Pool(processes=num_processes) as pool,
+        ):
             results = pool.starmap(
                 _adam_optimize,
                 [
@@ -573,21 +735,22 @@ def multi_start_optimize(
                         trainable_indices,
                         split_indices,
                         num_steps,
-                        (min_converged_initializations + num_processes - 1) // num_processes,
+                        min_converged_initializations_local,
                         learning_rate,
                         tol,
                         device_idx,
                         device_idx if use_one_process_per_device else None,
+                        progress_queue,
                     )
                     for device_idx, p in enumerate(chunks)
                 ],
             )
 
-        # Concatenate results from all processes
-        final_params_trainable_list, final_infidelities_list, histories_list = zip(*results)
-        final_params_trainable = np.concatenate(final_params_trainable_list, axis=0)
-        final_infidelities = np.concatenate(final_infidelities_list, axis=0)
-        history = np.concatenate(histories_list, axis=1) if return_history else None
+            # Concatenate results from all processes
+            final_params_trainable_list, final_infidelities_list, histories_list = zip(*results)
+            final_params_trainable = np.concatenate(final_params_trainable_list, axis=0)
+            final_infidelities = np.concatenate(final_infidelities_list, axis=0)
+            history = np.concatenate(histories_list, axis=1) if return_history else None
 
     duration = time.perf_counter() - t0
 

@@ -33,6 +33,7 @@ dependencies = [
     "numpy>=2.0.2",
     "optax>=0.2.2",
     "qutip>=5.1.0",
+    "tqdm>=4.65.0",
 ]
 
 [project.optional-dependencies]
@@ -43,8 +44,7 @@ dev = [
     "sphinx-autobuild>=2024.10.3",
     "sphinxcontrib-napoleon>=0.7",
     "nbsphinx>=0.9.7",
-    "sphinx-tabs>=3.4.7",
-    "notebook>=7.5.0",
+    "sphinx-tabs>=3.4.7"
 ]
 cuda12 = [
     "jax[cuda12]>=0.4.34",
