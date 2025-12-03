@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import multiprocessing as mp
+import sys
 import threading
 import time
 import warnings
@@ -133,12 +134,7 @@ class _ProgressBar:
             if kind == "update":
                 bar = bars.get(proc_idx)
                 if bar is None:
-                    bar = tqdm(
-                        total=self._num_steps,
-                        desc=f"process{proc_idx:02d}",
-                        position=proc_idx,
-                        leave=True,
-                    )
+                    bar = tqdm(total=self._num_steps, desc=f"process{proc_idx:02d}", position=proc_idx, file=sys.stdout)
                     bars[proc_idx] = bar
 
                 bar.n = step + 1
