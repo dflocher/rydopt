@@ -134,7 +134,9 @@ class _ProgressBar:
             if kind == "update":
                 bar = bars.get(proc_idx)
                 if bar is None:
-                    bar = tqdm(total=self._num_steps, desc=f"process{proc_idx:02d}", position=proc_idx, file=sys.stdout)
+                    bar = tqdm(
+                        total=self._num_steps, desc=f"proc{proc_idx:02d}", position=proc_idx, file=sys.stdout, ncols=90
+                    )
                     bars[proc_idx] = bar
 
                 bar.n = step + 1
@@ -286,7 +288,7 @@ def _adam_scan(
             jax.lax.cond(
                 should_log,
                 lambda args: jax.debug.print(
-                    "Step {step} [process{process_idx}]: infidelity = {min_infidelity}, "
+                    "Step {step} [proc{process_idx}]: infidelity = {min_infidelity}, "
                     "converged = {converged} / {min_converged_initializations}",
                     step=args[0],
                     process_idx=args[1],
@@ -682,7 +684,7 @@ def multi_start_optimize(
     if num_processes == 1:
         # Run optimization in main process
         with _ProgressBar(
-            num_processes=1,
+            num_processes=num_processes,
             num_steps=num_steps,
             min_converged_initializations=min_converged_initializations_local,
             enable=not verbose,
@@ -712,7 +714,7 @@ def multi_start_optimize(
         with (
             ctx.Manager() as manager,
             _ProgressBar(
-                num_processes=1,
+                num_processes=num_processes,
                 num_steps=num_steps,
                 min_converged_initializations=min_converged_initializations_local,
                 queue=manager.Queue(),
