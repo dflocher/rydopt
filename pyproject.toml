@@ -27,8 +27,8 @@ classifiers = [
 requires-python = ">=3.10"
 dependencies = [
     "diffrax>=0.5.0",
-    "jax>=0.4.34",
-    "jaxlib>=0.4.34",
+    "jax>=0.4.28",
+    "jaxlib>=0.4.28",
     "matplotlib>=3.9.0",
     "numpy>=2.0.2",
     "optax>=0.2.2",
@@ -47,7 +47,7 @@ dev = [
     "sphinx-tabs>=3.4.7"
 ]
 cuda12 = [
-    "jax[cuda12]>=0.4.34",
+    "jax[cuda12]>=0.4.28",
 ]
 
 [build-system]

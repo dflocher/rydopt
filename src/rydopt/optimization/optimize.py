@@ -290,7 +290,7 @@ def _adam_scan(
             jax.lax.cond(
                 should_log,
                 lambda args: jax.debug.print(
-                    "Step {step:06d} [process{process_idx:02d}]: infidelity ={min_infidelity:13.6e}, "
+                    "Step {step} [process{process_idx}]: infidelity = {min_infidelity}, "
                     "converged = {converged} / {min_converged_initializations}",
                     step=args[0],
                     process_idx=args[1],
