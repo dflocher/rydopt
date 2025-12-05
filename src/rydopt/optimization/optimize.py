@@ -4,7 +4,6 @@ import multiprocessing as mp
 import sys
 import threading
 import time
-import warnings
 from collections.abc import Callable, Sized
 from contextlib import nullcontext
 from dataclasses import dataclass
@@ -135,7 +134,11 @@ class _ProgressBar:
                 bar = bars.get(proc_idx)
                 if bar is None:
                     bar = tqdm(
-                        total=self._num_steps, desc=f"proc{proc_idx:02d}", position=proc_idx, file=sys.stdout, ncols=90
+                        total=self._num_steps,
+                        desc=f"proc{proc_idx:02d}",
+                        position=proc_idx,
+                        file=sys.stdout,
+                        dynamic_ncols=True,
                     )
                     bars[proc_idx] = bar
 
@@ -204,7 +207,7 @@ def _make_infidelity(
 def _print_gate(title: str, params, infidelity: float, tol: float):
     print(f"\n{title}")
     if abs(float(infidelity)) < tol:
-        print("> infidelity <= numerical precision")
+        print("> infidelity <= tol")
     else:
         print(f"> infidelity = {infidelity:.6e}")
     print(f"> parameters = ({', '.join(str(p) for p in params)})")
@@ -360,24 +363,16 @@ def _adam_optimize(
             infidelity_and_grad = jax.vmap(jax.value_and_grad(infidelity))
             tol_arg = jnp.full((params_trainable.shape[0],), tol)
 
-        with warnings.catch_warnings():
-            warnings.filterwarnings(
-                "ignore",
-                message=r"Complex dtype support in Diffrax.*",
-                category=UserWarning,
-                module=r"^equinox\._jit$",
-            )
-
-            final_params, final_infidelities, infidelity_history = _adam_scan(
-                infidelity_and_grad=infidelity_and_grad,
-                optimizer=optimizer,
-                params_trainable=params_trainable,
-                num_steps=num_steps,
-                min_converged_initializations=min_converged_initializations,
-                process_idx=process_idx,
-                tol=tol_arg,
-                progress_hook=progress_hook,
-            )
+        final_params, final_infidelities, infidelity_history = _adam_scan(
+            infidelity_and_grad=infidelity_and_grad,
+            optimizer=optimizer,
+            params_trainable=params_trainable,
+            num_steps=num_steps,
+            min_converged_initializations=min_converged_initializations,
+            process_idx=process_idx,
+            tol=tol_arg,
+            progress_hook=progress_hook,
+        )
 
         return np.array(final_params), np.array(final_infidelities), np.array(infidelity_history)
 

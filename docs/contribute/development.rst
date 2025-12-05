@@ -54,3 +54,9 @@ To build the documentation locally, run:
 .. code-block:: bash
 
    (cd docs && make livehtml)
+
+The tutorials in the documentation are jupyter notebooks. Use the following command to run a jupyter server and edit the tutorials in the browser (turn on ``Settings > Save Widget State Automatically`` in the menu to ensure that status bars are shown in the documentation):
+
+.. code-block:: bash
+
+   jupyter notebook docs/examples/
