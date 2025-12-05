@@ -1,3 +1,4 @@
+import jax.nn as jnn
 import jax.numpy as jnp
 
 
@@ -434,27 +435,13 @@ def softbox_hann(
     duration: float,
     params: jnp.ndarray,
 ) -> jnp.ndarray:
-    r"""Soft-box pulse ansatz with Hann-shaped edges.
+    r"""Soft-box pulse ansatz with Hann-shaped edges, also known as Tukey window.
 
-    For a pulse of duration :math:`T` and cutoff frequency :math:`\nu_c`,
-    the rise/fall time :math:`\tau_e` is chosen as
-
-    .. math::
-
-       \tau_e
-       = \min\!\left(
-           \frac{T}{2},
-           \frac{2}{\nu_c}
-         \right),
-
-    which corresponds to placing the first zero of a 2-term Hann window at
-    approximately :math:`\nu_c`. The Hann window on :math:`\xi \in [0, 1]`
-    is
+    The Hann window on :math:`\xi \in [0, 1]` is
 
     .. math::
 
-       w(\xi)
-       = a_0 - a_1 \cos(2\pi \xi),
+       w(\xi) = a_0 - a_1 \cos(2\pi \xi),
 
     with :math:`a_0 = 0.5`, :math:`a_1 = 0.5`.
     The pulse ansatz :math:`f(t)` uses the rising and falling halves of
@@ -467,14 +454,14 @@ def softbox_hann(
        \begin{cases}
          0, &
          t < 0 \ \text{or}\ t > T, \\[4pt]
-         A\,w\!\left(\dfrac{t}{2\tau_e}\right), &
-         0 \le t < \tau_e, \\[8pt]
+         A\,w\!\left(\dfrac{t}{\alpha T}\right), &
+         0 \le t < \alpha T / 2, \\[8pt]
          A, &
-         \tau_e \le t \le T - \tau_e, \\[8pt]
+         \alpha T / 2 \le t \le T - \alpha T / 2, \\[8pt]
          A\,w\!\left(
-           1 - \dfrac{T - t}{2\tau_e}
+           1 - \dfrac{T - t}{\alpha T}
          \right), &
-         T - \tau_e < t \le T.
+         T - \alpha T / 2 < t \le T.
        \end{cases}
 
     Args:
@@ -483,17 +470,16 @@ def softbox_hann(
         duration:
             Pulse duration :math:`T`.
         params:
-            Array with two entries :math:`(A, \nu_c)`.
+            Array with two entries :math:`(A, \alpha)`.
 
     Returns:
         Values of :math:`f(t)`.
 
     """
-    amplitude, cutoff = params
+    amplitude, alpha = params
     t = jnp.asarray(t)
 
-    edge_fraction_inv = jnp.maximum(cutoff * duration / 2.0, 2.0)
-    edge_duration = duration / edge_fraction_inv
+    edge_duration = duration * jnp.minimum(alpha / 2.0, 0.5)
 
     # 2-term Hann window
     def hann(s: jnp.ndarray) -> jnp.ndarray:
@@ -534,27 +520,11 @@ def softbox_blackman(
 ) -> jnp.ndarray:
     r"""Soft-box pulse ansatz with Blackman-shaped edges.
 
-    For a pulse of duration :math:`T` and cutoff frequency :math:`\nu_c`,
-    the rise/fall time :math:`\tau_e` is chosen as
+    The Blackman window on :math:`\xi \in [0, 1]` is
 
     .. math::
 
-       \tau_e
-       = \min\!\left(
-           \frac{T}{2},
-           \frac{3}{\nu_c}
-         \right),
-
-    which corresponds to placing the first zero of a 3-term Blackman
-    window at approximately :math:`\nu_c`. The Blackman window on
-    :math:`\xi \in [0, 1]` is
-
-    .. math::
-
-       w(\xi)
-       = a_0
-         - a_1 \cos(2\pi \xi)
-         + a_2 \cos(4\pi \xi),
+       w(\xi) = a_0 - a_1 \cos(2\pi \xi) + a_2 \cos(4\pi \xi),
 
     with :math:`a_0 = 0.42`, :math:`a_1 = 0.5`, :math:`a_2 = 0.08`.
     The pulse ansatz :math:`f(t)` uses the rising and falling halves of
@@ -567,14 +537,14 @@ def softbox_blackman(
        \begin{cases}
          0, &
          t < 0 \ \text{or}\ t > T, \\[4pt]
-         A\,w\!\left(\dfrac{t}{2\tau_e}\right), &
-         0 \le t < \tau_e, \\[8pt]
+         A\,w\!\left(\dfrac{t}{\alpha T}\right), &
+         0 \le t < \alpha T / 2, \\[8pt]
          A, &
-         \tau_e \le t \le T - \tau_e, \\[8pt]
+         \alpha T / 2 \le t \le T - \alpha T / 2, \\[8pt]
          A\,w\!\left(
-           1 - \dfrac{T - t}{2\tau_e}
+           1 - \dfrac{T - t}{\alpha T}
          \right), &
-         T - \tau_e < t \le T.
+         T - \alpha T / 2 < t \le T.
        \end{cases}
 
     Args:
@@ -583,17 +553,16 @@ def softbox_blackman(
         duration:
             Pulse duration :math:`T`.
         params:
-            Array with two entries :math:`(A, \nu_c)`.
+            Array with two entries :math:`(A, \alpha)`.
 
     Returns:
         Values of :math:`f(t)`.
 
     """
-    amplitude, cutoff = params
+    amplitude, alpha = params
     t = jnp.asarray(t)
 
-    edge_fraction_inv = jnp.maximum(cutoff * duration / 3.0, 2.0)
-    edge_duration = duration / edge_fraction_inv
+    edge_duration = duration * jnp.minimum(alpha / 2.0, 0.5)
 
     # 3-term Blackman window
     def blackman(s: jnp.ndarray) -> jnp.ndarray:
@@ -635,25 +604,11 @@ def softbox_nuttall(
 ) -> jnp.ndarray:
     r"""Soft-box pulse ansatz with Nuttall-shaped edges.
 
-    For a pulse of duration :math:`T` and cutoff frequency :math:`\nu_c`, the rise/fall time is chosen as
+    The Nuttall window on :math:`\xi \in [0, 1]` is
 
     .. math::
 
-       \tau_e
-       = \min\!\left(
-           \frac{T}{2},
-           \frac{4}{\nu_c}
-         \right),
-
-    which corresponds to placing the first zero of a  4-term Nuttall
-    window at approximately :math:`\nu_c`. The Nuttall window on :math:`\xi \in [0, 1]` is
-
-    .. math::
-
-       w(\xi) = a_0
-          - a_1 \cos(2\pi \xi)
-          + a_2 \cos(4\pi \xi)
-          - a_3 \cos(6\pi \xi),
+       w(\xi) = a_0 - a_1 \cos(2\pi \xi) + a_2 \cos(4\pi \xi) - a_3 \cos(6\pi \xi),
 
     with :math:`a_0 = 0.355768`, :math:`a_1 = 0.487396`, :math:`a_2 = 0.144232`, :math:`a_3 = 0.012604`.
     The pulse ansatz :math:`f(t)` uses the rising and falling halves of this window:
@@ -665,14 +620,14 @@ def softbox_nuttall(
        \begin{cases}
          0, &
          t < 0 \ \text{or}\ t > T, \\[4pt]
-         A\,w\!\left(\dfrac{t}{2\tau_e}\right), &
-         0 \le t < \tau_e, \\[8pt]
+         A\,w\!\left(\dfrac{t}{\alpha T}\right), &
+         0 \le t < \alpha T / 2, \\[8pt]
          A, &
-         \tau_e \le t \le T - \tau_e, \\[8pt]
+         \alpha T / 2 \le t \le T - \alpha T / 2, \\[8pt]
          A\,w\!\left(
-           1 - \dfrac{T - t}{2\tau_e}
+           1 - \dfrac{T - t}{\alpha T}
          \right), &
-         T - \tau_e < t \le T.
+         T - \alpha T / 2 < t \le T.
        \end{cases}
 
     Args:
@@ -681,17 +636,16 @@ def softbox_nuttall(
         duration:
             Pulse duration :math:`T`.
         params:
-            Array with two entries :math:`(A, \nu_c)`.
+            Array with two entries :math:`(A, \alpha)`.
 
     Returns:
         Values of :math:`f(t)`.
 
     """
-    amplitude, cutoff = params
+    amplitude, alpha = params
     t = jnp.asarray(t)
 
-    edge_fraction_inv = jnp.maximum(cutoff * duration / 4.0, 2.0)
-    edge_duration = duration / edge_fraction_inv
+    edge_duration = duration * jnp.minimum(alpha / 2.0, 0.5)
 
     # 4-term Nuttall window
     def nuttall(s: jnp.ndarray) -> jnp.ndarray:
@@ -721,6 +675,262 @@ def softbox_nuttall(
             jnp.zeros_like(t),
             nuttall(position_within_rising_edge),
             nuttall(position_within_falling_edge),
+        ],
+        default=1.0,
+    )
+
+
+def softbox_planck(
+    t: jnp.ndarray | float,
+    duration: float,
+    params: jnp.ndarray,
+) -> jnp.ndarray:
+    r"""Planck-taper window.
+
+    The Planck-taper on :math:`\xi \in (0, 1)` is
+
+    .. math::
+
+       w(\xi)
+       =
+       \frac{1}{
+         \exp\!\left(
+           \frac{1}{\xi}
+           - \frac{1}{1 - \xi}
+         \right) + 1
+       },
+
+    with :math:`w(0)=0` and :math:`w(1)=1` by continuity.
+    The pulse ansatz :math:`f(t)` uses a rising and a falling Planck taper:
+
+    .. math::
+
+       f(t)
+       =
+       \begin{cases}
+         0, &
+         t < 0 \ \text{or}\ t > T, \\[4pt]
+         A\,w\!\left(\dfrac{t}{\alpha T/2}\right), &
+         0 \le t < \alpha T / 2, \\[8pt]
+         A, &
+         \alpha T / 2 \le t \le T - \alpha T / 2, \\[8pt]
+         A\,w\!\left(
+           \dfrac{T - t}{\alpha T/2}
+         \right), &
+         T - \alpha T / 2 < t \le T.
+       \end{cases}
+
+    Args:
+        t:
+            Time samples :math:`t` at which :math:`f(t)` is evaluated.
+        duration:
+            Pulse duration :math:`T`.
+        params:
+            Array with two entries :math:`(A, \alpha)`.
+
+    Returns:
+        Values of :math:`f(t)`.
+
+    """
+    amplitude, alpha = params
+    t = jnp.asarray(t)
+
+    edge_duration = duration * jnp.minimum(alpha / 2.0, 0.5)
+
+    # Planck-taper
+    def planck_taper(s: jnp.ndarray) -> jnp.ndarray:
+        t = (2.0 * s - 1.0) / (s * (1.0 - s))
+        return jnn.sigmoid(t)
+
+    # Determine edge regions
+    end_rising_edge = edge_duration
+    start_falling_edge = duration - edge_duration
+
+    is_outside = (t < 0.0) | (t > duration)
+    is_rising = (t >= 0.0) & (t < end_rising_edge)
+    is_falling = (t <= duration) & (t > start_falling_edge)
+
+    # Map physical time to Planck-taper coordinate
+    position_within_rising_edge = t / edge_duration
+    position_within_falling_edge = (duration - t) / edge_duration
+
+    # Assemble the pulse
+    return amplitude * jnp.select(
+        [
+            is_outside,
+            is_rising,
+            is_falling,
+        ],
+        [
+            jnp.zeros_like(t),
+            planck_taper(position_within_rising_edge),
+            planck_taper(position_within_falling_edge),
+        ],
+        default=1.0,
+    )
+
+
+def softbox_fifth_order_smoothstep(
+    t: jnp.ndarray | float,
+    duration: float,
+    params: jnp.ndarray,
+) -> jnp.ndarray:
+    r"""Soft-box pulse ansatz with 5th-order-smoothstep-shaped edges.
+
+    The 5th-order smoothstep on :math:`\xi \in [0, 1]` is
+
+    .. math::
+
+       w(\xi) = 6\xi^5 - 15\xi^4 + 10\xi^3,
+
+    which interpolates smoothly from 0 to 1 with vanishing first and
+    second derivatives at both endpoints.
+    The pulse ansatz :math:`f(t)` uses a rising and a falling smoothstep:
+
+    .. math::
+
+       f(t)
+       =
+       \begin{cases}
+         0, &
+         t < 0 \ \text{or}\ t > T, \\[4pt]
+         A\,w\!\left(\dfrac{t}{\alpha T/2}\right), &
+         0 \le t < \alpha T / 2, \\[8pt]
+         A, &
+         \alpha T / 2 \le t \le T - \alpha T / 2, \\[8pt]
+         A\,w\!\left(
+           \dfrac{T - t}{\alpha T/2}
+         \right), &
+         T - \alpha T / 2 < t \le T.
+       \end{cases}
+
+    Args:
+        t:
+            Time samples :math:`t` at which :math:`f(t)` is evaluated.
+        duration:
+            Pulse duration :math:`T`.
+        params:
+            Array with two entries :math:`(A, \alpha)`.
+
+    Returns:
+        Values of :math:`f(t)`.
+
+    """
+    amplitude, alpha = params
+    t = jnp.asarray(t)
+
+    edge_duration = duration * jnp.minimum(alpha / 2.0, 0.5)
+
+    # 5th-order smoothstep
+    def quintic_smoothstep(s: jnp.ndarray) -> jnp.ndarray:
+        return 6.0 * s**5 - 15.0 * s**4 + 10.0 * s**3
+
+    # Determine edge regions
+    end_rising_edge = edge_duration
+    start_falling_edge = duration - edge_duration
+
+    is_outside = (t < 0.0) | (t > duration)
+    is_rising = (t >= 0.0) & (t < end_rising_edge)
+    is_falling = (t <= duration) & (t > start_falling_edge)
+
+    # Map physical time to quintic smoothstep coordinate
+    position_within_rising_edge = t / edge_duration
+    position_within_falling_edge = (duration - t) / edge_duration
+
+    # Assemble the pulse
+    return amplitude * jnp.select(
+        [
+            is_outside,
+            is_rising,
+            is_falling,
+        ],
+        [
+            jnp.zeros_like(t),
+            quintic_smoothstep(position_within_rising_edge),
+            quintic_smoothstep(position_within_falling_edge),
+        ],
+        default=1.0,
+    )
+
+
+def softbox_seventh_order_smoothstep(
+    t: jnp.ndarray | float,
+    duration: float,
+    params: jnp.ndarray,
+) -> jnp.ndarray:
+    r"""Soft-box pulse ansatz with 7th-order-smoothstep-shaped edges.
+
+    The 7th-order smoothstep :math:`S_3` on :math:`\xi \in [0, 1]` is
+
+    .. math::
+
+       w(\xi) = -20\xi^7 + 70\xi^6 - 84\xi^5 + 35\xi^4,
+
+    which interpolates smoothly from 0 to 1 with vanishing derivatives
+    up to third order at both endpoints.
+    The pulse ansatz :math:`f(t)` uses a rising and a falling smoothstep:
+
+    .. math::
+
+       f(t)
+       =
+       \begin{cases}
+         0, &
+         t < 0 \ \text{or}\ t > T, \\[4pt]
+         A\,w\!\left(\dfrac{t}{\alpha T/2}\right), &
+         0 \le t < \alpha T / 2, \\[8pt]
+         A, &
+         \alpha T / 2 \le t \le T - \alpha T / 2, \\[8pt]
+         A\,w\!\left(
+           \dfrac{T - t}{\alpha T/2}
+         \right), &
+         T - \alpha T / 2 < t \le T.
+       \end{cases}
+
+    Args:
+        t:
+            Time samples :math:`t` at which :math:`f(t)` is evaluated.
+        duration:
+            Pulse duration :math:`T`.
+        params:
+            Array with two entries :math:`(A, \alpha)`.
+
+    Returns:
+        Values of :math:`f(t)`.
+
+    """
+    amplitude, alpha = params
+    t = jnp.asarray(t)
+
+    edge_duration = duration * jnp.minimum(alpha / 2.0, 0.5)
+
+    # 7th-order smoothstep
+    def seventh_order_smoothstep(s: jnp.ndarray) -> jnp.ndarray:
+        return -20.0 * s**7 + 70.0 * s**6 - 84.0 * s**5 + 35.0 * s**4
+
+    # Determine edge regions
+    end_rising_edge = edge_duration
+    start_falling_edge = duration - edge_duration
+
+    is_outside = (t < 0.0) | (t > duration)
+    is_rising = (t >= 0.0) & (t < end_rising_edge)
+    is_falling = (t <= duration) & (t > start_falling_edge)
+
+    # Map physical time to smoothstep coordinate
+    position_within_rising_edge = t / edge_duration
+    position_within_falling_edge = (duration - t) / edge_duration
+
+    # Assemble the pulse
+    return amplitude * jnp.select(
+        [
+            is_outside,
+            is_rising,
+            is_falling,
+        ],
+        [
+            jnp.zeros_like(t),
+            seventh_order_smoothstep(position_within_rising_edge),
+            seventh_order_smoothstep(position_within_falling_edge),
         ],
         default=1.0,
     )

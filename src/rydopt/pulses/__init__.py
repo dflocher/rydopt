@@ -14,8 +14,11 @@ from rydopt.pulses.pulse_ansatz_functions import (
     sin_cos_crab,
     sin_crab,
     softbox_blackman,
+    softbox_fifth_order_smoothstep,
     softbox_hann,
     softbox_nuttall,
+    softbox_planck,
+    softbox_seventh_order_smoothstep,
 )
 
 __all__ = [
@@ -36,4 +39,7 @@ __all__ = [
     "softbox_hann",
     "softbox_blackman",
     "softbox_nuttall",
+    "softbox_planck",
+    "softbox_fifth_order_smoothstep",
+    "softbox_seventh_order_smoothstep",
 ]
