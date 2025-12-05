@@ -633,7 +633,7 @@ def multi_start_optimize(
         trainable_mask = np.ones_like(flat_min, dtype=bool)
     else:
         trainable_mask = ~_ravel(fixed_initial_params).astype(bool)
-        if not np.allclose(flat_min[trainable_mask], flat_max[trainable_mask]):
+        if not np.allclose(flat_min[~trainable_mask], flat_max[~trainable_mask]):
             raise ValueError(
                 "For fixed parameters, min_initial_params and max_initial_params must have identical values."
             )

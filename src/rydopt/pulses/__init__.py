@@ -13,6 +13,9 @@ from rydopt.pulses.pulse_ansatz_functions import (
     lin_sin_crab,
     sin_cos_crab,
     sin_crab,
+    softbox_blackman,
+    softbox_hann,
+    softbox_nuttall,
 )
 
 __all__ = [
@@ -30,4 +33,7 @@ __all__ = [
     "lin_cos_crab",
     "lin_sin_cos_crab",
     "lin_cos_sin_crab",
+    "softbox_hann",
+    "softbox_blackman",
+    "softbox_nuttall",
 ]
