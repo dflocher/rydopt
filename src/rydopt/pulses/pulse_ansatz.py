@@ -42,7 +42,7 @@ class PulseAnsatz:
     phase_ansatz: PulseAnsatzFunction = _const_zero
     rabi_ansatz: PulseAnsatzFunction = _const_one
 
-    def make_pulses(self, params: ParamsTuple) -> tuple[PulseFunction, PulseFunction, PulseFunction]:
+    def make_pulse_functions(self, params: ParamsTuple) -> tuple[PulseFunction, PulseFunction, PulseFunction]:
         r"""Create three functions that describe the detuning sweep, the phase sweep, and the rabi sweep for fixed
         parameters.
 
@@ -68,3 +68,28 @@ class PulseAnsatz:
             return self.rabi_ansatz(t, duration, rabi_params)
 
         return detuning_pulse, phase_pulse, rabi_pulse
+
+    def evaluate_pulse_functions(
+        self, t: jnp.ndarray | float, params: ParamsTuple
+    ) -> tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray]:
+        r"""Create three functions that describe the detuning sweep, the phase sweep, and the rabi sweep for fixed
+        parameters and evaluate them at the given times.
+
+        Args:
+            t: time samples at which the functions are evaluated
+            params: pulse parameters
+
+        Returns:
+            Three values :math:`\Delta(t), \, \xi(t), \, |\Omega(t)|`
+
+        """
+        duration, detuning_params, phase_params, rabi_params = params
+        detuning_params = jnp.asarray(detuning_params)
+        phase_params = jnp.asarray(phase_params)
+        rabi_params = jnp.asarray(rabi_params)
+
+        return (
+            self.detuning_ansatz(t, duration, detuning_params),
+            self.phase_ansatz(t, duration, phase_params),
+            self.rabi_ansatz(t, duration, rabi_params),
+        )

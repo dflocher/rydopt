@@ -20,7 +20,7 @@ from rydopt.types import ParamsTuple
 
 
 def _setup_hamiltonian(gate, pulse_ansatz, params):
-    detuning_pulse, phase_pulse, rabi_pulse = pulse_ansatz.make_pulses(params)
+    detuning_pulse, phase_pulse, rabi_pulse = pulse_ansatz.make_pulse_functions(params)
 
     if isinstance(gate, TwoQubitGate):
         decay = gate.get_decay()

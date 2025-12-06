@@ -38,12 +38,6 @@ def evolve(gate: Gate, pulse: PulseAnsatz, params: ParamsTuple, tol: float = 1e-
     if jax.devices()[0].platform == "gpu":
         return _evolve_optimized_for_gpus(gate, pulse, params, tol)
 
-    duration, detuning_params, phase_params, rabi_params = params
-
-    detuning_params = jnp.asarray(detuning_params)
-    phase_params = jnp.asarray(phase_params)
-    rabi_params = jnp.asarray(rabi_params)
-
     # Collect initial states and pad them to a common dimension so we can stack
     initial_states = gate.initial_basis_states()
 
@@ -54,8 +48,9 @@ def evolve(gate: Gate, pulse: PulseAnsatz, params: ParamsTuple, tol: float = 1e-
 
     # Schrödinger equation for the basis states. The Hamiltonian is chosen via lax.switch
     # based on the index of the basis state, with padding to max_dim × max_dim.
-    def apply_hamiltonian(detuning, phase, rabi, psi, hamiltonian, dim):
-        dpsi_small = -1j * hamiltonian(detuning, phase, rabi) @ psi[:dim]
+    def apply_hamiltonian(t, params, psi, hamiltonian, dim):
+        values = pulse.evaluate_pulse_functions(t, params)
+        dpsi_small = -1j * hamiltonian(*values) @ psi[:dim]
         return jnp.pad(dpsi_small, (0, psi.shape[0] - dim))
 
     branches = tuple(
@@ -63,13 +58,8 @@ def evolve(gate: Gate, pulse: PulseAnsatz, params: ParamsTuple, tol: float = 1e-
     )
 
     def schroedinger_eq(t, psi, args):
-        detuning_params, phase_params, rabi_params, idx = args
-
-        detuning = pulse.detuning_ansatz(t, duration, detuning_params)
-        phase = pulse.phase_ansatz(t, duration, phase_params)
-        rabi = pulse.rabi_ansatz(t, duration, rabi_params)
-
-        return jax.lax.switch(idx, branches, detuning, phase, rabi, psi)
+        params, idx = args
+        return jax.lax.switch(idx, branches, t, params, psi)
 
     # Propagator
     term = diffrax.ODETerm(schroedinger_eq)
@@ -83,10 +73,10 @@ def evolve(gate: Gate, pulse: PulseAnsatz, params: ParamsTuple, tol: float = 1e-
             term,
             solver,
             t0=0.0,
-            t1=duration,
+            t1=params[0],
             dt0=None,
             y0=psi_initial,
-            args=(detuning_params, phase_params, rabi_params, idx),
+            args=(params, idx),
             stepsize_controller=stepsize_controller,
             saveat=saveat,
             max_steps=10_000,
@@ -111,19 +101,9 @@ def _evolve_optimized_for_gpus(
     # wrong device. Hence, we defer the import of diffrax to the latest time possible.
     import diffrax
 
-    duration, detuning_params, phase_params, rabi_params = params
-
-    detuning_params = jnp.asarray(detuning_params)
-    phase_params = jnp.asarray(phase_params)
-    rabi_params = jnp.asarray(rabi_params)
-
     def schroedinger_eq(t, psi_tuple, _):
-        detuning = pulse.detuning_ansatz(t, duration, detuning_params)
-        phase = pulse.phase_ansatz(t, duration, phase_params)
-        rabi = pulse.rabi_ansatz(t, duration, rabi_params)
-        return tuple(
-            -1j * (h(detuning, phase, rabi) @ psi) for h, psi in zip(gate.hamiltonians_for_basis_states(), psi_tuple)
-        )
+        values = pulse.evaluate_pulse_functions(t, params)
+        return tuple(-1j * (h(*values) @ psi) for h, psi in zip(gate.hamiltonians_for_basis_states(), psi_tuple))
 
     solver = diffrax.Dopri8()
     stepsize_controller = diffrax.PIDController(rtol=0.1 * tol, atol=0.1 * tol)
@@ -134,7 +114,7 @@ def _evolve_optimized_for_gpus(
         term,
         solver,
         t0=0.0,
-        t1=duration,
+        t1=params[0],
         dt0=None,
         y0=gate.initial_basis_states(),
         args=None,

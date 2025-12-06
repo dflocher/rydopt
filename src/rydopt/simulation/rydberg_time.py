@@ -33,12 +33,6 @@ def rydberg_time(gate: Gate, pulse: PulseAnsatz, params: ParamsTuple, tol: float
     # wrong device. Hence, we defer the import of diffrax to the latest time possible.
     import diffrax
 
-    duration, detuning_params, phase_params, rabi_params = params
-
-    detuning_params = jnp.asarray(detuning_params)
-    phase_params = jnp.asarray(phase_params)
-    rabi_params = jnp.asarray(rabi_params)
-
     # Collect initial states and pad them to a common dimension so we can stack
     initial_states = gate.initial_basis_states()
 
@@ -49,10 +43,11 @@ def rydberg_time(gate: Gate, pulse: PulseAnsatz, params: ParamsTuple, tol: float
 
     # Schrödinger equation for the basis states. The Hamiltonian is chosen via lax.switch
     # based on the index of the basis state, with padding to max_dim × max_dim.
-    def apply_hamiltonian(detuning, phase, rabi, y, hamiltonian, rydberg_operator, dim):
+    def apply_hamiltonian(t, params, y, hamiltonian, rydberg_operator, dim):
+        values = pulse.evaluate_pulse_functions(t, params)
         psi, _expectation = y
         psi_small = psi[:dim]
-        dpsi_small = -1j * hamiltonian(detuning, phase, rabi) @ psi_small
+        dpsi_small = -1j * hamiltonian(*values) @ psi_small
         instantaneous_rydberg_population = jnp.vdot(psi_small, rydberg_operator @ psi_small)
         return (
             jnp.pad(dpsi_small, (0, psi.shape[0] - dim)),
@@ -69,13 +64,8 @@ def rydberg_time(gate: Gate, pulse: PulseAnsatz, params: ParamsTuple, tol: float
     )
 
     def schroedinger_eq(t, y, args):
-        detuning_params, phase_params, rabi_params, idx = args
-
-        detuning = pulse.detuning_ansatz(t, duration, detuning_params)
-        phase = pulse.phase_ansatz(t, duration, phase_params)
-        rabi = pulse.rabi_ansatz(t, duration, rabi_params)
-
-        return jax.lax.switch(idx, branches, detuning, phase, rabi, y)
+        params, idx = args
+        return jax.lax.switch(idx, branches, t, params, y)
 
     # Propagator
     term = diffrax.ODETerm(schroedinger_eq)
@@ -89,10 +79,10 @@ def rydberg_time(gate: Gate, pulse: PulseAnsatz, params: ParamsTuple, tol: float
             term,
             solver,
             t0=0.0,
-            t1=duration,
+            t1=params[0],
             dt0=None,
             y0=(psi_initial, jnp.array(0.0, dtype=psi_initial.dtype)),
-            args=(detuning_params, phase_params, rabi_params, idx),
+            args=(params, idx),
             stepsize_controller=stepsize_controller,
             saveat=saveat,
             max_steps=100_000,

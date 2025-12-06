@@ -35,26 +35,28 @@ def plot_spectrum(
         A tuple of (Figure, Axes) containing the spectrum plot.
 
     """
-    pulses = pulse_ansatz.make_pulses(params)
-    labels = [
-        r"$\mathcal{F}\left(\Delta(t \Omega_0)\right)$",
-        r"$\mathcal{F}\left(\phi(t \Omega_0)\right)$",
-        r"$\mathcal{F}\left(\Omega(t \Omega_0)\right)$",
-    ]
     duration = params[0]
 
     # Padded times
     times = jnp.linspace(
         -duration * (pad_factor - 1) / 2, duration * (pad_factor + 1) / 2, num_points * pad_factor, endpoint=False
     )
-    is_constant = [np.all(p(times) == p(0.0)) for p in pulses]
+
+    # Evaluated pulses
+    pulses = pulse_ansatz.evaluate_pulse_functions(times, params)
+    labels = [
+        r"$\mathcal{F}\left(\Delta(t \Omega_0)\right)$",
+        r"$\mathcal{F}\left(\phi(t \Omega_0)\right)$",
+        r"$\mathcal{F}\left(\Omega(t \Omega_0)\right)$",
+    ]
+    is_constant = [np.all(p == p[0]) for p in pulses]
 
     # Tukey window: flat on the physical interval, tapered only in the padded region
     win = tukey(len(times), alpha=(pad_factor - 1) / pad_factor) if tapered else 1.0
 
     # Calculate spectra
     freqs = np.fft.rfftfreq(len(times), d=times[1] - times[0])
-    spectra = [np.abs(np.fft.rfft(p(times) * win)) for p in pulses]
+    spectra = [np.abs(np.fft.rfft(p * win)) for p in pulses]
 
     # Convert spectra to Decibel
     eps = np.finfo(float).tiny

@@ -29,7 +29,7 @@ def plot_pulse(
     """
     T = params[0]
     ts = jnp.linspace(0, T, 1000)
-    detuning_pulse, phase_pulse, rabi_pulse = pulse_ansatz.make_pulses(params)
+    detuning_pulse, phase_pulse, rabi_pulse = pulse_ansatz.make_pulse_functions(params)
 
     offset = phase_pulse(0) if phase_offset else 0
 
