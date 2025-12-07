@@ -8,11 +8,11 @@ from rydopt.pulses.pulse_ansatz_functions import const
 from rydopt.types import ParamsTuple, PulseAnsatzFunction, PulseFunction
 
 
-def _const_zero(t: jnp.ndarray | float, _duration: float, _params: jnp.ndarray) -> jnp.ndarray:
+def _const_zero(t: jnp.ndarray | float, _duration: float, _ansatz_params: jnp.ndarray) -> jnp.ndarray:
     return const(t, _duration, jnp.array([0.0]))
 
 
-def _const_one(t: jnp.ndarray | float, _duration: float, _params: jnp.ndarray) -> jnp.ndarray:
+def _const_one(t: jnp.ndarray | float, _duration: float, _ansatz_params: jnp.ndarray) -> jnp.ndarray:
     return const(t, _duration, jnp.array([1.0]))
 
 
@@ -50,22 +50,22 @@ class PulseAnsatz:
             params: pulse parameters
 
         Returns:
-            Three functions :math:`\Delta(t), \, \xi(t), \, |\Omega(t)|`
+            Three functions :math:`\Delta(t), \, \xi(t), \, \Omega(t)`
 
         """
-        duration, detuning_params, phase_params, rabi_params = params
-        detuning_params = jnp.asarray(detuning_params)
-        phase_params = jnp.asarray(phase_params)
-        rabi_params = jnp.asarray(rabi_params)
+        duration, detuning_ansatz_params, phase_ansatz_params, rabi_ansatz_params = params
+        detuning_ansatz_params = jnp.asarray(detuning_ansatz_params)
+        phase_ansatz_params = jnp.asarray(phase_ansatz_params)
+        rabi_ansatz_params = jnp.asarray(rabi_ansatz_params)
 
         def detuning_pulse(t):
-            return self.detuning_ansatz(t, duration, detuning_params)
+            return self.detuning_ansatz(t, duration, detuning_ansatz_params)
 
         def phase_pulse(t):
-            return self.phase_ansatz(t, duration, phase_params)
+            return self.phase_ansatz(t, duration, phase_ansatz_params)
 
         def rabi_pulse(t):
-            return self.rabi_ansatz(t, duration, rabi_params)
+            return self.rabi_ansatz(t, duration, rabi_ansatz_params)
 
         return detuning_pulse, phase_pulse, rabi_pulse
 
@@ -80,16 +80,16 @@ class PulseAnsatz:
             params: pulse parameters
 
         Returns:
-            Three values :math:`\Delta(t), \, \xi(t), \, |\Omega(t)|`
+            Three values :math:`\Delta(t), \, \xi(t), \, \Omega(t)`
 
         """
-        duration, detuning_params, phase_params, rabi_params = params
-        detuning_params = jnp.asarray(detuning_params)
-        phase_params = jnp.asarray(phase_params)
-        rabi_params = jnp.asarray(rabi_params)
+        duration, detuning_ansatz_params, phase_ansatz_params, rabi_ansatz_params = params
+        detuning_ansatz_params = jnp.asarray(detuning_ansatz_params)
+        phase_ansatz_params = jnp.asarray(phase_ansatz_params)
+        rabi_ansatz_params = jnp.asarray(rabi_ansatz_params)
 
         return (
-            self.detuning_ansatz(t, duration, detuning_params),
-            self.phase_ansatz(t, duration, phase_params),
-            self.rabi_ansatz(t, duration, rabi_params),
+            self.detuning_ansatz(t, duration, detuning_ansatz_params),
+            self.phase_ansatz(t, duration, phase_ansatz_params),
+            self.rabi_ansatz(t, duration, rabi_ansatz_params),
         )

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import cast
 
 import jax.numpy as jnp
@@ -6,14 +8,18 @@ import numpy as np
 from scipy.signal.windows import tukey
 
 from rydopt.pulses.pulse_ansatz import PulseAnsatz
+from rydopt.types import ParamsTuple
 
 
 def plot_spectrum(
     pulse_ansatz: PulseAnsatz,
-    params,
+    params: ParamsTuple,
     *,
-    num_points: int = 512,
-    pad_factor: int = 128,
+    plot_detuning: bool = True,
+    plot_phase: bool = True,
+    plot_rabi: bool = True,
+    num_points: int = 256,
+    pad_factor: int = 1024,
     tapered: bool = True,
     xlim: tuple[float, float] | None = None,
     ylim: tuple[float, float] | None = None,
@@ -24,7 +30,10 @@ def plot_spectrum(
     Args:
         pulse_ansatz: Ansatz of the gate pulse.
         params: Pulse parameters.
-        num_points: Number of sampling points in the physical time interval.
+        plot_detuning: Whether to plot the detuning pulse, default is True.
+        plot_phase: Whether to plot the phase pulse, default is True.
+        plot_rabi: Whether to plot the rabi pulse, default is True.
+        num_points: Number of sampling points in the time interval.
         pad_factor: Factor by which the time array is padded.
         tapered: If True, applies a Tukey window in the padded region.
         xlim: Optional x-axis (frequency) limits; if None, chosen automatically.
@@ -37,26 +46,28 @@ def plot_spectrum(
     """
     duration = params[0]
 
-    # Padded times
     times = jnp.linspace(
         -duration * (pad_factor - 1) / 2, duration * (pad_factor + 1) / 2, num_points * pad_factor, endpoint=False
     )
 
-    # Evaluated pulses
-    pulses = pulse_ansatz.evaluate_pulse_functions(times, params)
-    labels = [
-        r"$\mathcal{F}\left(\Delta(t \Omega_0)\right)$",
-        r"$\mathcal{F}\left(\phi(t \Omega_0)\right)$",
-        r"$\mathcal{F}\left(\Omega(t \Omega_0)\right)$",
-    ]
-    is_constant = [np.all(p == p[0]) for p in pulses]
+    # Evaluated pulse
+    selector = [plot_detuning, plot_phase, plot_rabi]
+    values = np.array(pulse_ansatz.evaluate_pulse_functions(times, params))[selector]
+    labels = np.array(
+        [
+            r"$\mathcal{F}\left(\Delta\right)$",
+            r"$\mathcal{F}\left(\xi\right)$",
+            r"$\mathcal{F}\left(\Omega\right)$",
+        ]
+    )[selector]
+    is_constant = [np.all(v == v[0]) for v in values]
 
     # Tukey window: flat on the physical interval, tapered only in the padded region
     win = tukey(len(times), alpha=(pad_factor - 1) / pad_factor) if tapered else 1.0
 
     # Calculate spectra
     freqs = np.fft.rfftfreq(len(times), d=times[1] - times[0])
-    spectra = [np.abs(np.fft.rfft(p * win)) for p in pulses]
+    spectra = [np.abs(np.fft.rfft(v * win)) for v in values]
 
     # Convert spectra to Decibel
     eps = np.finfo(float).tiny
@@ -66,13 +77,13 @@ def plot_spectrum(
     owns_ax = ax is None
 
     if owns_ax:
-        fig, ax = plt.subplots(figsize=(4, 3), dpi=200)
+        fig, ax = plt.subplots(figsize=(4, 3), dpi=160)
     else:
         assert ax is not None
         fig = cast(plt.Figure, ax.figure)
 
     if owns_ax and ylim is None:
-        ylim = (-80, 5)
+        ylim = (-100, 5)
 
     if owns_ax and xlim is None:
         assert ylim is not None
@@ -84,8 +95,12 @@ def plot_spectrum(
 
     for spectrum, label, skip in zip(spectra, labels, is_constant):
         if skip:
+            if owns_ax:
+                ax.plot([], [])  # propagate the color cycler
             continue
         if ylim is not None and np.all(spectrum[1:] < ylim[0]):
+            if owns_ax:
+                ax.plot([], [])  # propagate the color cycler
             continue
         ax.plot(freqs, spectrum, label=label)
 
@@ -93,7 +108,7 @@ def plot_spectrum(
         ax.set_xlim(xlim)
         ax.set_ylim(ylim)
         ax.set_xlabel(r"$f / \Omega_0$")
-        ax.set_ylabel("Amplitude (dB)")
+        ax.set_ylabel("Amplitude [dB]")
         ax.grid(alpha=0.3)
         ax.legend()
         fig.tight_layout()

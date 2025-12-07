@@ -86,12 +86,12 @@ class TwoQubitGate(Gate):
     def rydberg_population_operators_for_basis_states(self) -> tuple[jnp.ndarray, ...]:
         if isinf(float(self._Vnn)):
             return (
-                H_k_atoms_perfect_blockade(Delta=1.0, Phi=0.0, Omega=0.0, decay=0.0, k=1),
-                H_k_atoms_perfect_blockade(Delta=1.0, Phi=0.0, Omega=0.0, decay=0.0, k=1),
+                H_k_atoms_perfect_blockade(Delta=1.0, Xi=0.0, Omega=0.0, decay=0.0, k=1),
+                H_k_atoms_perfect_blockade(Delta=1.0, Xi=0.0, Omega=0.0, decay=0.0, k=1),
             )
         return (
-            H_k_atoms_perfect_blockade(Delta=1.0, Phi=0.0, Omega=0.0, decay=0.0, k=1),
-            H_2_atoms(Delta=1.0, Phi=0.0, Omega=0.0, decay=0.0, V=0.0),
+            H_k_atoms_perfect_blockade(Delta=1.0, Xi=0.0, Omega=0.0, decay=0.0, k=1),
+            H_2_atoms(Delta=1.0, Xi=0.0, Omega=0.0, decay=0.0, V=0.0),
         )
 
     def initial_basis_states(self) -> tuple[jnp.ndarray, ...]:
