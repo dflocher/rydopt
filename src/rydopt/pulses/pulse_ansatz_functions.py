@@ -477,9 +477,10 @@ def softbox_hann(
 
     """
     amplitude, alpha = ansatz_params
+    alpha = jnp.clip(alpha, 0.0, 1.0)
     t = jnp.asarray(t)
 
-    edge_duration = duration * jnp.minimum(alpha / 2.0, 0.5)
+    edge_duration = duration * alpha / 2.0
 
     # 2-term Hann window
     def hann(s: jnp.ndarray) -> jnp.ndarray:
@@ -560,9 +561,10 @@ def softbox_blackman(
 
     """
     amplitude, alpha = ansatz_params
+    alpha = jnp.clip(alpha, 0.0, 1.0)
     t = jnp.asarray(t)
 
-    edge_duration = duration * jnp.minimum(alpha / 2.0, 0.5)
+    edge_duration = duration * alpha / 2.0
 
     # 3-term Blackman window
     def blackman(s: jnp.ndarray) -> jnp.ndarray:
@@ -643,9 +645,10 @@ def softbox_nuttall(
 
     """
     amplitude, alpha = ansatz_params
+    alpha = jnp.clip(alpha, 0.0, 1.0)
     t = jnp.asarray(t)
 
-    edge_duration = duration * jnp.minimum(alpha / 2.0, 0.5)
+    edge_duration = duration * alpha / 2.0
 
     # 4-term Nuttall window
     def nuttall(s: jnp.ndarray) -> jnp.ndarray:
@@ -733,9 +736,10 @@ def softbox_planck(
 
     """
     amplitude, alpha = ansatz_params
+    alpha = jnp.clip(alpha, 0.0, 1.0)
     t = jnp.asarray(t)
 
-    edge_duration = duration * jnp.minimum(alpha / 2.0, 0.5)
+    edge_duration = duration * alpha / 2.0
 
     # Planck-taper
     def planck_taper(s: jnp.ndarray) -> jnp.ndarray:
@@ -817,9 +821,10 @@ def softbox_fifth_order_smoothstep(
 
     """
     amplitude, alpha = ansatz_params
+    alpha = jnp.clip(alpha, 0.0, 1.0)
     t = jnp.asarray(t)
 
-    edge_duration = duration * jnp.minimum(alpha / 2.0, 0.5)
+    edge_duration = duration * alpha / 2.0
 
     # 5th-order smoothstep
     def quintic_smoothstep(s: jnp.ndarray) -> jnp.ndarray:
@@ -900,9 +905,10 @@ def softbox_seventh_order_smoothstep(
 
     """
     amplitude, alpha = ansatz_params
+    alpha = jnp.clip(alpha, 0.0, 1.0)
     t = jnp.asarray(t)
 
-    edge_duration = duration * jnp.minimum(alpha / 2.0, 0.5)
+    edge_duration = duration * alpha / 2.0
 
     # 7th-order smoothstep
     def seventh_order_smoothstep(s: jnp.ndarray) -> jnp.ndarray:

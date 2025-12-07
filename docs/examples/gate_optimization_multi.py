@@ -17,8 +17,8 @@ if __name__ == "__main__":
     )
 
     # Bounds for the initial pulse parameter guesses
-    min_initial_params = (6, (-2,), (-2, -2), ())
-    max_initial_params = (9, (2,), (2, 2), ())
+    min_initial_params = (6, [-2], [-2, -2], [])
+    max_initial_params = (9, [2], [2, 2], [])
 
     # Optimize the pulse parameters
     opt_result = ro.optimization.multi_start_optimize(

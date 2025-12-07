@@ -22,8 +22,8 @@ if __name__ == "__main__":
     )
 
     # Parameter bounds for choosing random initial parameters
-    min_initial_params = (6, (-2,), (-2, -2, -2, -2, -2, -2), ())
-    max_initial_params = (9, (2,), (2, 2, 2, 2, 2, 2), ())
+    min_initial_params = (6, [-2], [-2, -2, -2, -2, -2, -2], [])
+    max_initial_params = (9, [2], [2, 2, 2, 2, 2, 2], [])
 
     # Run optimization
     _ = ro.optimization.multi_start_optimize(

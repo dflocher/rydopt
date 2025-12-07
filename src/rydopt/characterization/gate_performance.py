@@ -8,13 +8,13 @@ from rydopt.gates.gate import Gate
 from rydopt.pulses.pulse_ansatz import PulseAnsatz
 from rydopt.simulation.fidelity import process_fidelity
 from rydopt.simulation.rydberg_time import rydberg_time
-from rydopt.types import ParamsTuple
+from rydopt.types import PulseParams
 
 
 def analyze_gate(
     gate: Gate,
-    pulse_ansatz: PulseAnsatz,
-    params: ParamsTuple,
+    pulse: PulseAnsatz,
+    params: PulseParams,
     tol: float = 1e-15,
 ) -> tuple[float, float, float]:
     r"""Function that analyzes the performance of a gate pulse using JAX.
@@ -30,13 +30,13 @@ def analyze_gate(
         ...     Vnn=float("inf"),
         ...     decay=0.0001,
         ... )
-        >>> pulse_ansatz = ro.pulses.PulseAnsatz(detuning_ansatz=ro.pulses.const, phase_ansatz=ro.pulses.sin_crab)
-        >>> params = (7.61140652, (-0.07842706,), (1.80300902, -0.61792703), ())
-        >>> infid, infid_no_decay, ryd_time = analyze_gate(gate, pulse_ansatz, params)
+        >>> pulse = ro.pulses.PulseAnsatz(detuning_ansatz=ro.pulses.const, phase_ansatz=ro.pulses.sin_crab)
+        >>> params = (7.61140652, [-0.07842706], [1.80300902, -0.61792703], [])
+        >>> infid, infid_no_decay, ryd_time = analyze_gate(gate, pulse, params)
 
     Args:
         gate: Target gate.
-        pulse_ansatz: Ansatz of the gate pulse.
+        pulse: Ansatz of the gate pulse.
         params: Pulse parameters.
         tol: Precision of the ODE solver, default is 1e-15.
 
@@ -47,17 +47,17 @@ def analyze_gate(
     gate_nodecay = gate.copy()
     gate_nodecay.set_decay(0.0)
 
-    infidelity = 1 - process_fidelity(gate, pulse_ansatz, params, tol=tol)
-    infidelity_nodecay = 1 - process_fidelity(gate_nodecay, pulse_ansatz, params, tol=tol)
-    ryd_time = rydberg_time(gate_nodecay, pulse_ansatz, params, tol=tol)
+    infidelity = 1 - process_fidelity(gate, pulse, params, tol=tol)
+    infidelity_nodecay = 1 - process_fidelity(gate_nodecay, pulse, params, tol=tol)
+    ryd_time = rydberg_time(gate_nodecay, pulse, params, tol=tol)
 
     return float(infidelity), float(infidelity_nodecay), float(ryd_time)
 
 
 def analyze_gate_qutip(
     gate: Gate,
-    pulse_ansatz: PulseAnsatz,
-    params: ParamsTuple,
+    pulse: PulseAnsatz,
+    params: PulseParams,
 ) -> tuple[float, float, float]:
     r"""Function that analyzes the performance of a gate pulse using QuTiP.
 
@@ -72,13 +72,13 @@ def analyze_gate_qutip(
         ...     Vnn=float("inf"),
         ...     decay=0.0001,
         ... )
-        >>> pulse_ansatz = ro.pulses.PulseAnsatz(detuning_ansatz=ro.pulses.const, phase_ansatz=ro.pulses.sin_crab)
-        >>> params = (7.61140652, (-0.07842706,), (1.80300902, -0.61792703), ())
-        >>> infid, infid_no_decay, ryd_time = analyze_gate_qutip(gate, pulse_ansatz, params)
+        >>> pulse = ro.pulses.PulseAnsatz(detuning_ansatz=ro.pulses.const, phase_ansatz=ro.pulses.sin_crab)
+        >>> params = (7.61140652, [-0.07842706], [1.80300902, -0.61792703], [])
+        >>> infid, infid_no_decay, ryd_time = analyze_gate_qutip(gate, pulse, params)
 
     Args:
         gate: Target gate.
-        pulse_ansatz: Ansatz of the gate pulse.
+        pulse: Ansatz of the gate pulse.
         params: Pulse parameters.
 
     Returns:
@@ -88,8 +88,8 @@ def analyze_gate_qutip(
     gate_nodecay = gate.copy()
     gate_nodecay.set_decay(0.0)
 
-    infidelity = 1 - process_fidelity_qutip(gate, pulse_ansatz, params)
-    infidelity_nodecay = 1 - process_fidelity_qutip(gate_nodecay, pulse_ansatz, params)
-    ryd_time = rydberg_time_qutip(gate_nodecay, pulse_ansatz, params)
+    infidelity = 1 - process_fidelity_qutip(gate, pulse, params)
+    infidelity_nodecay = 1 - process_fidelity_qutip(gate_nodecay, pulse, params)
+    ryd_time = rydberg_time_qutip(gate_nodecay, pulse, params)
 
     return infidelity, infidelity_nodecay, ryd_time

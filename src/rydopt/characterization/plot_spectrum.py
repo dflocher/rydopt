@@ -8,12 +8,12 @@ import numpy as np
 from scipy.signal.windows import tukey
 
 from rydopt.pulses.pulse_ansatz import PulseAnsatz
-from rydopt.types import ParamsTuple
+from rydopt.types import PulseParams
 
 
 def plot_spectrum(
-    pulse_ansatz: PulseAnsatz,
-    params: ParamsTuple,
+    pulse: PulseAnsatz,
+    params: PulseParams,
     *,
     plot_detuning: bool = True,
     plot_phase: bool = True,
@@ -28,7 +28,7 @@ def plot_spectrum(
     r"""Function that plots the spectrum of a pulse, given the pulse ansatz and the pulse parameters.
 
     Args:
-        pulse_ansatz: Ansatz of the gate pulse.
+        pulse: Ansatz of the gate pulse.
         params: Pulse parameters.
         plot_detuning: Whether to plot the detuning pulse, default is True.
         plot_phase: Whether to plot the phase pulse, default is True.
@@ -52,12 +52,12 @@ def plot_spectrum(
 
     # Evaluated pulse
     selector = [plot_detuning, plot_phase, plot_rabi]
-    values = np.array(pulse_ansatz.evaluate_pulse_functions(times, params))[selector]
+    values = np.array(pulse.evaluate_pulse_functions(times, params))[selector]
     labels = np.array(
         [
-            r"$\mathcal{F}\left(\Delta\right)$",
-            r"$\mathcal{F}\left(\xi\right)$",
-            r"$\mathcal{F}\left(\Omega\right)$",
+            r"$\mathcal{F}\left(\Delta(t)\right)$",
+            r"$\mathcal{F}\left(\xi(t)\right)$",
+            r"$\mathcal{F}\left(\Omega(t)\right)$",
         ]
     )[selector]
     is_constant = [np.all(v == v[0]) for v in values]

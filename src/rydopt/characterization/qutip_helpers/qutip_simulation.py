@@ -16,11 +16,11 @@ from rydopt.characterization.qutip_helpers.qutip_two_qubit_gate import (
 from rydopt.gates import FourQubitGatePyramidal, ThreeQubitGateIsosceles, TwoQubitGate
 from rydopt.gates.gate import Gate
 from rydopt.pulses.pulse_ansatz import PulseAnsatz
-from rydopt.types import ParamsTuple
+from rydopt.types import PulseParams
 
 
-def _setup_hamiltonian(gate, pulse_ansatz, params):
-    detuning_pulse, phase_pulse, rabi_pulse = pulse_ansatz.make_pulse_functions(params)
+def _setup_hamiltonian(gate, pulse, params):
+    detuning_pulse, phase_pulse, rabi_pulse = pulse.make_pulse_functions(params)
 
     if isinstance(gate, TwoQubitGate):
         decay = gate.get_decay()
@@ -76,16 +76,16 @@ def _qutip_time_evolution(T, H, psi_in, TR_op, normalize):
     return psi_out, TR
 
 
-def process_fidelity_qutip(gate: Gate, pulse_ansatz: PulseAnsatz, params: ParamsTuple) -> float:
+def process_fidelity_qutip(gate: Gate, pulse: PulseAnsatz, params: PulseParams) -> float:
     T = params[0]
-    H, psi_in, TR_op = _setup_hamiltonian(gate, pulse_ansatz, params)
+    H, psi_in, TR_op = _setup_hamiltonian(gate, pulse, params)
     final_state, _ = _qutip_time_evolution(T, H, psi_in, TR_op, normalize=gate.get_decay() == 0)
     target_state = _setup_target(gate, final_state)
     return qt.fidelity(final_state, target_state) ** 2
 
 
-def rydberg_time_qutip(gate: Gate, pulse_ansatz: PulseAnsatz, params: ParamsTuple) -> float:
+def rydberg_time_qutip(gate: Gate, pulse: PulseAnsatz, params: PulseParams) -> float:
     T = params[0]
-    H, psi_in, TR_op = _setup_hamiltonian(gate, pulse_ansatz, params)
+    H, psi_in, TR_op = _setup_hamiltonian(gate, pulse, params)
     _, TR = _qutip_time_evolution(T, H, psi_in, TR_op, normalize=True)
     return TR

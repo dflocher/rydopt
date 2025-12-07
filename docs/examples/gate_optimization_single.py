@@ -18,7 +18,7 @@ if __name__ == "__main__":
     )
 
     # Initial pulse parameter guess
-    initial_params = (7.0, (0.0,), (0.0, 0.0), ())
+    initial_params = (7.0, [0.0], [0.0, 0.0], [])
 
     # Optimize the pulse parameters
     opt_result = ro.optimization.optimize(

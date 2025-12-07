@@ -17,7 +17,7 @@ def test_fidelity_calculation() -> None:
     )
 
     # Parameters
-    params = (7.61141034, (-0.078847771,), (1.83253308, -0.61765787), ())
+    params = (7.61141034, [-0.078847771], [1.83253308, -0.61765787], [])
 
     # Time evolve the system and get the fidelity
     fidelity = ro.simulation.process_fidelity(gate, pulse, params)
@@ -35,7 +35,7 @@ def test_evolution_performance() -> None:
     )
 
     # Parameters
-    params = (7.61141034, (-0.078847771,), (1.83253308, -0.61765787), ())
+    params = (7.61141034, [-0.078847771], [1.83253308, -0.61765787], [])
 
     # Compilation and warmup
     evolve_jit = jax.jit(lambda params: ro.simulation.evolve(gate, pulse, params))

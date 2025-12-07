@@ -21,7 +21,7 @@ from tqdm.auto import tqdm
 from rydopt.gates.gate import Gate
 from rydopt.pulses.pulse_ansatz import PulseAnsatz
 from rydopt.simulation.fidelity import process_fidelity
-from rydopt.types import FixedParamsTuple, ParamsTuple
+from rydopt.types import FixedPulseParams, PulseParams
 
 tqdm.monitor_interval = 0
 
@@ -166,21 +166,21 @@ class _ProgressBar:
 # -----------------------------------------------------------------------------
 
 
-def _spec(nested: ParamsTuple | FixedParamsTuple) -> tuple[int, ...]:
+def _spec(nested: PulseParams | FixedPulseParams) -> tuple[int, ...]:
     return tuple(np.cumsum([len(p) if isinstance(p, Sized) else 1 for p in nested])[:-1].tolist())
 
 
-def _ravel(nested: ParamsTuple | FixedParamsTuple) -> np.ndarray:
+def _ravel(nested: PulseParams | FixedPulseParams) -> np.ndarray:
     first, *rest = nested
     return np.concatenate([(first,), *list(rest)])
 
 
-def _unravel(flat: np.ndarray, split_indices: tuple[int, ...]) -> ParamsTuple | FixedParamsTuple:
+def _unravel(flat: np.ndarray, split_indices: tuple[int, ...]) -> PulseParams | FixedPulseParams:
     parts = np.split(flat, split_indices)
     return (parts[0][0], *tuple(parts[1:]))
 
 
-def _unravel_jax(flat: jnp.ndarray, split_indices: tuple[int, ...]) -> ParamsTuple | FixedParamsTuple:
+def _unravel_jax(flat: jnp.ndarray, split_indices: tuple[int, ...]) -> PulseParams | FixedPulseParams:
     parts = jnp.split(flat, split_indices)
     return (parts[0][0], *tuple(parts[1:]))  # type: ignore[return-value]
 
@@ -386,44 +386,44 @@ def _adam_optimize(
 def optimize(
     gate: Gate,
     pulse: PulseAnsatz,
-    initial_params: ParamsTuple,
-    fixed_initial_params: FixedParamsTuple | None = ...,
+    initial_params: PulseParams,
+    fixed_initial_params: FixedPulseParams | None = ...,
     *,
     num_steps: int = ...,
     learning_rate: float = ...,
     tol: float = ...,
     return_history: Literal[True],
     verbose: bool = ...,
-) -> OptimizationResult[ParamsTuple, float, np.ndarray]: ...
+) -> OptimizationResult[PulseParams, float, np.ndarray]: ...
 
 
 @overload
 def optimize(
     gate: Gate,
     pulse: PulseAnsatz,
-    initial_params: ParamsTuple,
-    fixed_initial_params: FixedParamsTuple | None = ...,
+    initial_params: PulseParams,
+    fixed_initial_params: FixedPulseParams | None = ...,
     *,
     num_steps: int = ...,
     learning_rate: float = ...,
     tol: float = ...,
     return_history: Literal[False] = False,
     verbose: bool = ...,
-) -> OptimizationResult[ParamsTuple, float, None]: ...
+) -> OptimizationResult[PulseParams, float, None]: ...
 
 
 def optimize(
     gate: Gate,
     pulse: PulseAnsatz,
-    initial_params: ParamsTuple,
-    fixed_initial_params: FixedParamsTuple | None = None,
+    initial_params: PulseParams,
+    fixed_initial_params: FixedPulseParams | None = None,
     *,
     num_steps: int = 1000,
     learning_rate: float = 0.05,
     tol: float = 1e-7,
     return_history: bool = False,
     verbose: bool = False,
-) -> OptimizationResult[ParamsTuple, float, np.ndarray | None]:
+) -> OptimizationResult[PulseParams, float, np.ndarray | None]:
     r"""Function that optimizes an initial parameter guess in order to realize the desired gate.
 
     Args:
@@ -503,9 +503,9 @@ def optimize(
 def multi_start_optimize(
     gate: Gate,
     pulse: PulseAnsatz,
-    min_initial_params: ParamsTuple,
-    max_initial_params: ParamsTuple,
-    fixed_initial_params: FixedParamsTuple | None = ...,
+    min_initial_params: PulseParams,
+    max_initial_params: PulseParams,
+    fixed_initial_params: FixedPulseParams | None = ...,
     *,
     num_steps: int = ...,
     learning_rate: float = ...,
@@ -517,16 +517,16 @@ def multi_start_optimize(
     return_history: Literal[True],
     return_all: Literal[True],
     verbose: bool = ...,
-) -> OptimizationResult[list[ParamsTuple], np.ndarray, np.ndarray]: ...
+) -> OptimizationResult[list[PulseParams], np.ndarray, np.ndarray]: ...
 
 
 @overload
 def multi_start_optimize(
     gate: Gate,
     pulse: PulseAnsatz,
-    min_initial_params: ParamsTuple,
-    max_initial_params: ParamsTuple,
-    fixed_initial_params: FixedParamsTuple | None = ...,
+    min_initial_params: PulseParams,
+    max_initial_params: PulseParams,
+    fixed_initial_params: FixedPulseParams | None = ...,
     *,
     num_steps: int = ...,
     learning_rate: float = ...,
@@ -538,16 +538,16 @@ def multi_start_optimize(
     return_history: Literal[False] = False,
     return_all: Literal[True],
     verbose: bool = ...,
-) -> OptimizationResult[list[ParamsTuple], np.ndarray, None]: ...
+) -> OptimizationResult[list[PulseParams], np.ndarray, None]: ...
 
 
 @overload
 def multi_start_optimize(
     gate: Gate,
     pulse: PulseAnsatz,
-    min_initial_params: ParamsTuple,
-    max_initial_params: ParamsTuple,
-    fixed_initial_params: FixedParamsTuple | None = ...,
+    min_initial_params: PulseParams,
+    max_initial_params: PulseParams,
+    fixed_initial_params: FixedPulseParams | None = ...,
     *,
     num_steps: int = ...,
     learning_rate: float = ...,
@@ -559,16 +559,16 @@ def multi_start_optimize(
     return_history: Literal[True],
     return_all: Literal[False] = False,
     verbose: bool = ...,
-) -> OptimizationResult[ParamsTuple, float, np.ndarray]: ...
+) -> OptimizationResult[PulseParams, float, np.ndarray]: ...
 
 
 @overload
 def multi_start_optimize(
     gate: Gate,
     pulse: PulseAnsatz,
-    min_initial_params: ParamsTuple,
-    max_initial_params: ParamsTuple,
-    fixed_initial_params: FixedParamsTuple | None = ...,
+    min_initial_params: PulseParams,
+    max_initial_params: PulseParams,
+    fixed_initial_params: FixedPulseParams | None = ...,
     *,
     num_steps: int = ...,
     learning_rate: float = ...,
@@ -580,15 +580,15 @@ def multi_start_optimize(
     return_history: Literal[False] = False,
     return_all: Literal[False] = False,
     verbose: bool = ...,
-) -> OptimizationResult[ParamsTuple, float, None]: ...
+) -> OptimizationResult[PulseParams, float, None]: ...
 
 
 def multi_start_optimize(
     gate: Gate,
     pulse: PulseAnsatz,
-    min_initial_params: ParamsTuple,
-    max_initial_params: ParamsTuple,
-    fixed_initial_params: FixedParamsTuple | None = None,
+    min_initial_params: PulseParams,
+    max_initial_params: PulseParams,
+    fixed_initial_params: FixedPulseParams | None = None,
     *,
     num_steps: int = 1000,
     learning_rate: float = 0.05,
@@ -600,7 +600,7 @@ def multi_start_optimize(
     return_history: bool = False,
     return_all: bool = False,
     verbose: bool = False,
-) -> OptimizationResult[ParamsTuple | list[ParamsTuple], float | np.ndarray, np.ndarray | None]:
+) -> OptimizationResult[PulseParams | list[PulseParams], float | np.ndarray, np.ndarray | None]:
     r"""Function that optimizes multiple random initial parameter guesses in order to realize the desired gate.
 
     Args:

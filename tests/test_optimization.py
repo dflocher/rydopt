@@ -13,7 +13,7 @@ def test_adam() -> None:
     pulse = ro.pulses.PulseAnsatz(detuning_ansatz=ro.pulses.const, phase_ansatz=ro.pulses.sin_crab)
 
     # Initial parameters
-    initial_params = (7.6, (-0.1,), (1.8, -0.6), ())
+    initial_params = (7.6, [-0.1], [1.8, -0.6], [])
 
     # Run optimization
     r = ro.optimization.optimize(
@@ -36,7 +36,7 @@ def test_adam_decay() -> None:
     pulse = ro.pulses.PulseAnsatz(detuning_ansatz=ro.pulses.const, phase_ansatz=ro.pulses.sin_crab)
 
     # Initial parameters
-    initial_params = (7.6, (-0.1,), (1.8, -0.6), ())
+    initial_params = (7.6, [-0.1], [1.8, -0.6], [])
 
     # Run optimization
     r = ro.optimization.optimize(gate, pulse, initial_params, num_steps=200, tol=1e-7)
@@ -57,8 +57,8 @@ def test_multi_start_adam() -> None:
     pulse = ro.pulses.PulseAnsatz(detuning_ansatz=ro.pulses.const_cos_crab)
 
     # Parameter bounds for choosing random initial parameters
-    min_initial_params = (6, (-2, -2, -2), (), ())
-    max_initial_params = (9, (2, 2, 2), (), ())
+    min_initial_params = (6, [-2, -2, -2], [], [])
+    max_initial_params = (9, [2, 2, 2], [], [])
 
     # Run optimization
     r = ro.optimization.multi_start_optimize(
@@ -98,8 +98,8 @@ def test_multi_start_adam_decay() -> None:
     pulse = ro.pulses.PulseAnsatz(detuning_ansatz=ro.pulses.const_cos_crab)
 
     # Parameter bounds for choosing random initial parameters
-    min_initial_params = (6, (-2, -2, -2), (), ())
-    max_initial_params = (9, (2, 2, 2), (), ())
+    min_initial_params = (6, [-2, -2, -2], [], [])
+    max_initial_params = (9, [2, 2, 2], [], [])
 
     # Run optimization
     r = ro.optimization.multi_start_optimize(
@@ -129,8 +129,8 @@ def test_fastest() -> None:
     pulse = ro.pulses.PulseAnsatz(detuning_ansatz=ro.pulses.const, phase_ansatz=ro.pulses.sin_crab)
 
     # Parameter bounds for choosing random initial parameters
-    min_initial_params = (6, (-2,), (-2, -2), ())
-    max_initial_params = (9, (2,), (2, 2), ())
+    min_initial_params = (6, [-2], [-2, -2], [])
+    max_initial_params = (9, [2], [2, 2], [])
 
     # Run optimization
     r = ro.optimization.multi_start_optimize(
@@ -162,8 +162,8 @@ def test_fixed() -> None:
     pulse = ro.pulses.PulseAnsatz(detuning_ansatz=ro.pulses.const, phase_ansatz=ro.pulses.sin_crab)
 
     # Initial parameters
-    initial_params = (7.6, (0.0,), (1.8, -0.6), ())
-    fixed_initial_params = (False, (True,), (False, False), ())
+    initial_params = (7.6, [0.0], [1.8, -0.6], [])
+    fixed_initial_params = (False, [True], [False, False], [])
 
     # Run optimization
     r = ro.optimization.optimize(gate, pulse, initial_params, fixed_initial_params, num_steps=200)

@@ -5,7 +5,7 @@ from dataclasses import dataclass
 import jax.numpy as jnp
 
 from rydopt.pulses.pulse_ansatz_functions import const
-from rydopt.types import ParamsTuple, PulseAnsatzFunction, PulseFunction
+from rydopt.types import PulseAnsatzFunction, PulseFunction, PulseParams
 
 
 def _const_zero(t: jnp.ndarray | float, _duration: float, _ansatz_params: jnp.ndarray) -> jnp.ndarray:
@@ -34,7 +34,7 @@ class PulseAnsatz:
     Attributes:
         detuning_ansatz: Detuning sweep, default is zero.
         phase_ansatz: Phase sweep, default is zero.
-        rabi_ansatz: Rabi amplitude sweep, default is one.
+        rabi_ansatz: Rabi frequency amplitude sweep, default is one.
 
     """
 
@@ -42,7 +42,7 @@ class PulseAnsatz:
     phase_ansatz: PulseAnsatzFunction = _const_zero
     rabi_ansatz: PulseAnsatzFunction = _const_one
 
-    def make_pulse_functions(self, params: ParamsTuple) -> tuple[PulseFunction, PulseFunction, PulseFunction]:
+    def make_pulse_functions(self, params: PulseParams) -> tuple[PulseFunction, PulseFunction, PulseFunction]:
         r"""Create three functions that describe the detuning sweep, the phase sweep, and the rabi sweep for fixed
         parameters.
 
@@ -70,17 +70,17 @@ class PulseAnsatz:
         return detuning_pulse, phase_pulse, rabi_pulse
 
     def evaluate_pulse_functions(
-        self, t: jnp.ndarray | float, params: ParamsTuple
+        self, t: jnp.ndarray | float, params: PulseParams
     ) -> tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray]:
-        r"""Create three functions that describe the detuning sweep, the phase sweep, and the rabi sweep for fixed
-        parameters and evaluate them at the given times.
+        r"""Evaluate the detuning sweep, the phase sweep, and the rabi sweep for fixed
+        parameters at the given times.
 
         Args:
             t: time samples at which the functions are evaluated
             params: pulse parameters
 
         Returns:
-            Three values :math:`\Delta(t), \, \xi(t), \, \Omega(t)`
+            Three arrays of values for :math:`\Delta`, :math:`\xi`, :math:`\Omega`
 
         """
         duration, detuning_ansatz_params, phase_ansatz_params, rabi_ansatz_params = params

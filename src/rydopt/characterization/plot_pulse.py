@@ -7,12 +7,12 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from rydopt.pulses.pulse_ansatz import PulseAnsatz
-from rydopt.types import ParamsTuple
+from rydopt.types import PulseParams
 
 
 def plot_pulse(
-    pulse_ansatz: PulseAnsatz,
-    params: ParamsTuple,
+    pulse: PulseAnsatz,
+    params: PulseParams,
     *,
     plot_detuning: bool = True,
     plot_phase: bool = True,
@@ -24,7 +24,7 @@ def plot_pulse(
     r"""Function that plots a pulse, given the pulse ansatz and the pulse parameters.
 
     Args:
-        pulse_ansatz: Ansatz of the gate pulse.
+        pulse: Ansatz of the gate pulse.
         params: Pulse parameters.
         plot_detuning: Whether to plot the detuning pulse, default is True.
         plot_phase: Whether to plot the phase pulse, default is True.
@@ -44,16 +44,16 @@ def plot_pulse(
     # Evaluated pulse
     selector = [plot_detuning, plot_phase, plot_rabi]
 
-    values = np.array(pulse_ansatz.evaluate_pulse_functions(times, params))
+    values = np.array(pulse.evaluate_pulse_functions(times, params))
     if subtract_phase_offset:
         values[1] -= values[1][0]
     values = values[selector]
 
     labels = np.array(
         [
-            r"$\Delta$",
-            r"$\xi$",
-            r"$\Omega$",
+            r"$\Delta(t)$",
+            r"$\xi(t)$",
+            r"$\Omega(t)$",
         ]
     )[selector]
 

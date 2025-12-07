@@ -6,9 +6,9 @@ from typing import TypeAlias
 import jax.numpy as jnp
 from numpy.typing import ArrayLike
 
-ParamsTuple: TypeAlias = tuple[float, ArrayLike, ArrayLike, ArrayLike]
+PulseParams: TypeAlias = tuple[float, ArrayLike, ArrayLike, ArrayLike]
 
-FixedParamsTuple: TypeAlias = tuple[bool, ArrayLike, ArrayLike, ArrayLike]
+FixedPulseParams: TypeAlias = tuple[bool, ArrayLike, ArrayLike, ArrayLike]
 
 PulseAnsatzFunction = Callable[
     [jnp.ndarray | float, float, jnp.ndarray],

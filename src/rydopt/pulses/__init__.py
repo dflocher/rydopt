@@ -1,4 +1,4 @@
-from rydopt.pulses.pulse_ansatz import PulseAnsatz
+from rydopt.pulses.pulse_ansatz import PulseAnsatz, PulseParams
 from rydopt.pulses.pulse_ansatz_functions import (
     const,
     const_cos_crab,
@@ -20,9 +20,12 @@ from rydopt.pulses.pulse_ansatz_functions import (
     softbox_planck,
     softbox_seventh_order_smoothstep,
 )
+from rydopt.types import FixedPulseParams
 
 __all__ = [
     "PulseAnsatz",
+    "PulseParams",
+    "FixedPulseParams",
     "sin_crab",
     "cos_crab",
     "sin_cos_crab",

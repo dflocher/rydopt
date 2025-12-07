@@ -34,7 +34,7 @@ gate = ro.gates.TwoQubitGate(phi=None, theta=np.pi, Vnn=float("inf"), decay=0.0)
 pulse_ansatz = ro.pulses.PulseAnsatz(detuning_ansatz=ro.pulses.const, phase_ansatz=ro.pulses.sin_crab)
 
 # Initial pulse parameter guess
-initial_params = (7.0, (0.0,), (0.0, 0.0), ())
+initial_params = (7.0, [0.0], [0.0, 0.0], [])
 
 # Optimize the pulse parameters
 opt_result = ro.optimization.optimize(gate, pulse_ansatz, initial_params, tol=1e-10)
