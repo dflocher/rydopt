@@ -86,3 +86,28 @@ pygments_style = "friendly"
 html_theme = "sphinx_rtd_theme"
 html_static_path = ["_static"]
 templates_path = ["_templates"]
+
+# -- Work around Sphinx not linking `py:type` in type annotations ------------
+# When a type annotation produces a py:class reference to one of our
+# aliases and Sphinx can't resolve it, redirect the lookup to `py:type`.
+
+
+def resolve_type_aliases(app, env, node, contnode):
+    if node.get("refdomain") != "py":
+        return None
+
+    # Annotations usually generate a "class" reference (even for aliases)
+    if node.get("reftype") != "class":
+        return None
+
+    target = node.get("reftarget")
+    if target not in {"PulseParams", "FixedPulseParams"}:
+        return None
+
+    # Try to resolve as a py:type instead
+    py_domain = app.env.get_domain("py")
+    return py_domain.resolve_xref(env, node["refdoc"], app.builder, "type", target, node, contnode)
+
+
+def setup(app):
+    app.connect("missing-reference", resolve_type_aliases)

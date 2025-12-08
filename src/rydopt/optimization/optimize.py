@@ -43,7 +43,7 @@ class OptimizationResult(Generic[ParamsType, ValueType, HistoryType]):
         grad_norm_history: Norm of the parameter gradient during the optimization.
         num_steps: Number of optimization steps.
         tol: Target gate infidelity.
-        duration_in_sec: Duration of the optimization in seconds.
+        runtime_in_sec: Runtime of the optimization in seconds.
 
     """
 
@@ -55,7 +55,7 @@ class OptimizationResult(Generic[ParamsType, ValueType, HistoryType]):
     grad_norm_history: HistoryType  # type: ignore[misc]
     num_steps: int
     tol: float
-    duration_in_sec: float
+    runtime_in_sec: float
 
 
 # -----------------------------------------------------------------------------
@@ -220,9 +220,9 @@ def _print_gate(title: str, params, infidelity: float, tol: float):
     print(f"> duration = {params[0]}")
 
 
-def _print_summary(method_name: str, duration: float, tol: float, num_converged: int):
+def _print_summary(method_name: str, runtime: float, tol: float, num_converged: int):
     print(f"\n=== Optimization finished using {method_name} ===\n")
-    print(f"Duration: {duration:.3f} seconds")
+    print(f"Runtime: {runtime:.3f} seconds")
     print(f"Gates with infidelity below tol={tol:.1e}: {num_converged}")
 
 
@@ -508,7 +508,7 @@ def optimize(
                 return_history,
             )
         )
-    duration = time.perf_counter() - t0
+    runtime = time.perf_counter() - t0
 
     final_full = params_full.copy()
     final_full[trainable_indices] = final_params_trainable
@@ -518,7 +518,7 @@ def optimize(
 
     # --- Logging ---
 
-    _print_summary("Adam", duration, tol, num_converged)
+    _print_summary("Adam", runtime, tol, num_converged)
     _print_gate("Optimized gate:", final_params, float(final_infidelity), tol)
 
     return OptimizationResult(
@@ -530,7 +530,7 @@ def optimize(
         grad_norm_history=grad_norm_history,
         num_steps=num_steps,
         tol=tol,
-        duration_in_sec=duration,
+        runtime_in_sec=runtime,
     )
 
 
@@ -797,7 +797,7 @@ def multi_start_optimize(
                 duration_history = None
                 grad_norm_history = None
 
-    duration = time.perf_counter() - t0
+    runtime = time.perf_counter() - t0
 
     final_full = np.tile(params_full, (final_params_trainable.shape[0], 1))
     final_full[:, trainable_indices] = final_params_trainable
@@ -810,7 +810,7 @@ def multi_start_optimize(
 
     # --- Logging ---
 
-    _print_summary("multi-start Adam", duration, tol, num_converged)
+    _print_summary("multi-start Adam", runtime, tol, num_converged)
 
     fastest_idx = converged[np.argmin(durations_converged)]
     fastest_infidelity = final_infidelities[fastest_idx]
@@ -850,7 +850,7 @@ def multi_start_optimize(
             grad_norm_history=grad_norm_history_out,
             num_steps=num_steps,
             tol=tol,
-            duration_in_sec=duration,
+            runtime_in_sec=runtime,
         )
 
     infidelity_history_out = infidelity_history[:, fastest_idx] if infidelity_history is not None else None
@@ -865,5 +865,5 @@ def multi_start_optimize(
         grad_norm_history=grad_norm_history_out,
         num_steps=num_steps,
         tol=tol,
-        duration_in_sec=duration,
+        runtime_in_sec=runtime,
     )
