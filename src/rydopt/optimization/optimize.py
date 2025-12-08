@@ -26,18 +26,21 @@ from rydopt.types import FixedPulseParams, PulseParams
 tqdm.monitor_interval = 0
 
 ParamsType = TypeVar("ParamsType", covariant=True)
-InfidelityType = TypeVar("InfidelityType", covariant=True)
+ValueType = TypeVar("ValueType", covariant=True)
 HistoryType = TypeVar("HistoryType", covariant=True)
 
 
 @dataclass
-class OptimizationResult(Generic[ParamsType, InfidelityType, HistoryType]):
+class OptimizationResult(Generic[ParamsType, ValueType, HistoryType]):
     r"""Data class that stores the results of a gate pulse optimization.
 
     Attributes:
         params: Final pulse parameters.
         infidelity: Final cost function evaluation.
-        history: Cost function evaluations during the optimization.
+        duration: Final duration
+        infidelity_history: Cost function evaluations during the optimization.
+        duration_history: Durations during the optimization.
+        grad_norm_history: Norm of the parameter gradient during the optimization.
         num_steps: Number of optimization steps.
         tol: Target gate infidelity.
         duration_in_sec: Duration of the optimization in seconds.
@@ -45,8 +48,11 @@ class OptimizationResult(Generic[ParamsType, InfidelityType, HistoryType]):
     """
 
     params: ParamsType  # type: ignore[misc]
-    infidelity: InfidelityType  # type: ignore[misc]
-    history: HistoryType  # type: ignore[misc]
+    infidelity: ValueType  # type: ignore[misc]
+    duration: ValueType  # type: ignore[misc]
+    infidelity_history: HistoryType  # type: ignore[misc]
+    duration_history: HistoryType  # type: ignore[misc]
+    grad_norm_history: HistoryType  # type: ignore[misc]
     num_steps: int
     tol: float
     duration_in_sec: float
@@ -233,6 +239,7 @@ def _print_summary(method_name: str, duration: float, tol: float, num_converged:
         "num_steps",
         "min_converged_initializations",
         "progress_hook",
+        "return_history",
     ],
     donate_argnames=["params_trainable"],
 )
@@ -245,16 +252,17 @@ def _adam_scan(
     process_idx: int,
     tol: float | jnp.ndarray,
     progress_hook,
+    return_history: bool,
 ):
     opt_state0 = optimizer.init(params_trainable)
 
     def body(carry, step):
-        _, _, _, _, prev_converged_initializations = carry
+        _, _, _, _, prev_converged_initializations, _ = carry
 
         # Do an gradient descent step if the optimization was not yet done. Note that 'params' and
         # not 'new_params' contains the parameters that correspond to the 'infidelity'.
         def do_step(carry):
-            _, params, _, opt_state, _ = carry
+            _, params, _, opt_state, _, _ = carry
 
             infidelity, grads = infidelity_and_grad(params)
             converged_initializations = jnp.sum(infidelity <= tol)
@@ -262,18 +270,21 @@ def _adam_scan(
             updates, opt_state = optimizer.update(grads, opt_state, params)
             new_params = optax.apply_updates(params, updates)
 
+            grad_norm = jnp.linalg.norm(grads, axis=-1) if return_history else jnp.zeros_like(tol)
+
             return (
                 params,
                 new_params,
                 infidelity,
                 opt_state,
                 converged_initializations,
+                grad_norm,
             )
 
         was_not_done = prev_converged_initializations < min_converged_initializations
         carry = jax.lax.cond(was_not_done, do_step, lambda carry: carry, operand=carry)
 
-        _, _, infidelity, _, converged_initializations = carry
+        params, _, infidelity, _, converged_initializations, grad_norm = carry
 
         # Log intermediate results at distinct steps
         is_done_now = converged_initializations >= min_converged_initializations
@@ -309,15 +320,17 @@ def _adam_scan(
                 ),
             )
 
-        return carry, infidelity
+        if return_history:
+            return carry, (infidelity, params[..., 0], grad_norm)
+        return carry, None
 
-    (final_params, _, final_infidelity, _, _), infidelity_history = jax.lax.scan(
+    (final_params, _, final_infidelity, _, _, _), history = jax.lax.scan(
         body,
-        (params_trainable, params_trainable, jnp.zeros_like(tol), opt_state0, 0),
+        (params_trainable, params_trainable, jnp.zeros_like(tol), opt_state0, 0, jnp.zeros_like(tol)),
         jnp.arange(num_steps),
     )
 
-    return (final_params, final_infidelity, infidelity_history)
+    return (final_params, final_infidelity, history)
 
 
 # -----------------------------------------------------------------------------
@@ -339,7 +352,8 @@ def _adam_optimize(
     process_idx: int,
     device_idx: int | None,
     progress_queue: _ProgressQueue | None,
-) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    return_history: bool,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray | None, np.ndarray | None, np.ndarray | None]:
     device_ctx = nullcontext() if device_idx is None else jax.default_device(jax.devices()[device_idx])
 
     progress_hook = _ProgressBar.make_progress_hook(progress_queue)
@@ -363,7 +377,7 @@ def _adam_optimize(
             infidelity_and_grad = jax.vmap(jax.value_and_grad(infidelity))
             tol_arg = jnp.full((params_trainable.shape[0],), tol)
 
-        final_params, final_infidelities, infidelity_history = _adam_scan(
+        final_params, final_infidelities, history = _adam_scan(
             infidelity_and_grad=infidelity_and_grad,
             optimizer=optimizer,
             params_trainable=params_trainable,
@@ -372,9 +386,25 @@ def _adam_optimize(
             process_idx=process_idx,
             tol=tol_arg,
             progress_hook=progress_hook,
+            return_history=return_history,
         )
 
-        return np.array(final_params), np.array(final_infidelities), np.array(infidelity_history)
+        if return_history:
+            infidelity_history = np.array(history[0])
+            duration_history = np.array(history[1])
+            grad_norm_history = np.array(history[2])
+        else:
+            infidelity_history = None
+            duration_history = None
+            grad_norm_history = None
+
+        return (
+            np.array(final_params),
+            np.array(final_infidelities),
+            infidelity_history,
+            duration_history,
+            grad_norm_history,
+        )
 
 
 # -----------------------------------------------------------------------------
@@ -460,22 +490,24 @@ def optimize(
     with _ProgressBar(
         num_processes=1, num_steps=num_steps, min_converged_initializations=1, enable=not verbose
     ) as progress_queue:
-        final_params_trainable, final_infidelity, complete_history = _adam_optimize(
-            gate,
-            pulse,
-            params_full,
-            params_trainable,
-            trainable_indices,
-            split_indices,
-            num_steps,
-            1,
-            learning_rate,
-            tol,
-            0,
-            None,
-            progress_queue,
+        final_params_trainable, final_infidelity, infidelity_history, duration_history, grad_norm_history = (
+            _adam_optimize(
+                gate,
+                pulse,
+                params_full,
+                params_trainable,
+                trainable_indices,
+                split_indices,
+                num_steps,
+                1,
+                learning_rate,
+                tol,
+                0,
+                None,
+                progress_queue,
+                return_history,
+            )
         )
-        history = complete_history if return_history else None
     duration = time.perf_counter() - t0
 
     final_full = params_full.copy()
@@ -492,7 +524,10 @@ def optimize(
     return OptimizationResult(
         params=final_params,
         infidelity=float(final_infidelity),
-        history=history,
+        duration=final_params[0],
+        infidelity_history=infidelity_history,
+        duration_history=duration_history,
+        grad_norm_history=grad_norm_history,
         num_steps=num_steps,
         tol=tol,
         duration_in_sec=duration,
@@ -684,22 +719,24 @@ def multi_start_optimize(
             min_converged_initializations=min_converged_initializations_local,
             enable=not verbose,
         ) as progress_queue:
-            final_params_trainable, final_infidelities, complete_history = _adam_optimize(
-                gate,
-                pulse,
-                params_full,
-                params_trainable,
-                trainable_indices,
-                split_indices,
-                num_steps,
-                min_converged_initializations_local,
-                learning_rate,
-                tol,
-                0,
-                None,
-                progress_queue,
+            final_params_trainable, final_infidelities, infidelity_history, duration_history, grad_norm_history = (
+                _adam_optimize(
+                    gate,
+                    pulse,
+                    params_full,
+                    params_trainable,
+                    trainable_indices,
+                    split_indices,
+                    num_steps,
+                    min_converged_initializations_local,
+                    learning_rate,
+                    tol,
+                    0,
+                    None,
+                    progress_queue,
+                    return_history,
+                )
             )
-            history = complete_history if return_history else None
 
     else:
         # Run optimization in spawned processes
@@ -734,16 +771,31 @@ def multi_start_optimize(
                         device_idx,
                         device_idx if use_one_process_per_device else None,
                         progress_queue,
+                        return_history,
                     )
                     for device_idx, p in enumerate(chunks)
                 ],
             )
 
             # Concatenate results from all processes
-            final_params_trainable_list, final_infidelities_list, histories_list = zip(*results)
+            (
+                final_params_trainable_list,
+                final_infidelities_list,
+                infidelity_history_list,
+                duration_history_list,
+                grad_norm_history_list,
+            ) = zip(*results)
             final_params_trainable = np.concatenate(final_params_trainable_list, axis=0)
             final_infidelities = np.concatenate(final_infidelities_list, axis=0)
-            history = np.concatenate(histories_list, axis=1) if return_history else None
+
+            if return_history:
+                infidelity_history = np.concatenate(infidelity_history_list, axis=1)
+                duration_history = np.concatenate(duration_history_list, axis=1)
+                grad_norm_history = np.concatenate(grad_norm_history_list, axis=1)
+            else:
+                infidelity_history = None
+                duration_history = None
+                grad_norm_history = None
 
     duration = time.perf_counter() - t0
 
@@ -785,22 +837,32 @@ def multi_start_optimize(
 
     if return_all:
         sorter = np.argsort(final_infidelities)
-        history_out = None
-        history_out = history[:, sorter] if history is not None else None
+        final_full_sorted = final_full[sorter]
+        infidelity_history_out = infidelity_history[:, sorter] if infidelity_history is not None else None
+        duration_history_out = duration_history[:, sorter] if duration_history is not None else None
+        grad_norm_history_out = grad_norm_history[:, sorter] if grad_norm_history is not None else None
         return OptimizationResult(
-            params=[_unravel(p, split_indices) for p in final_full[sorter]],
+            params=[_unravel(p, split_indices) for p in final_full_sorted],
             infidelity=final_infidelities[sorter],
-            history=history_out,
+            duration=final_full_sorted[:, 0],
+            infidelity_history=infidelity_history_out,
+            duration_history=duration_history_out,
+            grad_norm_history=grad_norm_history_out,
             num_steps=num_steps,
             tol=tol,
             duration_in_sec=duration,
         )
 
-    history_out = history[:, fastest_idx] if history is not None else None
+    infidelity_history_out = infidelity_history[:, fastest_idx] if infidelity_history is not None else None
+    duration_history_out = duration_history[:, fastest_idx] if duration_history is not None else None
+    grad_norm_history_out = grad_norm_history[:, fastest_idx] if grad_norm_history is not None else None
     return OptimizationResult(
         params=fastest_params,
         infidelity=final_infidelities[fastest_idx],
-        history=history_out,
+        duration=fastest_params[0],
+        infidelity_history=infidelity_history_out,
+        duration_history=duration_history_out,
+        grad_norm_history=grad_norm_history_out,
         num_steps=num_steps,
         tol=tol,
         duration_in_sec=duration,

@@ -24,7 +24,7 @@ def test_adam() -> None:
     fidelity = ro.simulation.process_fidelity(gate, pulse, r.params)
     assert np.allclose(abs(1 - fidelity), r.infidelity, rtol=1e-12)
     assert np.allclose(fidelity, 1, rtol=1e-7)
-    assert r.infidelity == r.history[-1]
+    assert r.infidelity == r.infidelity_history[-1]
 
 
 @pytest.mark.optimization
@@ -79,12 +79,12 @@ def test_multi_start_adam() -> None:
     fidelity = ro.simulation.process_fidelity(gate, pulse, r.params[0], tol=tol)
     assert np.allclose(abs(1 - fidelity), r.infidelity[0], rtol=1e-12)
     assert np.allclose(fidelity, 1, rtol=tol)
-    assert r.infidelity[0] == r.history[-1, 0]
+    assert r.infidelity[0] == r.infidelity_history[-1, 0]
 
     fidelity = ro.simulation.process_fidelity(gate, pulse, r.params[1], tol=tol)
     assert np.allclose(abs(1 - fidelity), r.infidelity[1], rtol=1e-12)
     assert np.allclose(fidelity, 1, rtol=tol)
-    assert r.infidelity[1] == r.history[-1, 1]
+    assert r.infidelity[1] == r.infidelity_history[-1, 1]
 
 
 @pytest.mark.optimization
@@ -150,7 +150,7 @@ def test_fastest() -> None:
     fidelity = ro.simulation.process_fidelity(gate, pulse, r.params, tol=tol)
     assert np.allclose(abs(1 - fidelity), r.infidelity, rtol=1e-12)
     assert np.allclose(fidelity, 1, rtol=tol)
-    assert r.infidelity == r.history[-1]
+    assert r.infidelity == r.infidelity_history[-1]
 
 
 @pytest.mark.optimization

@@ -31,10 +31,10 @@ def plot_pulse(
         plot_rabi: Whether to plot the rabi pulse, default is True.
         subtract_phase_offset: Whether the phase pulse begins at 0, default is False.
         num_points: Number of sampling points in the time interval.
-        ax: Optional matplotlib Axes to draw on; if None, a new one is created.
+        ax: Optional :class:`matplotlib.axes.Axes` to draw on; if None, a new one is created.
 
     Returns:
-        A tuple of (Figure, Axes) containing the pulse plot.
+        A tuple of (fig, ax) where ax is the axes used for the pulse plot.
 
     """
     duration = params[0]

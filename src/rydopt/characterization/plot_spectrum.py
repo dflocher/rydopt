@@ -38,10 +38,10 @@ def plot_spectrum(
         tapered: If True, applies a Tukey window in the padded region.
         xlim: Optional x-axis (frequency) limits; if None, chosen automatically.
         ylim: Optional y-axis (dB) limits; if None, chosen automatically.
-        ax: Optional matplotlib Axes to draw on; if None, a new one is created.
+        ax: Optional :class:`matplotlib.axes.Axes` to draw on; if None, a new one is created.
 
     Returns:
-        A tuple of (Figure, Axes) containing the spectrum plot.
+        A tuple of (fig, ax) where ax is the axes used for the spectrum plot.
 
     """
     duration = params[0]
