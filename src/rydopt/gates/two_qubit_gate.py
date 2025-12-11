@@ -1,11 +1,12 @@
 from __future__ import annotations
 
+from copy import deepcopy
 from functools import partial
 from math import isinf
+from typing import Self
 
 import jax.numpy as jnp
 
-from rydopt.gates.gate import Gate
 from rydopt.gates.subsystem_hamiltonians import (
     H_2_atoms,
     H_k_atoms_perfect_blockade,
@@ -13,7 +14,7 @@ from rydopt.gates.subsystem_hamiltonians import (
 from rydopt.types import HamiltonianFunction
 
 
-class TwoQubitGate(Gate):
+class TwoQubitGate:
     r"""Class that describes a gate on two atoms.
     The physical setting is described by the interaction strength between the atoms, :math:`V_{\mathrm{nn}}`,
     and the decay strength from Rydberg states, :math:`\gamma`.
@@ -40,39 +41,45 @@ class TwoQubitGate(Gate):
         Vnn: interaction strength :math:`V_{\mathrm{nn}}/(\hbar\Omega_0)`.
         decay: Rydberg decay strength :math:`\gamma/\Omega_0`.
 
-    Returns:
-        Two-qubit gate object.
-
     """
 
     def __init__(self, phi: float | None, theta: float | None, Vnn: float, decay: float):
-        super().__init__(decay)
         self._phi = phi
         self._theta = theta
         self._Vnn = Vnn
+        self._decay = decay
+
+    def with_decay(self, decay: float) -> Self:
+        r"""Creates a copy of the gate with a new decay strength.
+
+        Args:
+            decay: New decay strength :math:`\gamma/\Omega_0`.
+
+        Returns:
+            A copy of the gate object with the new decay strength.
+
+        """
+        new = deepcopy(self)
+        new._decay = decay
+        return new
 
     def dim(self) -> int:
-        r"""Returns:
-        4
+        r"""Hilbert space dimension.
+
+        Returns:
+            4
 
         """
         return 4
 
-    def get_gate_angles(self) -> tuple[float | None, float | None]:
-        r"""Returns:
-        Gate phases :math:`\phi, \theta`.
-
-        """
-        return self._phi, self._theta
-
-    def get_interactions(self) -> float:
-        r"""Returns:
-        Interaction strength :math:`V_{\mathrm{nn}}/(\hbar\Omega_0)`.
-
-        """
-        return self._Vnn
-
     def hamiltonians_for_basis_states(self) -> tuple[HamiltonianFunction, ...]:
+        r"""The full gate Hamiltonian can be split into distinct blocks that describe the time evolution
+        of basis states. The number of blocks and their dimensionality depends on the interaction strengths.
+
+        Returns:
+            Tuple of Hamiltonian functions.
+
+        """
         if isinf(float(self._Vnn)):
             return (
                 partial(H_k_atoms_perfect_blockade, decay=self._decay, k=1),
@@ -84,6 +91,13 @@ class TwoQubitGate(Gate):
         )
 
     def rydberg_population_operators_for_basis_states(self) -> tuple[jnp.ndarray, ...]:
+        r"""For each basis state, the Rydberg population operators count the number of Rydberg excitations on
+        the diagonal.
+
+        Returns:
+            Tuple of operators.
+
+        """
         if isinf(float(self._Vnn)):
             return (
                 H_k_atoms_perfect_blockade(Delta=1.0, Xi=0.0, Omega=0.0, decay=0.0, k=1),
@@ -95,6 +109,13 @@ class TwoQubitGate(Gate):
         )
 
     def initial_basis_states(self) -> tuple[jnp.ndarray, ...]:
+        r"""The initial basis states :math:`(1, 0, ...)` of appropriate dimension are
+        provided.
+
+        Returns:
+            Tuple of arrays.
+
+        """
         if isinf(float(self._Vnn)):
             return (
                 jnp.array([1.0 + 0.0j, 0.0 + 0.0j]),
@@ -106,6 +127,17 @@ class TwoQubitGate(Gate):
         )
 
     def process_fidelity(self, final_basis_states) -> jnp.ndarray:
+        r"""Given the basis states evolved under the pulse,
+        this function calculates the fidelity with respect to the gate's target state, specified by the gate angles
+        :math:`\phi, \, \theta, \, \ldots`
+
+        Args:
+            final_basis_states: Time-evolved basis states.
+
+        Returns:
+            Fidelity with respect to the target state.
+
+        """
         # Obtained diagonal gate matrix
         obtained_gate = jnp.array(
             [
@@ -132,4 +164,14 @@ class TwoQubitGate(Gate):
         return jnp.abs(jnp.vdot(targeted_gate, obtained_gate)) ** 2 / len(targeted_gate) ** 2
 
     def rydberg_time(self, expectation_values_of_basis_states) -> jnp.ndarray:
+        r"""Given the expectation values of Rydberg populations for each basis state, integrated over the full
+        pulse, this function calculates the average time spent in Rydberg states during the gate.
+
+        Args:
+            expectation_values_of_basis_states: Expected Rydberg times for each basis state.
+
+        Returns:
+            Averaged Rydberg time :math:`T_R`.
+
+        """
         return (1 / 4) * jnp.squeeze(2 * expectation_values_of_basis_states[0] + expectation_values_of_basis_states[1])

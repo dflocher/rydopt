@@ -5,3 +5,5 @@ Reference of Internal Functions
    :maxdepth: 2
 
    internal_subsystem_hamiltonians
+   internal_gate_methods
+   internal_protocols

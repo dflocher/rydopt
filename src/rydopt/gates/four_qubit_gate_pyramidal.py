@@ -1,11 +1,12 @@
 from __future__ import annotations
 
+from copy import deepcopy
 from functools import partial
 from math import isinf
+from typing import Self
 
 import jax.numpy as jnp
 
-from rydopt.gates.gate import Gate
 from rydopt.gates.subsystem_hamiltonians import (
     H_2_atoms,
     H_3_atoms,
@@ -19,7 +20,7 @@ from rydopt.gates.subsystem_hamiltonians import (
 from rydopt.types import HamiltonianFunction
 
 
-class FourQubitGatePyramidal(Gate):
+class FourQubitGatePyramidal:
     r"""Class that describes a gate on four atoms arranged in a pyramid.
     The physical setting is described by the interaction strengths between atoms, :math:`V_{\mathrm{nn}}`
     and :math:`V_{\mathrm{nnn}}`, and the decay strength from Rydberg states, :math:`\gamma`.
@@ -57,9 +58,6 @@ class FourQubitGatePyramidal(Gate):
         Vnnn: next-nearest-neighbour interaction strength :math:`V_{\mathrm{nnn}}/(\hbar\Omega_0)`.
         decay: Rydberg decay strength :math:`\gamma/\Omega_0`.
 
-    Returns:
-        Four-qubit gate object.
-
     """
 
     def __init__(
@@ -74,7 +72,6 @@ class FourQubitGatePyramidal(Gate):
         Vnnn: float,
         decay: float,
     ):
-        super().__init__(decay)
         if (Vnn == Vnnn) and ((theta != theta_prime) or (lamb != lamb_prime)):
             raise ValueError("For Vnn=Vnnn, theta=theta_prime and lambda=lamb_prime is required")
         if (Vnnn == 0) and ((theta_prime != 0.0) or (lamb_prime != 0.0)):
@@ -87,45 +84,39 @@ class FourQubitGatePyramidal(Gate):
         self._kappa = kappa
         self._Vnn = Vnn
         self._Vnnn = Vnnn
+        self._decay = decay
+
+    def with_decay(self, decay: float) -> Self:
+        r"""Creates a copy of the gate with a new decay strength.
+
+        Args:
+            decay: New decay strength :math:`\gamma/\Omega_0`.
+
+        Returns:
+            A copy of the gate object with the new decay strength.
+
+        """
+        new = deepcopy(self)
+        new._decay = decay
+        return new
 
     def dim(self) -> int:
-        r"""Returns:
-        16
+        r"""Hilbert space dimension.
+
+        Returns:
+            16
 
         """
         return 16
 
-    def get_gate_angles(
-        self,
-    ) -> tuple[
-        float | None,
-        float | None,
-        float | None,
-        float | None,
-        float | None,
-        float | None,
-    ]:
-        r"""Returns:
-        Gate phases :math:`\phi, \theta, \theta', \lambda, \lambda', \kappa`.
-
-        """
-        return (
-            self._phi,
-            self._theta,
-            self._theta_prime,
-            self._lamb,
-            self._lamb_prime,
-            self._kappa,
-        )
-
-    def get_interactions(self) -> tuple[float, float]:
-        r"""Returns:
-        Interaction strengths :math:`V_{\mathrm{nn}}/(\hbar\Omega_0), V_{\mathrm{nnn}}/(\hbar\Omega_0)`.
-
-        """
-        return self._Vnn, self._Vnnn
-
     def hamiltonians_for_basis_states(self) -> tuple[HamiltonianFunction, ...]:
+        r"""The full gate Hamiltonian can be split into distinct blocks that describe the time evolution
+        of basis states. The number of blocks and their dimensionality depends on the interaction strengths.
+
+        Returns:
+            Tuple of Hamiltonian functions.
+
+        """
         if isinf(float(self._Vnn)) and isinf(float(self._Vnnn)):
             return (
                 partial(H_k_atoms_perfect_blockade, decay=self._decay, k=1),
@@ -166,6 +157,13 @@ class FourQubitGatePyramidal(Gate):
         )
 
     def rydberg_population_operators_for_basis_states(self) -> tuple[jnp.ndarray, ...]:
+        r"""For each basis state, the Rydberg population operators count the number of Rydberg excitations on
+        the diagonal.
+
+        Returns:
+            Tuple of operators.
+
+        """
         if isinf(float(self._Vnn)) and isinf(float(self._Vnnn)):
             return (
                 H_k_atoms_perfect_blockade(Delta=1.0, Xi=0.0, Omega=0.0, decay=0.0, k=1),
@@ -206,6 +204,13 @@ class FourQubitGatePyramidal(Gate):
         )
 
     def initial_basis_states(self) -> tuple[jnp.ndarray, ...]:
+        r"""The initial basis states :math:`(1, 0, ...)` of appropriate dimension are
+        provided.
+
+        Returns:
+            Tuple of arrays.
+
+        """
         if isinf(float(self._Vnn)) and isinf(float(self._Vnnn)):
             return (
                 jnp.array([1.0 + 0.0j, 0.0 + 0.0j]),
@@ -257,6 +262,17 @@ class FourQubitGatePyramidal(Gate):
         )
 
     def process_fidelity(self, final_basis_states) -> jnp.ndarray:
+        r"""Given the basis states evolved under the pulse,
+        this function calculates the fidelity with respect to the gate's target state, specified by the gate angles
+        :math:`\phi, \, \theta, \, \ldots`
+
+        Args:
+            final_basis_states: Time-evolved basis states.
+
+        Returns:
+            Fidelity with respect to the target state.
+
+        """
         # Obtained diagonal gate matrix
         if float(self._Vnn) == float(self._Vnnn):
             obtained_gate = jnp.array(
@@ -354,6 +370,16 @@ class FourQubitGatePyramidal(Gate):
         return jnp.abs(jnp.vdot(targeted_gate, obtained_gate)) ** 2 / len(targeted_gate) ** 2
 
     def rydberg_time(self, expectation_values_of_basis_states) -> jnp.ndarray:
+        r"""Given the expectation values of Rydberg populations for each basis state, integrated over the full
+        pulse, this function calculates the average time spent in Rydberg states during the gate.
+
+        Args:
+            expectation_values_of_basis_states: Expected Rydberg times for each basis state.
+
+        Returns:
+            Averaged Rydberg time :math:`T_R`.
+
+        """
         if float(self._Vnn) == float(self._Vnnn):
             return (1 / 16) * jnp.squeeze(
                 4 * expectation_values_of_basis_states[0]

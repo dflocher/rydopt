@@ -1,5 +1,5 @@
-Hamiltonians for Basis States
-=============================
+Building Blocks for Hamiltonians
+================================
 
 The Hamiltonian describing a Rydberg gate pulse on a group of atoms is block-diagonal, with one subsystem for every computational basis state.
 To determine the dynamics of a gate pulse, one can analyze the dynamics of each subsystem separately.

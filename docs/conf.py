@@ -33,9 +33,7 @@ autodoc_class_signature = "mixed"
 autodoc_typehints = "description"
 
 autodoc_default_options = {
-    "members": True,
     "member-order": "bysource",
-    "inherited-members": True,
     "class-doc-from": "class",
 }
 

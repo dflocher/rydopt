@@ -18,7 +18,7 @@ import numpy as np
 import optax
 from tqdm.auto import tqdm
 
-from rydopt.gates.gate import Gate
+from rydopt.protocols import OptimizableGate
 from rydopt.pulses.pulse_ansatz import PulseAnsatz
 from rydopt.simulation.fidelity import process_fidelity
 from rydopt.types import FixedPulseParams, PulseParams
@@ -192,7 +192,7 @@ def _unravel_jax(flat: jnp.ndarray, split_indices: tuple[int, ...]) -> PulsePara
 
 
 def _make_infidelity(
-    gate: Gate,
+    gate: OptimizableGate,
     pulse: PulseAnsatz,
     params_full: np.ndarray,
     params_trainable_indices: np.ndarray,
@@ -339,7 +339,7 @@ def _adam_scan(
 
 
 def _adam_optimize(
-    gate: Gate,
+    gate: OptimizableGate,
     pulse: PulseAnsatz,
     params_full: np.ndarray,
     params_trainable: np.ndarray,
@@ -414,7 +414,7 @@ def _adam_optimize(
 
 @overload
 def optimize(
-    gate: Gate,
+    gate: OptimizableGate,
     pulse: PulseAnsatz,
     initial_params: PulseParams,
     fixed_initial_params: FixedPulseParams | None = ...,
@@ -429,7 +429,7 @@ def optimize(
 
 @overload
 def optimize(
-    gate: Gate,
+    gate: OptimizableGate,
     pulse: PulseAnsatz,
     initial_params: PulseParams,
     fixed_initial_params: FixedPulseParams | None = ...,
@@ -443,7 +443,7 @@ def optimize(
 
 
 def optimize(
-    gate: Gate,
+    gate: OptimizableGate,
     pulse: PulseAnsatz,
     initial_params: PulseParams,
     fixed_initial_params: FixedPulseParams | None = None,
@@ -536,7 +536,7 @@ def optimize(
 
 @overload
 def multi_start_optimize(
-    gate: Gate,
+    gate: OptimizableGate,
     pulse: PulseAnsatz,
     min_initial_params: PulseParams,
     max_initial_params: PulseParams,
@@ -557,7 +557,7 @@ def multi_start_optimize(
 
 @overload
 def multi_start_optimize(
-    gate: Gate,
+    gate: OptimizableGate,
     pulse: PulseAnsatz,
     min_initial_params: PulseParams,
     max_initial_params: PulseParams,
@@ -578,7 +578,7 @@ def multi_start_optimize(
 
 @overload
 def multi_start_optimize(
-    gate: Gate,
+    gate: OptimizableGate,
     pulse: PulseAnsatz,
     min_initial_params: PulseParams,
     max_initial_params: PulseParams,
@@ -599,7 +599,7 @@ def multi_start_optimize(
 
 @overload
 def multi_start_optimize(
-    gate: Gate,
+    gate: OptimizableGate,
     pulse: PulseAnsatz,
     min_initial_params: PulseParams,
     max_initial_params: PulseParams,
@@ -619,7 +619,7 @@ def multi_start_optimize(
 
 
 def multi_start_optimize(
-    gate: Gate,
+    gate: OptimizableGate,
     pulse: PulseAnsatz,
     min_initial_params: PulseParams,
     max_initial_params: PulseParams,
