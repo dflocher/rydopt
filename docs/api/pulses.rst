@@ -26,6 +26,14 @@ rydopt.pulses
    - **fixed_phase_params** - Boolean mask of fixed phase parameters
    - **fixed_rabi_params** - Boolean mask of fixed Rabi frequency amplitude parameters
 
-.. automodule:: rydopt.pulses
+General Pulse Ansatz Functions
+------------------------------
+
+.. automodule:: rydopt.pulses.general_pulse_ansatz_functions
    :members:
-   :exclude-members: PulseAnsatz, PulseParams, FixedPulseParams
+
+Soft-Box Pulse Ansatz Functions
+-------------------------------
+
+.. automodule:: rydopt.pulses.softbox_pulse_ansatz_functions
+   :members:

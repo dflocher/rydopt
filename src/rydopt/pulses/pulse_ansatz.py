@@ -4,7 +4,7 @@ from dataclasses import dataclass
 
 import jax.numpy as jnp
 
-from rydopt.pulses.pulse_ansatz_functions import const
+from rydopt.pulses.general_pulse_ansatz_functions import const
 from rydopt.types import PulseAnsatzFunction, PulseFunction, PulseParams
 
 

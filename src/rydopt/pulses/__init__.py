@@ -1,5 +1,4 @@
-from rydopt.pulses.pulse_ansatz import PulseAnsatz, PulseParams
-from rydopt.pulses.pulse_ansatz_functions import (
+from rydopt.pulses.general_pulse_ansatz_functions import (
     const,
     const_cos_crab,
     const_cos_sin_crab,
@@ -13,6 +12,9 @@ from rydopt.pulses.pulse_ansatz_functions import (
     lin_sin_crab,
     sin_cos_crab,
     sin_crab,
+)
+from rydopt.pulses.pulse_ansatz import PulseAnsatz, PulseParams
+from rydopt.pulses.softbox_pulse_ansatz_functions import (
     softbox_blackman,
     softbox_fifth_order_smoothstep,
     softbox_hann,
