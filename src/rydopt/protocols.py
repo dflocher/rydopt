@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-from typing import Protocol, Self, runtime_checkable
+from typing import Protocol, runtime_checkable
 
 import jax.numpy as jnp
+from typing_extensions import Self
 
 from rydopt.types import HamiltonianFunction
 

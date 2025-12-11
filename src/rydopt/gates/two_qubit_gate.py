@@ -3,9 +3,9 @@ from __future__ import annotations
 from copy import deepcopy
 from functools import partial
 from math import isinf
-from typing import Self
 
 import jax.numpy as jnp
+from typing_extensions import Self
 
 from rydopt.gates.subsystem_hamiltonians import (
     H_2_atoms,

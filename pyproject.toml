@@ -33,6 +33,7 @@ dependencies = [
     "optax>=0.2.2",
     "qutip>=5.1.0",
     "tqdm>=4.65.0",
+    "typing-extensions>=4.15.0",
 ]
 
 [project.optional-dependencies]
