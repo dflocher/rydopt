@@ -1,3 +1,5 @@
+.. _gates:
+
 rydopt.gates
 ============
 

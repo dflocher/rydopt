@@ -9,7 +9,9 @@ from rydopt.types import HamiltonianFunction
 
 
 class EvolvableGate(Protocol):
-    """Minimal interface needed to run time evolution.
+    """Minimal interface for :ref:`gates <gates>`. All gates must implement it so that they can be simulated.
+
+    :func:`rydopt.simulation.evolve`
 
     Used by :func:`rydopt.simulation.evolve`.
 
@@ -38,9 +40,10 @@ class EvolvableGate(Protocol):
 
 @runtime_checkable
 class OptimizableGate(EvolvableGate, Protocol):
-    """Interface for gates that can be optimized for process fidelity.
+    """Interface for :ref:`gates <gates>` that can be optimized for process fidelity.
 
-    Used by :func:`rydopt.optimization.optimize`.
+    Used by :func:`rydopt.simulation.process_fidelity`, :func:`rydopt.simulation.average_gate_fidelity`,
+    and :func:`rydopt.optimization.optimize`.
     """
 
     def process_fidelity(self, final_basis_states: tuple[jnp.ndarray, ...]) -> jnp.ndarray:
@@ -69,9 +72,10 @@ class OptimizableGate(EvolvableGate, Protocol):
 
 @runtime_checkable
 class RydbergObservableGate(EvolvableGate, Protocol):
-    """Interface for gates that expose logic to determine the time in the Rydberg state.
+    """Interface for :ref:`gates <gates>` that expose logic to determine the time in the Rydberg state.
 
-    Used by :func:`rydopt.simulation.rydberg_time`.
+    Used by :func:`rydopt.simulation.rydberg_time`, `rydopt.characterization.analyze_gate`,
+    and `rydopt.characterization.analyze_gate_qutip`.
     """
 
     def rydberg_population_operators_for_basis_states(self) -> tuple[jnp.ndarray, ...]:
@@ -100,9 +104,9 @@ class RydbergObservableGate(EvolvableGate, Protocol):
 
 @runtime_checkable
 class WithDecayGate(Protocol):
-    """Interface for creating a gate with a new decay strength.
+    """Interface for :ref:`gates <gates>` that allow to create a new gate with a new decay strength.
 
-    Used by :func:`rydopt.characterization.analyze_gate`.
+    Used by :func:`rydopt.characterization.analyze_gate` and `rydopt.characterization.analyze_gate_qutip`.
 
     """
 
