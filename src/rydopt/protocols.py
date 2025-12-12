@@ -39,6 +39,7 @@ class EvolvableGate(Protocol):
 @runtime_checkable
 class OptimizableGate(EvolvableGate, Protocol):
     """Interface for :ref:`gates <gates>` that can be optimized for process fidelity.
+    The interface is derived from :class:`EvolvableGate`.
 
     Used by :func:`rydopt.simulation.process_fidelity`, :func:`rydopt.simulation.average_gate_fidelity`,
     and :func:`rydopt.optimization.optimize`.
@@ -71,6 +72,7 @@ class OptimizableGate(EvolvableGate, Protocol):
 @runtime_checkable
 class RydbergObservableGate(EvolvableGate, Protocol):
     """Interface for :ref:`gates <gates>` that expose logic to determine the time in the Rydberg state.
+    The interface is derived from :class:`EvolvableGate`.
 
     Used by :func:`rydopt.simulation.rydberg_time`, :func:`rydopt.characterization.analyze_gate`,
     and :func:`rydopt.characterization.analyze_gate_qutip`.
@@ -103,6 +105,8 @@ class RydbergObservableGate(EvolvableGate, Protocol):
 @runtime_checkable
 class WithDecayGate(Protocol):
     """Interface for :ref:`gates <gates>` that allow to create a new gate with a new decay strength.
+    This interface is independent from the interfaces above,
+    it *only* ensures that the method ``with_decay`` is present.
 
     Used by :func:`rydopt.characterization.analyze_gate` and :func:`rydopt.characterization.analyze_gate_qutip`.
 
