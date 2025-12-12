@@ -1,6 +1,8 @@
 Internally Used Gate Methods
 ============================
 
+TwoQubitGate:
+
 .. automethod:: rydopt.gates.TwoQubitGate.with_decay
 .. automethod:: rydopt.gates.TwoQubitGate.dim
 .. automethod:: rydopt.gates.TwoQubitGate.hamiltonians_for_basis_states
@@ -9,6 +11,8 @@ Internally Used Gate Methods
 .. automethod:: rydopt.gates.TwoQubitGate.process_fidelity
 .. automethod:: rydopt.gates.TwoQubitGate.rydberg_time
 
+ThreeQubitGateIsosceles:
+
 .. automethod:: rydopt.gates.ThreeQubitGateIsosceles.with_decay
 .. automethod:: rydopt.gates.ThreeQubitGateIsosceles.dim
 .. automethod:: rydopt.gates.ThreeQubitGateIsosceles.hamiltonians_for_basis_states
@@ -16,6 +20,8 @@ Internally Used Gate Methods
 .. automethod:: rydopt.gates.ThreeQubitGateIsosceles.initial_basis_states
 .. automethod:: rydopt.gates.ThreeQubitGateIsosceles.process_fidelity
 .. automethod:: rydopt.gates.ThreeQubitGateIsosceles.rydberg_time
+
+FourQubitGatePyramidal
 
 .. automethod:: rydopt.gates.FourQubitGatePyramidal.with_decay
 .. automethod:: rydopt.gates.FourQubitGatePyramidal.dim

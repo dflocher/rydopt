@@ -11,8 +11,6 @@ from rydopt.types import HamiltonianFunction
 class EvolvableGate(Protocol):
     """Minimal interface for :ref:`gates <gates>`. All gates must implement it so that they can be simulated.
 
-    :func:`rydopt.simulation.evolve`
-
     Used by :func:`rydopt.simulation.evolve`.
 
     """
@@ -74,8 +72,8 @@ class OptimizableGate(EvolvableGate, Protocol):
 class RydbergObservableGate(EvolvableGate, Protocol):
     """Interface for :ref:`gates <gates>` that expose logic to determine the time in the Rydberg state.
 
-    Used by :func:`rydopt.simulation.rydberg_time`, `rydopt.characterization.analyze_gate`,
-    and `rydopt.characterization.analyze_gate_qutip`.
+    Used by :func:`rydopt.simulation.rydberg_time`, :func:`rydopt.characterization.analyze_gate`,
+    and :func:`rydopt.characterization.analyze_gate_qutip`.
     """
 
     def rydberg_population_operators_for_basis_states(self) -> tuple[jnp.ndarray, ...]:
@@ -106,7 +104,7 @@ class RydbergObservableGate(EvolvableGate, Protocol):
 class WithDecayGate(Protocol):
     """Interface for :ref:`gates <gates>` that allow to create a new gate with a new decay strength.
 
-    Used by :func:`rydopt.characterization.analyze_gate` and `rydopt.characterization.analyze_gate_qutip`.
+    Used by :func:`rydopt.characterization.analyze_gate` and :func:`rydopt.characterization.analyze_gate_qutip`.
 
     """
 
