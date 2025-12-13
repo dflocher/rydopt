@@ -3,15 +3,25 @@
 rydopt.gates
 ============
 
-A gate class implements a :ref:`Protocol <label-protocols>` as defined in the Reference of Internal Functions.
+A gate systems class specifies (i) the physical system for implementing a gate and (ii) the target gate which should be
+implemented. The class implements all methods from the :class:`GateSystem <rydopt.protocols.GateSystem>` protocol as defined in the Reference of
+Internal Functions. This allows RydOpt's optimizer to calculate the time evolution of the physical system for a
+given :class:`PulseAnsatz <rydopt.pulses.PulseAnsatz>` and to adapt the pulse parameters so that the infidelity with respect to the target gate is
+minimized.
 
-The Rydberg gate classes implemented here specify the number of atoms and the conceptual atomic arrangement.
-A Rydberg gate object then fixes
+Rydberg Gate Systems
+--------------------
 
-(i) the specific physical setting, i.e., the Rydberg-interaction strengths between the atoms, and the Rydberg-state decay rate.
+The Rydberg gate systems describe gates that make use of the Rydberg interaction. They implement in addition to the methods from
+the :class:`GateSystem <rydopt.protocols.GateSystem>` protocol, the methods from the :class:`RydbergSystem <rydopt.protocols.RydbergSystem>`
+protocol. This allows to determine the time spent in the Rydberg state.
 
-(ii) the specific target gate angles.
+The different classes defer by the number of atoms and the conceptual atomic arrangement. An object can be constructed by
+specifying:
 
+1. the specific physical setting, i.e., the Rydberg-interaction strengths between the atoms, and the Rydberg-state decay rate.
+
+2. the specific target gate angles.
 
 .. autoclass:: rydopt.gates.TwoQubitGate
    :no-members:

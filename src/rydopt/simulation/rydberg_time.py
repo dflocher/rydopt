@@ -5,14 +5,12 @@ from functools import partial
 import jax
 import jax.numpy as jnp
 
-from rydopt.protocols import RydbergObservableGate
+from rydopt.protocols import RydbergSystem
 from rydopt.pulses.pulse_ansatz import PulseAnsatz
 from rydopt.types import PulseParams
 
 
-def rydberg_time(
-    gate: RydbergObservableGate, pulse: PulseAnsatz, params: PulseParams, tol: float = 1e-7
-) -> jnp.ndarray:
+def rydberg_time(gate: RydbergSystem, pulse: PulseAnsatz, params: PulseParams, tol: float = 1e-7) -> jnp.ndarray:
     r"""The function determines the total time spent in Rydberg states during a gate pulse:
 
     .. math::
@@ -59,7 +57,7 @@ def rydberg_time(
     branches = tuple(
         partial(apply_hamiltonian, hamiltonian=h, rydberg_operator=r, dim=d)
         for h, r, d in zip(
-            gate.hamiltonians_for_basis_states(),
+            gate.hamiltonian_functions_for_basis_states(),
             gate.rydberg_population_operators_for_basis_states(),
             dims,
         )

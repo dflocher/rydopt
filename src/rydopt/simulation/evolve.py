@@ -5,12 +5,12 @@ from functools import partial
 import jax
 import jax.numpy as jnp
 
-from rydopt.protocols import EvolvableGate
+from rydopt.protocols import Evolvable
 from rydopt.pulses.pulse_ansatz import PulseAnsatz
 from rydopt.types import PulseParams
 
 
-def evolve(gate: EvolvableGate, pulse: PulseAnsatz, params: PulseParams, tol: float = 1e-7) -> tuple[jnp.ndarray, ...]:
+def evolve(gate: Evolvable, pulse: PulseAnsatz, params: PulseParams, tol: float = 1e-7) -> tuple[jnp.ndarray, ...]:
     r"""The function performs the time evolution of all initial states :math:`|\psi_i(0)\rangle` (specified in the gate
     object), under the pulse Hamiltonian :math:`H`.
 
@@ -54,7 +54,8 @@ def evolve(gate: EvolvableGate, pulse: PulseAnsatz, params: PulseParams, tol: fl
         return jnp.pad(dpsi_small, (0, psi.shape[0] - dim))
 
     branches = tuple(
-        partial(apply_hamiltonian, hamiltonian=h, dim=d) for h, d in zip(gate.hamiltonians_for_basis_states(), dims)
+        partial(apply_hamiltonian, hamiltonian=h, dim=d)
+        for h, d in zip(gate.hamiltonian_functions_for_basis_states(), dims)
     )
 
     def schroedinger_eq(t, psi, args):
@@ -94,7 +95,7 @@ def evolve(gate: EvolvableGate, pulse: PulseAnsatz, params: PulseParams, tol: fl
 
 
 def _evolve_optimized_for_gpus(
-    gate: EvolvableGate, pulse: PulseAnsatz, params: PulseParams, tol: float = 1e-7
+    gate: Evolvable, pulse: PulseAnsatz, params: PulseParams, tol: float = 1e-7
 ) -> tuple[jnp.ndarray, ...]:
     # When we import diffrax, at least one jnp array is allocated (see optimistix/_misc.py, line 138). Thus,
     # if we change the default device after we have imported diffrax, some memory is allocated on the
@@ -103,7 +104,9 @@ def _evolve_optimized_for_gpus(
 
     def schroedinger_eq(t, psi_tuple, _):
         values = pulse.evaluate_pulse_functions(t, params)
-        return tuple(-1j * (h(*values) @ psi) for h, psi in zip(gate.hamiltonians_for_basis_states(), psi_tuple))
+        return tuple(
+            -1j * (h(*values) @ psi) for h, psi in zip(gate.hamiltonian_functions_for_basis_states(), psi_tuple)
+        )
 
     solver = diffrax.Dopri8()
     stepsize_controller = diffrax.PIDController(rtol=0.1 * tol, atol=0.1 * tol)

@@ -4,7 +4,7 @@ from rydopt.characterization.qutip_helpers.qutip_simulation import (
     process_fidelity_qutip,
     rydberg_time_qutip,
 )
-from rydopt.protocols import EvolvableGate, OptimizableGate, RydbergObservableGate, WithDecayGate
+from rydopt.protocols import GateSystem, RydbergSystem
 from rydopt.pulses.pulse_ansatz import PulseAnsatz
 from rydopt.simulation.fidelity import process_fidelity
 from rydopt.simulation.rydberg_time import rydberg_time
@@ -12,7 +12,7 @@ from rydopt.types import PulseParams
 
 
 def analyze_gate(
-    gate: EvolvableGate,
+    gate: GateSystem,
     pulse: PulseAnsatz,
     params: PulseParams,
     tol: float = 1e-15,
@@ -44,28 +44,23 @@ def analyze_gate(
         Gate infidelity, Gate infidelity without decay, Rydberg time.
 
     """
-    gate_nodecay = gate.with_decay(0.0) if isinstance(gate, WithDecayGate) else None
+    infidelity = float(1 - process_fidelity(gate, pulse, params, tol=tol))
 
-    if isinstance(gate, OptimizableGate):
-        infidelity = float(1 - process_fidelity(gate, pulse, params, tol=tol))
-    else:
-        infidelity = None
+    if isinstance(gate, RydbergSystem):
+        gate_nodecay = gate.with_decay(0.0)
+        assert isinstance(gate_nodecay, GateSystem)
 
-    if gate_nodecay is not None and isinstance(gate_nodecay, OptimizableGate):
         infidelity_nodecay = float(1 - process_fidelity(gate_nodecay, pulse, params, tol=tol))
-    else:
-        infidelity_nodecay = None
-
-    if gate_nodecay is not None and isinstance(gate_nodecay, RydbergObservableGate):
         ryd_time = float(rydberg_time(gate_nodecay, pulse, params, tol=tol))
     else:
+        infidelity_nodecay = None
         ryd_time = None
 
     return infidelity, infidelity_nodecay, ryd_time
 
 
 def analyze_gate_qutip(
-    gate: EvolvableGate,
+    gate: GateSystem,
     pulse: PulseAnsatz,
     params: PulseParams,
 ) -> tuple[float | None, float | None, float | None]:
@@ -95,21 +90,16 @@ def analyze_gate_qutip(
         Gate infidelity, Gate infidelity without decay, Rydberg time.
 
     """
-    gate_nodecay = gate.with_decay(0.0) if isinstance(gate, WithDecayGate) else None
+    infidelity = 1 - process_fidelity_qutip(gate, pulse, params, normalize=not isinstance(gate, RydbergSystem))
 
-    if isinstance(gate, OptimizableGate):
-        infidelity = 1 - process_fidelity_qutip(gate, pulse, params, normalize=gate_nodecay is None)
-    else:
-        infidelity = None
+    if isinstance(gate, RydbergSystem):
+        gate_nodecay = gate.with_decay(0.0)
+        assert isinstance(gate_nodecay, GateSystem)
 
-    if gate_nodecay is not None and isinstance(gate_nodecay, OptimizableGate):
         infidelity_nodecay = 1 - process_fidelity_qutip(gate_nodecay, pulse, params, normalize=True)
-    else:
-        infidelity_nodecay = None
-
-    if gate_nodecay is not None and isinstance(gate_nodecay, RydbergObservableGate):
         ryd_time = rydberg_time_qutip(gate_nodecay, pulse, params, normalize=True)
     else:
+        infidelity_nodecay = None
         ryd_time = None
 
     return infidelity, infidelity_nodecay, ryd_time

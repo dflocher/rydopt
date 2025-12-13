@@ -98,7 +98,7 @@ class ThreeQubitGateIsosceles:
         """
         return 8
 
-    def hamiltonians_for_basis_states(self) -> tuple[HamiltonianFunction, ...]:
+    def hamiltonian_functions_for_basis_states(self) -> tuple[HamiltonianFunction, ...]:
         r"""The full gate Hamiltonian can be split into distinct blocks that describe the time evolution
         of basis states. The number of blocks and their dimensionality depends on the interaction strengths.
 

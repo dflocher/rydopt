@@ -8,26 +8,28 @@ from typing_extensions import Self
 from rydopt.types import HamiltonianFunction
 
 
-class EvolvableGate(Protocol):
-    """Minimal interface for :ref:`gates <gates>`. All gates must implement it so that they can be simulated.
+class Evolvable(Protocol):
+    """Minimal interface for a system that can be time evolved.
 
     Used by :func:`rydopt.simulation.evolve`.
 
     """
 
     def initial_basis_states(self) -> tuple[jnp.ndarray, ...]:
-        r"""The initial basis states :math:`(1, 0, ...)` of appropriate dimension are
-        provided.
+        r"""The initial basis states :math:`(1, 0, ...)` of appropriate dimension.
 
         Returns:
-            Tuple of arrays.
+            Tuple of initial basis states.
 
         """
         ...
 
-    def hamiltonians_for_basis_states(self) -> tuple[HamiltonianFunction, ...]:
-        r"""The full gate Hamiltonian can be split into distinct blocks that describe the time evolution
-        of basis states. The number of blocks and their dimensionality depends on the interaction strengths.
+    def hamiltonian_functions_for_basis_states(self) -> tuple[HamiltonianFunction, ...]:
+        r"""The Hamiltonian under which the initial basis states evolve.
+
+        A separate Hamiltonian function is returned for each initial basis state. In the case of a
+        block-diagonal Hamiltonian, this allows for returning only the block that is of relevance
+        for a particular basis state.
 
         Returns:
             Tuple of Hamiltonian functions.
@@ -36,14 +38,8 @@ class EvolvableGate(Protocol):
         ...
 
 
-@runtime_checkable
-class OptimizableGate(EvolvableGate, Protocol):
-    """Interface for :ref:`gates <gates>` that can be optimized for process fidelity.
-    The interface is derived from :class:`EvolvableGate`.
-
-    Used by :func:`rydopt.simulation.process_fidelity`, :func:`rydopt.simulation.average_gate_fidelity`,
-    and :func:`rydopt.optimization.optimize`.
-    """
+class HasFidelity(Protocol):
+    """Interface that ensures that methods are present for calculating fidelities from time-evolved basis states."""
 
     def process_fidelity(self, final_basis_states: tuple[jnp.ndarray, ...]) -> jnp.ndarray:
         r"""Given the basis states evolved under the pulse,
@@ -69,13 +65,9 @@ class OptimizableGate(EvolvableGate, Protocol):
         ...
 
 
-@runtime_checkable
-class RydbergObservableGate(EvolvableGate, Protocol):
-    """Interface for :ref:`gates <gates>` that expose logic to determine the time in the Rydberg state.
-    The interface is derived from :class:`EvolvableGate`.
-
-    Used by :func:`rydopt.simulation.rydberg_time`, :func:`rydopt.characterization.analyze_gate`,
-    and :func:`rydopt.characterization.analyze_gate_qutip`.
+class HasRydbergTime(Protocol):
+    """Interface that ensures that methods are present for calculating the time spent in the Rydberg state
+    from time-evolved basis states.
     """
 
     def rydberg_population_operators_for_basis_states(self) -> tuple[jnp.ndarray, ...]:
@@ -101,17 +93,6 @@ class RydbergObservableGate(EvolvableGate, Protocol):
         """
         ...
 
-
-@runtime_checkable
-class WithDecayGate(Protocol):
-    """Interface for :ref:`gates <gates>` that allow to create a new gate with a new decay strength.
-    This interface is independent from the interfaces above,
-    it *only* ensures that the method ``with_decay`` is present.
-
-    Used by :func:`rydopt.characterization.analyze_gate` and :func:`rydopt.characterization.analyze_gate_qutip`.
-
-    """
-
     def with_decay(self, decay: float) -> Self:
         r"""Creates a copy of the gate with a new decay strength.
 
@@ -123,3 +104,24 @@ class WithDecayGate(Protocol):
 
         """
         ...
+
+
+@runtime_checkable
+class GateSystem(Evolvable, HasFidelity, Protocol):
+    """Interface for :ref:`gates <gates>` that can be optimized for process fidelity.
+    The interface is derived from :class:`Evolvable` and :class:`HasFidelity`.
+
+    Used by :func:`rydopt.simulation.process_fidelity`, :func:`rydopt.simulation.average_gate_fidelity`,
+    :func:`rydopt.optimization.optimize`, :func:`rydopt.characterization.analyze_gate`,
+    and :func:`rydopt.characterization.analyze_gate_qutip`.
+    """
+
+
+@runtime_checkable
+class RydbergSystem(Evolvable, HasRydbergTime, Protocol):
+    """Interface for :ref:`gates <gates>` that expose logic to determine the time in the Rydberg state.
+    The interface is derived from :class:`Evolvable` and :class:`HasRydbergTime`.
+
+    Used by :func:`rydopt.simulation.rydberg_time`, :func:`rydopt.characterization.analyze_gate`,
+    and :func:`rydopt.characterization.analyze_gate_qutip`.
+    """

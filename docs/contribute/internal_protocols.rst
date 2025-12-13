@@ -1,4 +1,4 @@
-.. _label-protocols:
+.. _protocols:
 
 Protocols
 =========
