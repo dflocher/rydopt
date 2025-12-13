@@ -1,6 +1,9 @@
 Internally Used Gate Methods
 ============================
 
+The gate classes described in the API reference possess various methods to implement
+the :ref:`Protocols <protocols>` defined in the Reference of Internal Functions.
+
 TwoQubitGate
 ------------
 

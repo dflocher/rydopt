@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="120mm"
+   height="30mm"
+   viewBox="0 0 120 30"
+   version="1.1"
+   id="svg1"
+   inkscape:version="1.4.2 (ebf0e940, 2025-05-08)"
+   sodipodi:docname="Protocols.svg"
+   inkscape:export-filename="Protocols.png"
+   inkscape:export-xdpi="500"
+   inkscape:export-ydpi="500"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:document-units="mm"
+     inkscape:zoom="1.5880798"
+     inkscape:cx="220.39195"
+     inkscape:cy="49.11592"
+     inkscape:window-width="1920"
+     inkscape:window-height="993"
+     inkscape:window-x="0"
+     inkscape:window-y="31"
+     inkscape:window-maximized="0"
+     inkscape:current-layer="layer1"
+     showgrid="false" />
+  <defs
+     id="defs1">
+    <marker
+       style="overflow:visible"
+       id="ColoredTriangle"
+       refX="-1"
+       refY="0"
+       orient="auto-start-reverse"
+       inkscape:stockid="Colored triangle"
+       markerWidth="1"
+       markerHeight="1"
+       viewBox="0 0 1 1"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid"
+       markerUnits="strokeWidth">
+      <path
+         transform="scale(0.5)"
+         style="fill:context-fill;fill-rule:evenodd;stroke:context-stroke;stroke-width:2"
+         d="M 5.77,0 -2.88,5 V -5 Z"
+         id="path5" />
+    </marker>
+  </defs>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <g
+       id="g21">
+      <g
+         id="g16"
+         transform="translate(3.151948)">
+        <rect
+           style="fill:none;stroke:#000000;stroke-width:0.206284;stroke-linecap:round;stroke-linejoin:round;stroke-opacity:1"
+           id="rect1"
+           width="28.763935"
+           height="5.7083135"
+           x="75.883163"
+           y="3.4040022" />
+        <text
+           xml:space="preserve"
+           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3.5278px;line-height:1.25;font-family:Helvetica;-inkscape-font-specification:'Helvetica, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;stroke-width:0.264583"
+           x="76.54409"
+           y="7.1375251"
+           id="text3"><tspan
+             sodipodi:role="line"
+             id="tspan3"
+             x="76.54409"
+             y="7.1375251">HasRydbergTime</tspan></text>
+      </g>
+      <g
+         id="g15"
+         transform="translate(3.151948)">
+        <text
+           xml:space="preserve"
+           style="font-size:3.5278px;line-height:1.25;font-family:Helvetica;-inkscape-font-specification:'Helvetica, Normal';stroke-width:0.264583"
+           x="49.12582"
+           y="7.4940948"
+           id="text1"><tspan
+             sodipodi:role="line"
+             id="tspan1"
+             style="stroke-width:0.264583"
+             x="49.12582"
+             y="7.4940948">Evolvable</tspan></text>
+        <rect
+           style="fill:none;stroke:#000000;stroke-width:0.206284;stroke-linecap:round;stroke-linejoin:round;stroke-opacity:1"
+           id="rect5"
+           width="28.763935"
+           height="5.7083135"
+           x="42.466084"
+           y="3.4040022" />
+      </g>
+      <g
+         id="g14"
+         transform="translate(3.151948)">
+        <text
+           xml:space="preserve"
+           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3.5278px;line-height:1.25;font-family:Helvetica;-inkscape-font-specification:'Helvetica, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;stroke-width:0.264583"
+           x="14.58908"
+           y="7.1495829"
+           id="text2"><tspan
+             sodipodi:role="line"
+             id="tspan2"
+             x="14.58908"
+             y="7.1495829">HasFidelity</tspan></text>
+        <rect
+           style="fill:none;stroke:#000000;stroke-width:0.206284;stroke-linecap:round;stroke-linejoin:round;stroke-opacity:1"
+           id="rect6"
+           width="28.763935"
+           height="5.7083135"
+           x="9.0490055"
+           y="3.4040022" />
+      </g>
+      <g
+         id="g18"
+         transform="translate(3.151948)">
+        <text
+           xml:space="preserve"
+           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3.5278px;line-height:1.25;font-family:Helvetica;-inkscape-font-specification:'Helvetica, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;stroke-width:0.264583"
+           x="30.352772"
+           y="23.691517"
+           id="text4"><tspan
+             sodipodi:role="line"
+             id="tspan4"
+             x="30.352772"
+             y="23.691517">GateSystem</tspan></text>
+        <rect
+           style="fill:none;stroke:#000000;stroke-width:0.206284;stroke-linecap:round;stroke-linejoin:round;stroke-opacity:1"
+           id="rect7"
+           width="28.763935"
+           height="5.7083135"
+           x="25.646416"
+           y="19.915791" />
+      </g>
+      <g
+         id="g17"
+         transform="translate(2.6521305)">
+        <text
+           xml:space="preserve"
+           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3.5278px;line-height:1.25;font-family:Helvetica;-inkscape-font-specification:'Helvetica, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;stroke-width:0.264583"
+           x="61.576996"
+           y="23.643908"
+           id="text5"><tspan
+             sodipodi:role="line"
+             id="tspan5"
+             x="61.576996"
+             y="23.643908">RydbergSystem</tspan></text>
+        <rect
+           style="fill:none;stroke:#000000;stroke-width:0.206284;stroke-linecap:round;stroke-linejoin:round;stroke-opacity:1"
+           id="rect8"
+           width="28.763935"
+           height="5.7083135"
+           x="59.783485"
+           y="19.880239" />
+      </g>
+      <g
+         id="g20"
+         transform="translate(1.6601778)">
+        <path
+           style="fill:none;fill-opacity:1;stroke:#000000;stroke-width:0.301237;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#ColoredTriangle)"
+           d="m 45.063807,19.916345 4.074456,-9.400771"
+           id="path10" />
+        <path
+           style="fill:none;fill-opacity:1;stroke:#000000;stroke-width:0.301237;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#ColoredTriangle)"
+           d="M 37.9765,19.916345 33.902044,10.515574"
+           id="path12" />
+      </g>
+      <g
+         id="g19"
+         transform="translate(-2.8723955)">
+        <path
+           style="fill:none;fill-opacity:1;stroke:#000000;stroke-width:0.301237;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#ColoredTriangle)"
+           d="m 83.615641,19.916345 4.074456,-9.400771"
+           id="path11" />
+        <path
+           style="fill:none;fill-opacity:1;stroke:#000000;stroke-width:0.301237;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#ColoredTriangle)"
+           d="M 75.764317,19.916345 71.689861,10.515574"
+           id="path13" />
+      </g>
+    </g>
+  </g>
+</svg>
