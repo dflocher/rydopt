@@ -162,8 +162,8 @@ class _ProgressBar:
                 finished.add(proc_idx)
                 bar = bars.pop(proc_idx, None)
                 if bar is not None:
-                    if bar.n < bar.total:
-                        bar.n = bar.total
+                    if bar.n < self._num_steps:
+                        bar.n = self._num_steps
                     bar.close()
 
 
@@ -183,7 +183,7 @@ def _ravel(nested: PulseParams | FixedPulseParams) -> np.ndarray:
 
 def _unravel(flat: np.ndarray, split_indices: tuple[int, ...]) -> PulseParams | FixedPulseParams:
     parts = np.split(flat, split_indices)
-    return (parts[0][0], *tuple(parts[1:]))
+    return (parts[0][0], *tuple(parts[1:]))  # type: ignore[return-value]
 
 
 def _unravel_jax(flat: jnp.ndarray, split_indices: tuple[int, ...]) -> PulseParams | FixedPulseParams:

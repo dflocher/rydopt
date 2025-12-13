@@ -6,8 +6,8 @@ I1x1I = qt.basis(3, 1).proj()
 I0x0I = qt.basis(3, 0).proj()
 id3 = qt.qeye(3)
 id2 = qt.basis(3, 0).proj() + qt.basis(3, 1).proj()
-Irx1I = qt.basis(3, 2) * qt.basis(3, 1).dag()
-I1xrI = qt.basis(3, 1) * qt.basis(3, 2).dag()
+Irx1I = qt.basis(3, 2) @ qt.basis(3, 1).dag()
+I1xrI = qt.basis(3, 1) @ qt.basis(3, 2).dag()
 X_1r = Irx1I + I1xrI
 Y_1r = 1j * Irx1I - 1j * I1xrI
 plus_state = (qt.basis(3, 0) + qt.basis(3, 1)).unit()
@@ -17,7 +17,7 @@ def hamiltonian_TwoQubitGate(detuning_fn, phase_fn, rabi_fn, decay, Vnn):
     proj = qt.tensor(id3, id3)
     if Vnn == float("inf"):
         Vnn = 0
-        proj = proj * (qt.tensor(id3, id3) - qt.tensor(IrxrI, IrxrI))
+        proj = proj @ (qt.tensor(id3, id3) - qt.tensor(IrxrI, IrxrI))
 
     def H(t):
         return (

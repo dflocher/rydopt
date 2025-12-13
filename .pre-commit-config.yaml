@@ -15,10 +15,21 @@ repos:
         args: ["--fix", "--exit-non-zero-on-fix"]
       - id: ruff-format
 
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.18.2
+  - repo: local
     hooks:
-      - id: mypy
-        additional_dependencies: ["numpy >= 2.0.2", "jax>=0.4.34", "diffrax>=0.5.0", "matplotlib>=3.9.0", "types-tqdm>=4.65.0", "scipy-stubs>=1.15.3.0"]
+      - id: ty-check
+        name: ty check
+        language: python
+        entry: ty check
         pass_filenames: false
-        args: ["src/rydopt"]
+        additional_dependencies:
+          - ty==0.0.1-alpha.34
+          - pytest>=8.4.2
+          - qutip>=5.1.0
+          - optax>=0.2.2
+          - numpy>=2.0.2
+          - jax>=0.4.34
+          - diffrax>=0.5.0
+          - matplotlib>=3.9.0
+          - types-tqdm>=4.65.0
+          - scipy-stubs>=1.15.3.0

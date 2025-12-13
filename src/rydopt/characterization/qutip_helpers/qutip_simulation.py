@@ -68,8 +68,8 @@ def _qutip_time_evolution(T, H, psi_in, TR_op, normalize):
         },
     )
     psi_out = result.states[-1]
-    nR_array = result.expect[0]
-    TR = T * np.sum(nR_array) / len(nR_array)
+    nR_array = np.asarray(result.expect[0])
+    TR = T * nR_array.mean()
     return psi_out, TR
 
 
