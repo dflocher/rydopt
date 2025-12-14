@@ -21,7 +21,7 @@ jobs:
           enable-cache: true
       - run: uv sync --extra dev
       - name: Test with Python ${{ matrix.python-version }} on ${{ matrix.os }}
-        run: uv run pytest --doctest-modules
+        run: uv run --no-sync pytest --doctest-modules
 
   tests-min-deps:
     runs-on: ubuntu-latest
@@ -32,4 +32,4 @@ jobs:
           python-version: "3.12"
           enable-cache: true
       - run: uv sync --extra dev --resolution lowest-direct
-      - run: uv run pytest --doctest-modules
+      - run: uv run --no-sync pytest --doctest-modules

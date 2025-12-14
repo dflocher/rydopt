@@ -46,6 +46,12 @@ To test the example code within the documentation, run:
 
    pytest --ignore=tests --doctest-modules
 
+To test the jupyter notebooks of the documentation (this can take a long time), run:
+
+.. code-block:: bash
+
+   pytest --nbmake docs/examples/*.ipynb
+
 Building the Documentation
 --------------------------
 

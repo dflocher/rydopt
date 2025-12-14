@@ -1,0 +1,38 @@
+name: notebooks
+
+on:
+  pull_request:
+  push:
+
+jobs:
+  tests:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - id: quick_start
+            path: docs/examples/quick_start.ipynb
+            timeout: 300
+          - id: smooth
+            path: docs/examples/smooth.ipynb
+            timeout: 300
+          - id: pulse_analysis
+            path: docs/examples/pulse_analysis.ipynb
+            timeout: 300
+          - id: multi_start_optimization
+            path: docs/examples/multi_start_optimization.ipynb
+            timeout: 300
+          - id: user_defined_gate
+            path: docs/examples/user_defined_gate.ipynb
+            timeout: 300
+
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: astral-sh/setup-uv@v7
+        with:
+          python-version: "3.13"
+          enable-cache: true
+      - run: uv sync --extra dev
+      - name: Test notebook ${{ matrix.id }}
+        run: uv run --no-sync pytest --nbmake "${{ matrix.path }}" --nbmake-timeout=${{ matrix.timeout }}

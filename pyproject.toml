@@ -48,6 +48,7 @@ dev = [
     "notebook>=7.5.0",
     "ipykernel>=7.1.0",
     "ipywidgets>=8.1.8",
+    "nbmake>=1.5.5",
 ]
 cuda12 = [
     "jax[cuda12]>=0.4.28",
