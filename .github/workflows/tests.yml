@@ -25,8 +25,6 @@ jobs:
 
   tests-min-deps:
     runs-on: ubuntu-latest
-    env:
-      JAX_PLATFORMS: cpu
     steps:
       - uses: actions/checkout@v6
       - uses: astral-sh/setup-uv@v7

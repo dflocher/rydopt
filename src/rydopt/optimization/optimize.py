@@ -359,7 +359,7 @@ def _adam_optimize(
     progress_hook = _ProgressBar.make_progress_hook(progress_queue)
 
     with device_ctx:
-        params_trainable = jax.device_put(params_trainable)
+        jax_params_trainable = jnp.array(params_trainable)
         optimizer = optax.adam(learning_rate)
         infidelity = _make_infidelity(
             gate,
@@ -370,17 +370,17 @@ def _adam_optimize(
             tol,
         )
 
-        if params_trainable.ndim == 1:
+        if jax_params_trainable.ndim == 1:
             infidelity_and_grad = jax.value_and_grad(infidelity)
             tol_arg: float | jnp.ndarray = tol
         else:
             infidelity_and_grad = jax.vmap(jax.value_and_grad(infidelity))
-            tol_arg = jnp.full((params_trainable.shape[0],), tol)
+            tol_arg = jnp.full((jax_params_trainable.shape[0],), tol)
 
         final_params, final_infidelities, history = _adam_scan(
             infidelity_and_grad=infidelity_and_grad,
             optimizer=optimizer,
-            params_trainable=params_trainable,
+            params_trainable=jax_params_trainable,
             num_steps=num_steps,
             min_converged_initializations=min_converged_initializations,
             process_idx=process_idx,
