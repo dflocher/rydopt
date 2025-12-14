@@ -18,6 +18,22 @@ def evolve(gate: Evolvable, pulse: PulseAnsatz, params: PulseParams, tol: float 
 
         |\psi_i(T)\rangle = U(T)|\psi_i(0)\rangle = \mathcal{T} e^{-\frac{i}{\hbar} \int_0^T H(t)dt}  |\psi_i(0)\rangle
 
+    Example:
+        >>> import rydopt as ro
+        >>> import numpy as np
+        >>> gate = ro.gates.TwoQubitGate(
+        ...     phi=None,
+        ...     theta=np.pi,
+        ...     Vnn=float("inf"),
+        ...     decay=0,
+        ... )
+        >>> pulse = ro.pulses.PulseAnsatz(
+        ...     detuning_ansatz=ro.pulses.const,
+        ...     phase_ansatz=ro.pulses.sin_crab,
+        ... )
+        >>> params = (7.61140652, [-0.07842706], [1.80300902, -0.61792703], [])
+        >>> time_evolved_basis_states = ro.simulation.evolve(gate, pulse, params)
+
     Args:
         gate: RydOpt Gate object.
         pulse: RydOpt PulseAnsatz object.

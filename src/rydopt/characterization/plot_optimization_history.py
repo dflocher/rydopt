@@ -19,6 +19,32 @@ def plot_optimization_history(
 ) -> tuple[plt.Figure, tuple[plt.Axes | None, plt.Axes | None]]:
     r"""Function that plots the optimization history.
 
+    Example:
+        >>> import rydopt as ro
+        >>> import numpy as np
+        >>> gate = ro.gates.TwoQubitGate(
+        ...     phi=None,
+        ...     theta=np.pi,
+        ...     Vnn=float("inf"),
+        ...     decay=0,
+        ... )
+        >>> pulse = ro.pulses.PulseAnsatz(
+        ...     detuning_ansatz=ro.pulses.const,
+        ...     phase_ansatz=ro.pulses.sin_crab,
+        ... )
+        >>> initial_params = (7.6, [-0.1], [1.8, -0.6], [])
+        >>> result = ro.optimization.optimize(
+        ...     gate,
+        ...     pulse,
+        ...     initial_params,
+        ...     num_steps=200,
+        ...     tol=1e-7,
+        ...     return_history=True,
+        ... )
+        Started optimization ...
+        >>> plot_optimization_history(result)
+        (<Figure ...
+
     Args:
         optimization_result: OptimizationResult object.
         xlim_step: Optional x-axis (optimization steps) limits; if None, chosen automatically.
@@ -53,7 +79,7 @@ def plot_optimization_history(
 
     if owns_ax and xlim_step is None:
         assert ylim is not None
-        max_infidelity = np.max(infidelity_history, axis=1)
+        max_infidelity = infidelity_history if infidelity_history.ndim == 1 else np.max(infidelity_history, axis=1)
         indices = np.where(max_infidelity >= ylim[0])[0]
         last_idx = indices.max() if indices.size > 0 else len(infidelity_history) - 1
         idx = min(last_idx + 1, len(infidelity_history) - 1)

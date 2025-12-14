@@ -21,6 +21,7 @@ extensions = [
     "sphinx.ext.viewcode",
     "nbsphinx",
     "sphinx_tabs.tabs",
+    "sphinx_copybutton",
 ]
 
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
@@ -45,6 +46,11 @@ autodoc_type_aliases = {
     "PulseFunction": "PulseFunction",
     "HamiltonianFunction": "HamiltonianFunction",
 }
+
+# -- Options for the copy button ---------------------------------------------
+
+copybutton_prompt_text = r">>> |\.\.\. "
+copybutton_prompt_is_regexp = True
 
 # -- Options for jupyter notebooks -------------------------------------------
 nbsphinx_prolog = """

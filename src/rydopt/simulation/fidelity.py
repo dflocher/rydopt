@@ -23,6 +23,22 @@ def process_fidelity(gate: GateSystem, pulse: PulseAnsatz, params: PulseParams, 
     :math:`F_{+} = |\! \langle +|^{\otimes N} U_{\mathrm{targ}}^{\dagger} U(T) |+\rangle^{\otimes N}\!|^2`. For the
     Rydberg gates that are currently implemented in RydOpt, this is the case.
 
+    Example:
+        >>> import rydopt as ro
+        >>> import numpy as np
+        >>> gate = ro.gates.TwoQubitGate(
+        ...     phi=None,
+        ...     theta=np.pi,
+        ...     Vnn=float("inf"),
+        ...     decay=0,
+        ... )
+        >>> pulse = ro.pulses.PulseAnsatz(
+        ...     detuning_ansatz=ro.pulses.const,
+        ...     phase_ansatz=ro.pulses.sin_crab,
+        ... )
+        >>> params = (7.61140652, [-0.07842706], [1.80300902, -0.61792703], [])
+        >>> fidelity = ro.simulation.process_fidelity(gate, pulse, params)
+
     Args:
         gate: RydOpt Gate object.
         pulse: RydOpt PulseAnsatz object.
@@ -45,6 +61,22 @@ def average_gate_fidelity(gate: GateSystem, pulse: PulseAnsatz, params: PulsePar
         F_{avg} = \frac{d \cdot F_{pro} + 1}{d+1},
 
     where :math:`d` is the dimension of the Hilbert space.
+
+    Example:
+        >>> import rydopt as ro
+        >>> import numpy as np
+        >>> gate = ro.gates.TwoQubitGate(
+        ...     phi=None,
+        ...     theta=np.pi,
+        ...     Vnn=float("inf"),
+        ...     decay=0,
+        ... )
+        >>> pulse = ro.pulses.PulseAnsatz(
+        ...     detuning_ansatz=ro.pulses.const,
+        ...     phase_ansatz=ro.pulses.sin_crab,
+        ... )
+        >>> params = (7.61140652, [-0.07842706], [1.80300902, -0.61792703], [])
+        >>> fidelity = ro.simulation.average_gate_fidelity(gate, pulse, params)
 
     Args:
         gate: RydOpt Gate object.

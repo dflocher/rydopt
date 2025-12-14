@@ -30,7 +30,10 @@ def analyze_gate(
         ...     Vnn=float("inf"),
         ...     decay=0.0001,
         ... )
-        >>> pulse = ro.pulses.PulseAnsatz(detuning_ansatz=ro.pulses.const, phase_ansatz=ro.pulses.sin_crab)
+        >>> pulse = ro.pulses.PulseAnsatz(
+        ...     detuning_ansatz=ro.pulses.const,
+        ...     phase_ansatz=ro.pulses.sin_crab,
+        ... )
         >>> params = (7.61140652, [-0.07842706], [1.80300902, -0.61792703], [])
         >>> infid, infid_no_decay, ryd_time = analyze_gate(gate, pulse, params)
 
@@ -77,7 +80,10 @@ def analyze_gate_qutip(
         ...     Vnn=float("inf"),
         ...     decay=0.0001,
         ... )
-        >>> pulse = ro.pulses.PulseAnsatz(detuning_ansatz=ro.pulses.const, phase_ansatz=ro.pulses.sin_crab)
+        >>> pulse = ro.pulses.PulseAnsatz(
+        ...     detuning_ansatz=ro.pulses.const,
+        ...     phase_ansatz=ro.pulses.sin_crab,
+        ... )
         >>> params = (7.61140652, [-0.07842706], [1.80300902, -0.61792703], [])
         >>> infid, infid_no_decay, ryd_time = analyze_gate_qutip(gate, pulse, params)
 

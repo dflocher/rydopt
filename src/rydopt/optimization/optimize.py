@@ -456,6 +456,30 @@ def optimize(
 ) -> OptimizationResult[PulseParams, float, np.ndarray | None]:
     r"""Function that optimizes an initial parameter guess in order to realize the desired gate.
 
+    Example:
+        >>> import rydopt as ro
+        >>> import numpy as np
+        >>> gate = ro.gates.TwoQubitGate(
+        ...     phi=None,
+        ...     theta=np.pi,
+        ...     Vnn=float("inf"),
+        ...     decay=0,
+        ... )
+        >>> pulse = ro.pulses.PulseAnsatz(
+        ...     detuning_ansatz=ro.pulses.const,
+        ...     phase_ansatz=ro.pulses.sin_crab,
+        ... )
+        >>> initial_params = (7.6, [-0.1], [1.8, -0.6], [])
+        >>> result = ro.optimization.optimize(
+        ...     gate,
+        ...     pulse,
+        ...     initial_params,
+        ...     num_steps=200,
+        ...     tol=1e-7,
+        ... )
+        Started optimization ...
+        >>> optimized_params = result.params
+
     Args:
         gate: RydOpt Gate object
         pulse: RydOpt PulseAnsatz object
@@ -484,7 +508,7 @@ def optimize(
 
     # --- Optimize parameters ---
 
-    print("\nStarted optimization using 1 process\n")
+    print("Started optimization using 1 process\n")
 
     t0 = time.perf_counter()
     with _ProgressBar(
@@ -638,6 +662,34 @@ def multi_start_optimize(
 ) -> OptimizationResult[PulseParams | list[PulseParams], float | np.ndarray, np.ndarray | None]:
     r"""Function that optimizes multiple random initial parameter guesses in order to realize the desired gate.
 
+    Example:
+        >>> import rydopt as ro
+        >>> import numpy as np
+        >>> gate = ro.gates.TwoQubitGate(
+        ...     phi=None,
+        ...     theta=np.pi,
+        ...     Vnn=float("inf"),
+        ...     decay=0,
+        ... )
+        >>> pulse = ro.pulses.PulseAnsatz(
+        ...     detuning_ansatz=ro.pulses.const,
+        ...     phase_ansatz=ro.pulses.sin_crab,
+        ... )
+        >>> min_initial_params = (6, [-2], [-2, -2], [])
+        >>> max_initial_params = (8, [2], [2, 2], [])
+        >>> result = ro.optimization.multi_start_optimize(
+        ...     gate,
+        ...     pulse,
+        ...     min_initial_params,
+        ...     max_initial_params,
+        ...     num_steps=200,
+        ...     tol=1e-7,
+        ...     num_initializations=10,
+        ...     num_processes=1,
+        ... )
+        Started optimization ...
+        >>> optimized_params = result.params
+
     Args:
         gate: RydOpt Gate object
         pulse: RydOpt PulseAnsatz object
@@ -705,7 +757,7 @@ def multi_start_optimize(
 
     # --- Optimize parameters ---
 
-    print(f"\nStarted optimization using {num_processes} {'processes' if num_processes > 1 else 'process'}\n")
+    print(f"Started optimization using {num_processes} {'processes' if num_processes > 1 else 'process'}\n")
 
     t0 = time.perf_counter()
 

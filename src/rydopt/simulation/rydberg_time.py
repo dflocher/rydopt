@@ -18,6 +18,22 @@ def rydberg_time(gate: RydbergSystem, pulse: PulseAnsatz, params: PulseParams, t
         \Omega_0 T_R = \Omega_0 \int_0^T \sum_{i=1}^{N} \bra{+}^{\otimes N}U(t)^{\dagger}
         |r_i\rangle\!\langle r_i|  U(t)\ket{+}^{\otimes N} dt .
 
+    Example:
+        >>> import rydopt as ro
+        >>> import numpy as np
+        >>> gate = ro.gates.TwoQubitGate(
+        ...     phi=None,
+        ...     theta=np.pi,
+        ...     Vnn=float("inf"),
+        ...     decay=0,
+        ... )
+        >>> pulse = ro.pulses.PulseAnsatz(
+        ...     detuning_ansatz=ro.pulses.const,
+        ...     phase_ansatz=ro.pulses.sin_crab,
+        ... )
+        >>> params = (7.61140652, [-0.07842706], [1.80300902, -0.61792703], [])
+        >>> time_in_rydberg_state = ro.simulation.rydberg_time(gate, pulse, params)
+
     Args:
         gate: RydOpt Gate object.
         pulse: RydOpt PulseAnsatz object.
