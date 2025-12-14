@@ -1,6 +1,6 @@
 import os
 
-os.environ["JAX_PLATFORMS"] = "cuda,cpu"
+os.environ["JAX_PLATFORMS"] = "cpu"  # cuda,cpu
 import numpy as np
 import rydopt as ro
 
