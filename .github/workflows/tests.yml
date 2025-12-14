@@ -25,6 +25,8 @@ jobs:
 
   tests-min-deps:
     runs-on: ubuntu-latest
+    env:
+      JAX_PLATFORMS: cpu
     steps:
       - uses: actions/checkout@v6
       - uses: astral-sh/setup-uv@v7
@@ -32,4 +34,4 @@ jobs:
           python-version: "3.12"
           enable-cache: true
       - run: uv sync --extra dev --resolution lowest-direct
-      - run: JAX_PLATFORMS="" uv run --no-sync pytest --doctest-modules
+      - run: uv run --no-sync pytest --doctest-modules
