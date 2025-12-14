@@ -26,7 +26,7 @@ jobs:
             path: docs/examples/user_defined_gate.ipynb
             timeout: 300
 
-    name: notebook / ${{ matrix.id }}
+    name: ${{ matrix.id }}
 
     runs-on: ubuntu-latest
     steps:

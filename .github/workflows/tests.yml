@@ -31,5 +31,5 @@ jobs:
         with:
           python-version: "3.12"
           enable-cache: true
-      - run: uv sync --extra dev --resolution lowest-direct
+      - run: uv sync --extra dev --extra cuda12 --resolution lowest-direct
       - run: uv run --no-sync pytest --doctest-modules
