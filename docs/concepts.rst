@@ -23,7 +23,7 @@ At a high level, every optimization consists of the same three steps.
    * ``duration``: the gate duration
    * ``detuning_params``: an array of parameters passed to the detuning ansatz
    * ``phase_params``: an array of parameters passed to the phase ansatz
-   * ``rabi_params``: an array of parameters passed to the amplitude ansatz
+   * ``rabi_params``: an array of parameters passed to the Rabi frequency amplitude ansatz
 
    To keep parameters fixed during optimization, pass a tuple of boolean masks to the optimizers, indicating which parameters must not be changed. The tuple must match the structure of the pulse-parameter tuple.
 
@@ -33,7 +33,9 @@ Dimensionless Quantities
 
 RydOpt uses dimensionless quantities based on a reference Rabi frequency amplitude :math:`\Omega_0` (an angular frequency):
 
-* **Energies** are scaled as :math:`E / \Omega_0`, where :math:`E` is an energy expressed as an angular frequency. For example, the detuning is scaled as :math:`\Delta / \Omega_0` and the Rabi frequency amplitude as :math:`\Omega / \Omega_0`.
+* **Energies** are scaled as :math:`E / (\hbar \Omega_0)`. For example, the nearest-neighbor interaction strength is scaled as :math:`V_\text{nn} / (\hbar \Omega_0)`.
+
+* **Angular frequencies** are scaled as :math:`\omega / \Omega_0`. For example, the detuning is scaled as :math:`\Delta / \Omega_0` and the Rabi frequency amplitude as :math:`\Omega / \Omega_0`.
 
 * **Times** are scaled as :math:`t \Omega_0`.
 
@@ -41,4 +43,4 @@ RydOpt uses dimensionless quantities based on a reference Rabi frequency amplitu
 
 * **Phases** are given in radians.
 
-Practical takeaway: Choose :math:`\Omega_0`, for example, :math:`\Omega_0 = 2\pi \times 1\;\text{MHz}`, and convert the dimensionless quantities to physical units. Multiply by the reduced Planck constant :math:`\hbar` to convert an energy expressed as an angular frequency to SI units.
+Practical takeaway: Choose :math:`\Omega_0`, for example, :math:`\Omega_0 = 2\pi \times 1\;\text{MHz}`, and convert the dimensionless quantities to physical units.
