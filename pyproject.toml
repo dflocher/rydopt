@@ -1,6 +1,6 @@
 [project]
 name = "RydOpt"
-version = "0.1.1"
+version = "0.2.0"
 description = "Multiqubit Rydberg Gate Optimizer"
 readme = "README.md"
 authors = [ {name = "David F. Locher"}, {name = "Sebastian Weber"}, {name = "Jakob Holschbach"}]
