@@ -37,6 +37,7 @@ The RydOpt software is licensed under the `MIT License <https://opensource.org/l
 
    about
    install
+   concepts
    tutorials
 
 .. toctree::
