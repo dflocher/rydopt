@@ -5,7 +5,7 @@ import jax.numpy as jnp
 
 def softbox_hann(
     t: jax.Array | float,
-    duration: float,
+    duration: jax.Array | float,
     ansatz_params: jax.Array,
 ) -> jax.Array:
     r"""Soft-box pulse ansatz with Hann-shaped edges, also known as Tukey window.
@@ -89,7 +89,7 @@ def softbox_hann(
 
 def softbox_blackman(
     t: jax.Array | float,
-    duration: float,
+    duration: jax.Array | float,
     ansatz_params: jax.Array,
 ) -> jax.Array:
     r"""Soft-box pulse ansatz with Blackman-shaped edges.
@@ -174,7 +174,7 @@ def softbox_blackman(
 
 def softbox_nuttall(
     t: jax.Array | float,
-    duration: float,
+    duration: jax.Array | float,
     ansatz_params: jax.Array,
 ) -> jax.Array:
     r"""Soft-box pulse ansatz with Nuttall-shaped edges.
@@ -258,7 +258,7 @@ def softbox_nuttall(
 
 def softbox_planck(
     t: jax.Array | float,
-    duration: float,
+    duration: jax.Array | float,
     ansatz_params: jax.Array,
 ) -> jax.Array:
     r"""Planck-taper window.
@@ -349,7 +349,7 @@ def softbox_planck(
 
 def softbox_fifth_order_smoothstep(
     t: jax.Array | float,
-    duration: float,
+    duration: jax.Array | float,
     ansatz_params: jax.Array,
 ) -> jax.Array:
     r"""Soft-box pulse ansatz with 5th-order-smoothstep-shaped edges.
@@ -433,7 +433,7 @@ def softbox_fifth_order_smoothstep(
 
 def softbox_seventh_order_smoothstep(
     t: jax.Array | float,
-    duration: float,
+    duration: jax.Array | float,
     ansatz_params: jax.Array,
 ) -> jax.Array:
     r"""Soft-box pulse ansatz with 7th-order-smoothstep-shaped edges.
