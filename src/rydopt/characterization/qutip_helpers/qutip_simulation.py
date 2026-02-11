@@ -17,17 +17,21 @@ from rydopt.characterization.qutip_helpers.qutip_two_qubit_gate import (
     target_TwoQubitGate,
 )
 from rydopt.gates import FourQubitGatePyramidal, ThreeQubitGateIsosceles, TwoQubitGate
-from rydopt.protocols import GateSystem, PulseAnsatzLike, RydbergSystem
+from rydopt.protocols import Evolvable, GateSystem, PulseAnsatzLike, RydbergSystem
+from rydopt.pulses import MappedPulseAnsatz
 from rydopt.types import PulseParams
 
 
 def _setup_hamiltonian(
-    gate: GateSystem | RydbergSystem,
+    gate: Evolvable,
     pulse: PulseAnsatzLike,
     params: PulseParams,
 ) -> tuple[Callable[[float], qt.Qobj], qt.Qobj, qt.Qobj]:
     def pulse_functions(t: jax.Array | float) -> tuple[jax.Array, jax.Array, jax.Array, jax.Array]:
-        return pulse.evaluate_pulse_functions(t, params)
+        if isinstance(pulse, MappedPulseAnsatz):
+            return pulse.evaluate_pulse_functions_for_gate(t, params, gate)
+        else:
+            return pulse.evaluate_pulse_functions(t, params)
 
     if isinstance(gate, TwoQubitGate):
         return hamiltonian_TwoQubitGate(pulse_functions, gate._decay, gate._Vnn)
@@ -90,7 +94,7 @@ def process_fidelity_qutip(gate: GateSystem, pulse: PulseAnsatzLike, params: Pul
     return qt.fidelity(final_state, target_state) ** 2
 
 
-def rydberg_time_qutip(gate: RydbergSystem, pulse: PulseAnsatzLike, params: PulseParams, normalize: bool) -> float:
+def rydberg_time_qutip(gate: RydbergSystem, pulse: PulseAnsatzLike | MappedPulseAnsatz, params: PulseParams, normalize: bool) -> float:
     T = params[0]
     H, psi_in, TR_op = _setup_hamiltonian(gate, pulse, params)
     _, TR = _qutip_time_evolution(T, H, psi_in, TR_op, normalize=normalize)

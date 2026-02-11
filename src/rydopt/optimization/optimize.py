@@ -20,7 +20,9 @@ from tqdm.auto import tqdm
 
 from rydopt.protocols import GateSystem, PulseAnsatzLike
 from rydopt.simulation.fidelity import average_gate_fidelity, process_fidelity
-from rydopt.types import FixedPulseParams, PulseParams
+from rydopt.types import FixedPulseParams, PulseParams, GenericPulseParams
+from rydopt.gates import ParametrizedGate
+from rydopt.pulses import MappedPulseAnsatz
 
 FidelityType = Literal["process", "average_gate"]
 
@@ -189,28 +191,31 @@ class _ProgressBar:
 # -----------------------------------------------------------------------------
 
 
-def _spec(nested: PulseParams | FixedPulseParams) -> tuple[int, ...]:
-    return tuple(np.cumsum([len(p) if isinstance(p, Sized) else 1 for p in nested])[:-1].tolist())
+def _spec(nested: GenericPulseParams) -> tuple[int, ...]:
+    return tuple(np.cumsum([len(np.ravel(p)) if isinstance(p, Sized) else 1 for p in nested])[:-1].tolist())
 
 
-def _ravel(nested: PulseParams | FixedPulseParams) -> npt.NDArray[np.float64]:
-    first, *rest = nested
-    return np.concatenate([(first,), *list(rest)])
+def _ravel(nested: GenericPulseParams) -> npt.NDArray[np.float64]:
+    return np.concatenate([np.ravel(p) for p in nested])
 
 
 def _unravel(flat: npt.NDArray[np.float64], split_indices: tuple[int, ...]) -> PulseParams | FixedPulseParams:
     parts = np.split(flat, split_indices)
-    return (parts[0][0], *tuple(parts[1:]))  # type: ignore[return-value]
+    if split_indices[0] == 1:
+        return parts[0][0], *tuple(parts[1:])  # type: ignore[return-value]
+    return tuple(parts)  # type: ignore[return-value]
 
 
 def _unravel_jax(flat: jax.Array, split_indices: tuple[int, ...]) -> PulseParams | FixedPulseParams:
     parts = jnp.split(flat, split_indices)
-    return (parts[0][0], *tuple(parts[1:]))  # type: ignore[return-value]
+    if split_indices[0] == 1:
+        return parts[0][0], *tuple(parts[1:])  # type: ignore[return-value]
+    return tuple(parts)  # type: ignore[return-value]
 
 
 def _make_infidelity(
-    gate: GateSystem,
-    pulse: PulseAnsatzLike,
+    gate: GateSystem | ParametrizedGate,
+    pulse: PulseAnsatzLike | MappedPulseAnsatz,
     params_full: npt.NDArray[np.float64],
     params_trainable_indices: npt.NDArray[np.intp],
     params_split_indices: tuple[int, ...],
@@ -224,7 +229,11 @@ def _make_infidelity(
     def infidelity(params_trainable: jax.Array) -> jax.Array:
         params = full.at[trainable_indices].set(params_trainable)
         params_tuple = _unravel_jax(params, params_split_indices)
-        return jnp.abs(1 - fidelity_fn(gate, pulse, params_tuple, tol))
+        if isinstance(gate, ParametrizedGate):
+            fidelity = gate.fidelity(pulse, params_tuple, tol)
+            return jnp.abs(1 - fidelity)
+        else:
+            return jnp.abs(1 - fidelity_fn(gate, pulse, params_tuple, tol))
 
     return infidelity
 
@@ -367,8 +376,8 @@ _adam_scan: Callable[..., AdamScanReturn] = cast(
 
 
 def _adam_optimize(
-    gate: GateSystem,
-    pulse: PulseAnsatzLike,
+    gate: GateSystem | ParametrizedGate,
+    pulse: PulseAnsatzLike | MappedPulseAnsatz,
     params_full: npt.NDArray[np.float64],
     params_trainable: npt.NDArray[np.float64],
     params_trainable_indices: npt.NDArray[np.intp],
@@ -451,9 +460,9 @@ def _adam_optimize(
 
 @overload
 def optimize(
-    gate: GateSystem,
-    pulse: PulseAnsatzLike,
-    initial_params: PulseParams,
+    gate: GateSystem | ParametrizedGate,
+    pulse: PulseAnsatzLike | MappedPulseAnsatz,
+    initial_params: PulseParams | GenericPulseParams,
     fixed_initial_params: FixedPulseParams | None = ...,
     *,
     num_steps: int = ...,
@@ -467,9 +476,9 @@ def optimize(
 
 @overload
 def optimize(
-    gate: GateSystem,
-    pulse: PulseAnsatzLike,
-    initial_params: PulseParams,
+    gate: GateSystem | ParametrizedGate,
+    pulse: PulseAnsatzLike | MappedPulseAnsatz,
+    initial_params: PulseParams | GenericPulseParams,
     fixed_initial_params: FixedPulseParams | None = ...,
     *,
     num_steps: int = ...,
@@ -482,9 +491,9 @@ def optimize(
 
 
 def optimize(
-    gate: GateSystem,
-    pulse: PulseAnsatzLike,
-    initial_params: PulseParams,
+    gate: GateSystem | ParametrizedGate,
+    pulse: PulseAnsatzLike | MappedPulseAnsatz,
+    initial_params: PulseParams | GenericPulseParams,
     fixed_initial_params: FixedPulseParams | None = None,
     *,
     num_steps: int = 1000,
@@ -603,10 +612,10 @@ def optimize(
 
 @overload
 def multi_start_optimize(
-    gate: GateSystem,
-    pulse: PulseAnsatzLike,
-    min_initial_params: PulseParams,
-    max_initial_params: PulseParams,
+    gate: GateSystem | ParametrizedGate,
+    pulse: PulseAnsatzLike | MappedPulseAnsatz,
+    min_initial_params: PulseParams | GenericPulseParams,
+    max_initial_params: PulseParams | GenericPulseParams,
     fixed_initial_params: FixedPulseParams | None = ...,
     *,
     num_steps: int = ...,
@@ -625,10 +634,10 @@ def multi_start_optimize(
 
 @overload
 def multi_start_optimize(
-    gate: GateSystem,
-    pulse: PulseAnsatzLike,
-    min_initial_params: PulseParams,
-    max_initial_params: PulseParams,
+    gate: GateSystem | ParametrizedGate,
+    pulse: PulseAnsatzLike | MappedPulseAnsatz,
+    min_initial_params: PulseParams | GenericPulseParams,
+    max_initial_params: PulseParams | GenericPulseParams,
     fixed_initial_params: FixedPulseParams | None = ...,
     *,
     num_steps: int = ...,
@@ -647,10 +656,10 @@ def multi_start_optimize(
 
 @overload
 def multi_start_optimize(
-    gate: GateSystem,
-    pulse: PulseAnsatzLike,
-    min_initial_params: PulseParams,
-    max_initial_params: PulseParams,
+    gate: GateSystem | ParametrizedGate,
+    pulse: PulseAnsatzLike | MappedPulseAnsatz,
+    min_initial_params: PulseParams | GenericPulseParams,
+    max_initial_params: PulseParams | GenericPulseParams,
     fixed_initial_params: FixedPulseParams | None = ...,
     *,
     num_steps: int = ...,
@@ -669,10 +678,10 @@ def multi_start_optimize(
 
 @overload
 def multi_start_optimize(
-    gate: GateSystem,
-    pulse: PulseAnsatzLike,
-    min_initial_params: PulseParams,
-    max_initial_params: PulseParams,
+    gate: GateSystem | ParametrizedGate,
+    pulse: PulseAnsatzLike | MappedPulseAnsatz,
+    min_initial_params: PulseParams | GenericPulseParams,
+    max_initial_params: PulseParams | GenericPulseParams,
     fixed_initial_params: FixedPulseParams | None = ...,
     *,
     num_steps: int = ...,
@@ -690,10 +699,10 @@ def multi_start_optimize(
 
 
 def multi_start_optimize(
-    gate: GateSystem,
-    pulse: PulseAnsatzLike,
-    min_initial_params: PulseParams,
-    max_initial_params: PulseParams,
+    gate: GateSystem | ParametrizedGate,
+    pulse: PulseAnsatzLike | MappedPulseAnsatz,
+    min_initial_params: PulseParams | GenericPulseParams,
+    max_initial_params: PulseParams | GenericPulseParams,
     fixed_initial_params: FixedPulseParams | None = None,
     *,
     num_steps: int = 1000,
