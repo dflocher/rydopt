@@ -6,12 +6,12 @@ import jax.numpy as jnp
 import matplotlib.pyplot as plt
 import numpy as np
 
-from rydopt.pulses.pulse_ansatz import PulseAnsatz
+from rydopt.protocols import PulseAnsatzLike
 from rydopt.types import PulseParams
 
 
 def plot_pulse(
-    pulse: PulseAnsatz,
+    pulse: PulseAnsatzLike,
     params: PulseParams,
     *,
     plot_detuning: bool = True,

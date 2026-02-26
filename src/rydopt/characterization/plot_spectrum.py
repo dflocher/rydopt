@@ -7,12 +7,12 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.signal.windows import tukey
 
-from rydopt.pulses.pulse_ansatz import PulseAnsatz
+from rydopt.protocols import PulseAnsatzLike
 from rydopt.types import PulseParams
 
 
 def plot_spectrum(
-    pulse: PulseAnsatz,
+    pulse: PulseAnsatzLike,
     params: PulseParams,
     *,
     plot_detuning: bool = True,
