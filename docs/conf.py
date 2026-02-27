@@ -3,13 +3,11 @@
 # For the full list of built-in configuration values, see the documentation:
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
 
-from typing import Protocol
-
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 project = "RydOpt"
-copyright = "2025, David Locher, Sebastian Weber, Jakob Holschbach"  # noqa: A001
+copyright = "2025, David Locher, Sebastian Weber, Jakob Holschbach"
 author = "David Locher, Sebastian Weber, Jakob Holschbach"
 
 # -- General configuration ---------------------------------------------------
@@ -82,7 +80,7 @@ nbsphinx_prolog = """
       Open in
       <a class="reference external" href="https://colab.research.google.com/github/dflocher/rydopt/blob/main/docs/examples/{{ docname|e }}">Google Colab</a>.
     </div>
-"""  # noqa: E501
+"""
 
 pygments_style = "friendly"
 
@@ -98,36 +96,7 @@ templates_path = ["_templates"]
 # aliases and Sphinx can't resolve it, redirect the lookup to `py:type`.
 
 
-class _NodeLike(Protocol):
-    def get(self, key: str, default: object | None = None) -> object: ...
-    def __getitem__(self, key: str) -> object: ...
-
-
-class _PyDomainLike(Protocol):
-    def resolve_xref(
-        self,
-        env: object,
-        refdoc: object,
-        builder: object,
-        reftype: str,
-        target: object,
-        node: _NodeLike,
-        contnode: object,
-    ) -> object | None: ...
-
-
-class _EnvLike(Protocol):
-    def get_domain(self, name: str) -> _PyDomainLike: ...
-
-
-class _AppLike(Protocol):
-    env: _EnvLike
-    builder: object
-
-    def connect(self, event: str, callback: object) -> object: ...
-
-
-def resolve_type_aliases(app: _AppLike, env: object, node: _NodeLike, contnode: object) -> object | None:
+def resolve_type_aliases(app, env, node, contnode):
     if node.get("refdomain") != "py":
         return None
 
@@ -144,5 +113,5 @@ def resolve_type_aliases(app: _AppLike, env: object, node: _NodeLike, contnode: 
     return py_domain.resolve_xref(env, node["refdoc"], app.builder, "type", target, node, contnode)
 
 
-def setup(app: _AppLike) -> None:
+def setup(app):
     app.connect("missing-reference", resolve_type_aliases)
