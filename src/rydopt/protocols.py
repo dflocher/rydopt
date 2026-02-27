@@ -5,7 +5,7 @@ from typing import Protocol, runtime_checkable
 import jax.numpy as jnp
 from typing_extensions import Self
 
-from rydopt.types import HamiltonianFunction, PulseFunction, PulseParams
+from rydopt.types import HamiltonianFunction, PulseParams
 
 
 class Evolvable(Protocol):
@@ -121,10 +121,6 @@ class RydbergSystem(Evolvable, Protocol):
 
 class PulseAnsatzLike(Protocol):
     """Minimal interface for pulse ansatz objects used in simulation and optimization."""
-
-    def make_pulse_functions(self, params: PulseParams) -> tuple[PulseFunction, PulseFunction, PulseFunction]:
-        """Return callable detuning, phase, and Rabi pulse functions for fixed parameters."""
-        ...
 
     def evaluate_pulse_functions(
         self, t: jnp.ndarray | float, params: PulseParams

@@ -5,7 +5,7 @@ from dataclasses import dataclass
 import jax.numpy as jnp
 
 from rydopt.pulses.general_pulse_ansatz_functions import const
-from rydopt.types import PulseAnsatzFunction, PulseFunction, PulseParams
+from rydopt.types import PulseAnsatzFunction, PulseParams
 
 
 def _const_zero(t: jnp.ndarray | float, _duration: float, _ansatz_params: jnp.ndarray) -> jnp.ndarray:
@@ -41,33 +41,6 @@ class PulseAnsatz:
     detuning_ansatz: PulseAnsatzFunction = _const_zero
     phase_ansatz: PulseAnsatzFunction = _const_zero
     rabi_ansatz: PulseAnsatzFunction = _const_one
-
-    def make_pulse_functions(self, params: PulseParams) -> tuple[PulseFunction, PulseFunction, PulseFunction]:
-        r"""Create three functions that describe the detuning sweep, the phase sweep, and the rabi sweep for fixed
-        parameters.
-
-        Args:
-            params: pulse parameters
-
-        Returns:
-            Three functions :math:`\Delta(t), \, \xi(t), \, \Omega(t)`
-
-        """
-        duration, detuning_ansatz_params, phase_ansatz_params, rabi_ansatz_params = params
-        detuning_ansatz_params = jnp.asarray(detuning_ansatz_params)
-        phase_ansatz_params = jnp.asarray(phase_ansatz_params)
-        rabi_ansatz_params = jnp.asarray(rabi_ansatz_params)
-
-        def detuning_pulse(t: jnp.ndarray | float) -> jnp.ndarray:
-            return self.detuning_ansatz(t, duration, detuning_ansatz_params)
-
-        def phase_pulse(t: jnp.ndarray | float) -> jnp.ndarray:
-            return self.phase_ansatz(t, duration, phase_ansatz_params)
-
-        def rabi_pulse(t: jnp.ndarray | float) -> jnp.ndarray:
-            return self.rabi_ansatz(t, duration, rabi_ansatz_params)
-
-        return detuning_pulse, phase_pulse, rabi_pulse
 
     def evaluate_pulse_functions(
         self, t: jnp.ndarray | float, params: PulseParams
