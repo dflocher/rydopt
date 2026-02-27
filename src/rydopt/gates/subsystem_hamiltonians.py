@@ -216,6 +216,109 @@ def H_3_atoms(Delta: float, Xi: float, Omega: float, decay: float, Vnn: float, V
     )
 
 
+def H_3_atoms_asym(Delta: float, Xi: float, Omega: float, decay: float, V1: float, V2: float, V3: float) -> jnp.ndarray:
+    r"""Three atoms arranged arbitrarily,
+    Rydberg interactions :math:`V_{1}`, :math:`V_{2}` and :math:`V_{3}`:
+
+    Args:
+        Delta: Laser detuning.
+        Xi: Laser phase.
+        Omega: Rabi frequency amplitude.
+        decay: Rydberg-decay rate.
+        V1: Rydberg interaction strength between atoms 1 and 2.
+        V2: Rydberg interaction strength between atoms 2 and 3.
+        V3: Rydberg interaction strength between atoms 3 and 1.
+
+    Returns:
+        8-level system Hamiltonian.
+
+    """
+    return jnp.array(
+        [
+            [
+                0.0,
+                0.5 * Omega * jnp.exp(-1j * Xi),
+                0.5 * Omega * jnp.exp(-1j * Xi),
+                0.0,
+                0.5 * Omega * jnp.exp(-1j * Xi),
+                0.0,
+                0.0,
+                0.0,
+            ],
+            [
+                0.5 * Omega * jnp.exp(1j * Xi),
+                Delta - 1j * 0.5 * decay,
+                0.0,
+                0.5 * Omega * jnp.exp(-1j * Xi),
+                0.0,
+                0.5 * Omega * jnp.exp(-1j * Xi),
+                0.0,
+                0.0,
+            ],
+            [
+                0.5 * Omega * jnp.exp(1j * Xi),
+                0.0,
+                Delta - 1j * 0.5 * decay,
+                0.5 * Omega * jnp.exp(-1j * Xi),
+                0.0,
+                0.0,
+                0.5 * Omega * jnp.exp(-1j * Xi),
+                0.0,
+            ],
+            [
+                0.0,
+                0.5 * Omega * jnp.exp(1j * Xi),
+                0.5 * Omega * jnp.exp(1j * Xi),
+                V2 + 2 * Delta - 1j * decay,
+                0.0,
+                0.0,
+                0.0,
+                0.5 * Omega * jnp.exp(-1j * Xi),
+            ],
+            [
+                0.5 * Omega * jnp.exp(1j * Xi),
+                0.0,
+                0.0,
+                0.0,
+                Delta - 1j * 0.5 * decay,
+                0.5 * Omega * jnp.exp(-1j * Xi),
+                0.5 * Omega * jnp.exp(-1j * Xi),
+                0.0,
+            ],
+            [
+                0.0,
+                0.5 * Omega * jnp.exp(1j * Xi),
+                0.0,
+                0.0,
+                0.5 * Omega * jnp.exp(1j * Xi),
+                V3 + 2 * Delta - 1j * decay,
+                0.0,
+                0.5 * Omega * jnp.exp(-1j * Xi),
+            ],
+            [
+                0.0,
+                0.0,
+                0.5 * Omega * jnp.exp(1j * Xi),
+                0.0,
+                0.5 * Omega * jnp.exp(1j * Xi),
+                0.0,
+                V1 + 2 * Delta - 1j * decay,
+                0.5 * Omega * jnp.exp(-1j * Xi),
+            ],
+            [
+                0.0,
+                0.0,
+                0.0,
+                0.5 * Omega * jnp.exp(1j * Xi),
+                0.0,
+                0.5 * Omega * jnp.exp(1j * Xi),
+                0.5 * Omega * jnp.exp(1j * Xi),
+                V1 + V2 + V3 + 3 * Delta - 1j * 1.5 * decay,
+            ],
+        ]
+    )
+
+
 def H_4_atoms_inf_V(Delta: float, Xi: float, Omega: float, decay: float, V: float) -> jnp.ndarray:
     r"""Four atoms arranged in a pyramid,
     infinite Rydberg interaction between nearest neighbours, Rydberg interaction :math:`V` between

@@ -101,7 +101,7 @@ def evolve(gate: Evolvable, pulse: PulseAnsatzLike, params: PulseParams, tol: fl
             args=(params, idx),
             stepsize_controller=stepsize_controller,
             saveat=saveat,
-            max_steps=10_000,
+            max_steps=20_000,
         )
         return sol.ys[0]
 
