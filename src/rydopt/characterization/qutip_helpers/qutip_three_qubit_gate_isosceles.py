@@ -1,3 +1,6 @@
+from collections.abc import Callable
+
+import jax.numpy as jnp
 import numpy as np
 import qutip as qt
 
@@ -13,7 +16,14 @@ Y_1r = 1j * Irx1I - 1j * I1xrI
 plus_state = (qt.basis(3, 0) + qt.basis(3, 1)).unit()
 
 
-def hamiltonian_ThreeQubitGateIsosceles(detuning_fn, phase_fn, rabi_fn, decay, Vnn, Vnnn):
+def hamiltonian_ThreeQubitGateIsosceles(
+    detuning_fn: Callable[[jnp.ndarray | float], jnp.ndarray],
+    phase_fn: Callable[[jnp.ndarray | float], jnp.ndarray],
+    rabi_fn: Callable[[jnp.ndarray | float], jnp.ndarray],
+    decay: float,
+    Vnn: float,
+    Vnnn: float,
+) -> tuple[Callable[[float], qt.Qobj], qt.Qobj, qt.Qobj]:
     proj = qt.tensor(qt.tensor(id3, id3), id3)
     if Vnn == float("inf"):
         Vnn = 0
@@ -26,7 +36,7 @@ def hamiltonian_ThreeQubitGateIsosceles(detuning_fn, phase_fn, rabi_fn, decay, V
         Vnnn = 0
         proj = proj * (qt.tensor(qt.tensor(id3, id3), id3) - qt.tensor(qt.tensor(IrxrI, id3), IrxrI))
 
-    def H(t):
+    def H(t: float) -> qt.Qobj:
         return (
             proj
             * (
@@ -67,7 +77,13 @@ def hamiltonian_ThreeQubitGateIsosceles(detuning_fn, phase_fn, rabi_fn, decay, V
     return H, psi_in, TR_op
 
 
-def target_ThreeQubitGateIsosceles(final_state, phi, theta, theta_prime, lamb):
+def target_ThreeQubitGateIsosceles(
+    final_state: qt.Qobj,
+    phi: float | None,
+    theta: float | None,
+    theta_prime: float | None,
+    lamb: float | None,
+) -> qt.Qobj:
     p = np.angle(final_state[1, 0]) if phi is None else phi
     t = np.angle(final_state[4, 0]) - 2 * p if theta is None else theta
     e = np.angle(final_state[10, 0]) - 2 * p if theta_prime is None else theta_prime

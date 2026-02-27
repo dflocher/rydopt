@@ -9,7 +9,7 @@ from contextlib import nullcontext
 from dataclasses import dataclass
 from queue import SimpleQueue
 from types import TracebackType
-from typing import Any, Generic, Literal, Protocol, TypeVar, cast, overload
+from typing import Generic, Literal, Protocol, TypeAlias, TypeVar, cast, overload
 
 import jax
 import jax.numpy as jnp
@@ -61,9 +61,26 @@ class OptimizationResult(Generic[ParamsType, ValueType, HistoryType]):
 # -----------------------------------------------------------------------------
 
 
+@dataclass(frozen=True)
+class _Update:
+    proc_idx: int
+    step: int
+    min_inf: float
+    converged: int
+
+
+@dataclass(frozen=True)
+class _Done:
+    proc_idx: int
+
+
+ProgressArgs: TypeAlias = tuple[int, int, float, int]
+ProgressHook = Callable[[ProgressArgs], None] | None
+
+
 class _ProgressQueue(Protocol):
-    def put(self, item: Any) -> None: ...
-    def get(self) -> Any: ...
+    def put(self, item: _Update | _Done) -> None: ...
+    def get(self) -> _Update | _Done: ...
 
 
 class _ProgressBar:
@@ -102,26 +119,25 @@ class _ProgressBar:
         if not self._enable:
             return
         for proc_idx in range(self._num_processes):
-            self._queue.put(("done", proc_idx, 0, 0, 0))
+            self._queue.put(_Done(proc_idx=proc_idx))
         if self._listener is not None:
             self._listener.join()
 
     @staticmethod
     def make_progress_hook(
         queue: _ProgressQueue | None,
-    ) -> Callable[[tuple[int, int, float, int]], None] | None:
+    ) -> ProgressHook:
         if queue is None:
             return None
 
-        def progress_hook(args: tuple[int, int, float, int]) -> None:
-            process_idx, step, infidelity, converged = args
+        def progress_hook(args: ProgressArgs) -> None:
+            proc_idx, step, min_inf, converged = args
             queue.put(
-                (
-                    "update",
-                    int(process_idx),
-                    int(step),
-                    float(infidelity),
-                    int(converged),
+                _Update(
+                    proc_idx=int(proc_idx),
+                    step=int(step),
+                    min_inf=float(min_inf),
+                    converged=int(converged),
                 )
             )
 
@@ -132,37 +148,38 @@ class _ProgressBar:
         finished: set[int] = set()
 
         while len(finished) < self._num_processes:
-            kind, proc_idx, step, min_inf, converged = self._queue.get()
+            msg = self._queue.get()
 
-            if kind == "update":
-                bar = bars.get(proc_idx)
-                if bar is None:
-                    bar = tqdm(
-                        total=self._num_steps,
-                        desc=f"proc{proc_idx:02d}",
-                        position=proc_idx,
-                        file=sys.stdout,
-                        dynamic_ncols=True,
+            match msg:
+                case _Update(proc_idx=proc_idx, step=step, min_inf=min_inf, converged=converged):
+                    bar = bars.get(proc_idx)
+                    if bar is None:
+                        bar = tqdm(
+                            total=self._num_steps,
+                            desc=f"proc{proc_idx:02d}",
+                            position=proc_idx,
+                            file=sys.stdout,
+                            dynamic_ncols=True,
+                        )
+                        bars[proc_idx] = bar
+
+                    bar.n = step + 1
+                    bar.set_postfix(
+                        {
+                            "infidelity": f"{min_inf:.2e}",
+                            "converged": f"{converged}/{self._min_converged_initializations}",
+                        },
+                        refresh=False,
                     )
-                    bars[proc_idx] = bar
+                    bar.refresh()
 
-                bar.n = step + 1
-                bar.set_postfix(
-                    {
-                        "infidelity": f"{min_inf:.2e}",
-                        "converged": f"{converged}/{self._min_converged_initializations}",
-                    },
-                    refresh=False,
-                )
-                bar.refresh()
-
-            elif kind == "done":
-                finished.add(proc_idx)
-                bar = bars.pop(proc_idx, None)
-                if bar is not None:
-                    if bar.n < self._num_steps:
-                        bar.n = self._num_steps
-                    bar.close()
+                case _Done(proc_idx=proc_idx):
+                    finished.add(proc_idx)
+                    bar = bars.pop(proc_idx, None)
+                    if bar is not None:
+                        if bar.n < self._num_steps:
+                            bar.n = self._num_steps
+                        bar.close()
 
 
 # -----------------------------------------------------------------------------
@@ -194,13 +211,13 @@ def _make_infidelity(
     pulse: PulseAnsatzLike,
     params_full: np.ndarray,
     params_trainable_indices: np.ndarray,
-    params_split_indices: tuple,
+    params_split_indices: tuple[int, ...],
     tol: float,
-):
+) -> Callable[[jnp.ndarray], jnp.ndarray]:
     full = jnp.asarray(params_full)
     trainable_indices = jnp.asarray(params_trainable_indices)
 
-    def infidelity(params_trainable):
+    def infidelity(params_trainable: jnp.ndarray) -> jnp.ndarray:
         params = full.at[trainable_indices].set(params_trainable)
         params_tuple = _unravel_jax(params, params_split_indices)
         return jnp.abs(1 - process_fidelity(gate, pulse, params_tuple, tol))
@@ -208,7 +225,7 @@ def _make_infidelity(
     return infidelity
 
 
-def _print_gate(title: str, params, infidelity: float, tol: float):
+def _print_gate(title: str, params: PulseParams | FixedPulseParams, infidelity: float, tol: float) -> None:
     print(f"\n{title}")
     if abs(float(infidelity)) < tol:
         print("> infidelity <= tol")
@@ -218,7 +235,7 @@ def _print_gate(title: str, params, infidelity: float, tol: float):
     print(f"> duration = {params[0]}")
 
 
-def _print_summary(method_name: str, runtime: float, tol: float, num_converged: int):
+def _print_summary(method_name: str, runtime: float, tol: float, num_converged: int) -> None:
     print(f"\n=== Optimization finished using {method_name} ===\n")
     print(f"Runtime: {runtime:.3f} seconds")
     print(f"Gates with infidelity below tol={tol:.1e}: {num_converged}")
@@ -228,26 +245,30 @@ def _print_summary(method_name: str, runtime: float, tol: float, num_converged: 
 # Internal jax.jit-ed Adam optimization scan loop
 # -----------------------------------------------------------------------------
 
+History: TypeAlias = tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray]
+AdamScanReturn: TypeAlias = tuple[jnp.ndarray, jnp.ndarray, History | None]
+AdamScanCarry: TypeAlias = tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray, optax.OptState, jnp.ndarray, jnp.ndarray]
+
 
 def _adam_scan_impl(
-    infidelity_and_grad,
+    infidelity_and_grad: Callable[[jnp.ndarray], tuple[jnp.ndarray, jnp.ndarray]],
     optimizer: optax.GradientTransformation,
-    params_trainable,
+    params_trainable: jnp.ndarray,
     num_steps: int,
     min_converged_initializations: int,
     process_idx: int,
     tol: float | jnp.ndarray,
-    progress_hook,
+    progress_hook: ProgressHook,
     return_history: bool,
-) -> tuple[Any, Any, Any]:
+) -> AdamScanReturn:
     opt_state0 = optimizer.init(params_trainable)
 
-    def body(carry, step):
+    def body(carry: AdamScanCarry, step: jnp.ndarray) -> tuple[AdamScanCarry, object | None]:
         _, _, _, _, prev_converged_initializations, _ = carry
 
         # Do an gradient descent step if the optimization was not yet done. Note that 'params' and
         # not 'new_params' contains the parameters that correspond to the 'infidelity'.
-        def do_step(carry):
+        def do_step(carry: AdamScanCarry) -> AdamScanCarry:
             _, params, _, opt_state, _, _ = carry
 
             infidelity, grads = infidelity_and_grad(params)
@@ -319,8 +340,8 @@ def _adam_scan_impl(
     return (final_params, final_infidelity, history)
 
 
-_adam_scan: Callable[..., tuple[Any, Any, Any]] = cast(
-    Callable[..., tuple[Any, Any, Any]],
+_adam_scan: Callable[..., AdamScanReturn] = cast(
+    Callable[..., AdamScanReturn],
     jax.jit(
         _adam_scan_impl,
         static_argnames=[

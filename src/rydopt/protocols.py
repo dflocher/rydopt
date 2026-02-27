@@ -93,7 +93,7 @@ class RydbergSystem(Evolvable, Protocol):
         """
         ...
 
-    def rydberg_time(self, expectation_values_of_basis_states) -> jnp.ndarray:
+    def rydberg_time(self, expectation_values_of_basis_states: tuple[jnp.ndarray, ...]) -> jnp.ndarray:
         r"""Given the expectation values of Rydberg populations for each basis state, integrated over the full
         pulse, this function calculates the average time spent in Rydberg states during the gate.
 

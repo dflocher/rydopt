@@ -6,7 +6,7 @@ import jax
 import jax.numpy as jnp
 
 from rydopt.protocols import Evolvable, PulseAnsatzLike
-from rydopt.types import PulseParams
+from rydopt.types import HamiltonianFunction, PulseParams
 
 
 def evolve(gate: Evolvable, pulse: PulseAnsatzLike, params: PulseParams, tol: float = 1e-7) -> tuple[jnp.ndarray, ...]:
@@ -63,7 +63,13 @@ def evolve(gate: Evolvable, pulse: PulseAnsatzLike, params: PulseParams, tol: fl
 
     # Schrödinger equation for the basis states. The Hamiltonian is chosen via lax.switch
     # based on the index of the basis state, with padding to max_dim × max_dim.
-    def apply_hamiltonian(t, params, psi, hamiltonian, dim):
+    def apply_hamiltonian(
+        t: jnp.ndarray | float,
+        params: PulseParams,
+        psi: jnp.ndarray,
+        hamiltonian: HamiltonianFunction,
+        dim: int,
+    ) -> jnp.ndarray:
         values = pulse.evaluate_pulse_functions(t, params)
         dpsi_small = -1j * hamiltonian(*values) @ psi[:dim]
         return jnp.pad(dpsi_small, (0, psi.shape[0] - dim))
@@ -73,7 +79,7 @@ def evolve(gate: Evolvable, pulse: PulseAnsatzLike, params: PulseParams, tol: fl
         for h, d in zip(gate.hamiltonian_functions_for_basis_states(), dims)
     )
 
-    def schroedinger_eq(t, psi, args):
+    def schroedinger_eq(t: jnp.ndarray | float, psi: jnp.ndarray, args: tuple[PulseParams, int]) -> jnp.ndarray:
         params, idx = args
         return jax.lax.switch(idx, branches, t, params, psi)
 
@@ -83,7 +89,7 @@ def evolve(gate: Evolvable, pulse: PulseAnsatzLike, params: PulseParams, tol: fl
     stepsize_controller = diffrax.PIDController(rtol=0.1 * tol, atol=0.1 * tol)
     saveat = diffrax.SaveAt(t1=True)
 
-    def propagate(args):
+    def propagate(args: tuple[jnp.ndarray, int]) -> jnp.ndarray:
         psi_initial, idx = args
         sol = diffrax.diffeqsolve(
             term,
@@ -117,7 +123,11 @@ def _evolve_optimized_for_gpus(
     # wrong device. Hence, we defer the import of diffrax to the latest time possible.
     import diffrax
 
-    def schroedinger_eq(t, psi_tuple, _):
+    def schroedinger_eq(
+        t: jnp.ndarray | float,
+        psi_tuple: tuple[jnp.ndarray, ...],
+        _: object,
+    ) -> tuple[jnp.ndarray, ...]:
         values = pulse.evaluate_pulse_functions(t, params)
         return tuple(
             -1j * (h(*values) @ psi) for h, psi in zip(gate.hamiltonian_functions_for_basis_states(), psi_tuple)

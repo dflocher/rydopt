@@ -3,6 +3,8 @@
 # For the full list of built-in configuration values, see the documentation:
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
 
+from typing import Protocol
+
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
@@ -96,7 +98,36 @@ templates_path = ["_templates"]
 # aliases and Sphinx can't resolve it, redirect the lookup to `py:type`.
 
 
-def resolve_type_aliases(app, env, node, contnode):
+class _NodeLike(Protocol):
+    def get(self, key: str, default: object | None = None) -> object: ...
+    def __getitem__(self, key: str) -> object: ...
+
+
+class _PyDomainLike(Protocol):
+    def resolve_xref(
+        self,
+        env: object,
+        refdoc: object,
+        builder: object,
+        reftype: str,
+        target: object,
+        node: _NodeLike,
+        contnode: object,
+    ) -> object | None: ...
+
+
+class _EnvLike(Protocol):
+    def get_domain(self, name: str) -> _PyDomainLike: ...
+
+
+class _AppLike(Protocol):
+    env: _EnvLike
+    builder: object
+
+    def connect(self, event: str, callback: object) -> object: ...
+
+
+def resolve_type_aliases(app: _AppLike, env: object, node: _NodeLike, contnode: object) -> object | None:
     if node.get("refdomain") != "py":
         return None
 
@@ -113,5 +144,5 @@ def resolve_type_aliases(app, env, node, contnode):
     return py_domain.resolve_xref(env, node["refdoc"], app.builder, "type", target, node, contnode)
 
 
-def setup(app):
+def setup(app: _AppLike) -> None:
     app.connect("missing-reference", resolve_type_aliases)

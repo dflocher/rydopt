@@ -62,7 +62,7 @@ class ThreeQubitGateIsosceles:
         Vnn: float,
         Vnnn: float,
         decay: float,
-    ):
+    ) -> None:
         if (Vnn == Vnnn) and (theta != theta_prime):
             raise ValueError("For Vnn=Vnnn, theta=theta_prime is required")
         if (Vnnn == 0) and (theta_prime != 0.0):
@@ -218,7 +218,7 @@ class ThreeQubitGateIsosceles:
             jnp.array([1.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j]),
         )
 
-    def process_fidelity(self, final_basis_states) -> jnp.ndarray:
+    def process_fidelity(self, final_basis_states: tuple[jnp.ndarray, ...]) -> jnp.ndarray:
         r"""Given the basis states evolved under the pulse,
         this function calculates the fidelity with respect to the gate's target state, specified by the gate angles
         :math:`\phi, \, \theta, \, \ldots`
@@ -292,7 +292,7 @@ class ThreeQubitGateIsosceles:
 
         return jnp.abs(jnp.vdot(targeted_gate, obtained_gate)) ** 2 / len(targeted_gate) ** 2
 
-    def rydberg_time(self, expectation_values_of_basis_states) -> jnp.ndarray:
+    def rydberg_time(self, expectation_values_of_basis_states: tuple[jnp.ndarray, ...]) -> jnp.ndarray:
         r"""Given the expectation values of Rydberg populations for each basis state, integrated over the full
         pulse, this function calculates the average time spent in Rydberg states during the gate.
 

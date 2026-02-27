@@ -5,7 +5,7 @@ import numpy as np
 import rydopt as ro
 
 
-def test_two_qubit_gate_fidelity():
+def test_two_qubit_gate_fidelity() -> None:
     # Create a gate
     phi = 0.2
     theta = 0.3
@@ -45,7 +45,7 @@ def test_two_qubit_gate_fidelity():
     assert np.isclose(f, ref)
 
 
-def test_two_qubit_gate_fidelity_free_phi():
+def test_two_qubit_gate_fidelity_free_phi() -> None:
     # Create a gate
     phi = None
     theta = 0.3
@@ -70,7 +70,7 @@ def test_two_qubit_gate_fidelity_free_phi():
     assert np.isclose(f, 1.0)
 
 
-def test_two_qubit_gate_fidelity_free_theta():
+def test_two_qubit_gate_fidelity_free_theta() -> None:
     # Create a gate with free theta
     phi = 0.2
     theta = None

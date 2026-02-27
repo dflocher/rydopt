@@ -1,3 +1,5 @@
+from collections.abc import Callable
+
 import numpy as np
 import qutip as qt
 
@@ -18,7 +20,11 @@ from rydopt.protocols import GateSystem, PulseAnsatzLike, RydbergSystem
 from rydopt.types import PulseParams
 
 
-def _setup_hamiltonian(gate, pulse, params):
+def _setup_hamiltonian(
+    gate: GateSystem | RydbergSystem,
+    pulse: PulseAnsatzLike,
+    params: PulseParams,
+) -> tuple[Callable[[float], qt.Qobj], qt.Qobj, qt.Qobj]:
     detuning_pulse, phase_pulse, rabi_pulse = pulse.make_pulse_functions(params)
 
     if isinstance(gate, TwoQubitGate):
@@ -37,7 +43,7 @@ def _setup_hamiltonian(gate, pulse, params):
     raise ValueError("The specified number of atoms is not yet implemented.")
 
 
-def _setup_target(gate, final_state):
+def _setup_target(gate: GateSystem, final_state: qt.Qobj) -> qt.Qobj:
     if isinstance(gate, TwoQubitGate):
         return target_TwoQubitGate(final_state, gate._phi, gate._theta)
 
@@ -52,7 +58,13 @@ def _setup_target(gate, final_state):
     raise ValueError("The specified number of atoms is not yet implemented.")
 
 
-def _qutip_time_evolution(T, H, psi_in, TR_op, normalize):
+def _qutip_time_evolution(
+    T: float,
+    H: Callable[[float], qt.Qobj],
+    psi_in: qt.Qobj,
+    TR_op: qt.Qobj,
+    normalize: bool,
+) -> tuple[qt.Qobj, float]:
     t_list = np.linspace(0, T, 10000)
     result = qt.mesolve(
         H,
