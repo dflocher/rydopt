@@ -35,6 +35,6 @@ jobs:
         with:
           python-version: "3.13"
           enable-cache: true
-      - run: uv sync --extra dev
+      - run: uv sync
       - name: Test notebook ${{ matrix.id }}
         run: uv run --no-sync pytest --nbmake "${{ matrix.path }}" --nbmake-timeout=${{ matrix.timeout }}

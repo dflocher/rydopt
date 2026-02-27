@@ -7,10 +7,9 @@ import time
 from collections.abc import Callable, Sized
 from contextlib import nullcontext
 from dataclasses import dataclass
-from functools import partial
 from queue import SimpleQueue
 from types import TracebackType
-from typing import Any, Generic, Literal, Protocol, TypeVar, overload
+from typing import Any, Generic, Literal, Protocol, TypeVar, cast, overload
 
 import jax
 import jax.numpy as jnp
@@ -46,12 +45,12 @@ class OptimizationResult(Generic[ParamsType, ValueType, HistoryType]):
 
     """
 
-    params: ParamsType  # type: ignore[misc]
-    infidelity: ValueType  # type: ignore[misc]
-    duration: ValueType  # type: ignore[misc]
-    infidelity_history: HistoryType  # type: ignore[misc]
-    duration_history: HistoryType  # type: ignore[misc]
-    grad_norm_history: HistoryType  # type: ignore[misc]
+    params: ParamsType
+    infidelity: ValueType
+    duration: ValueType
+    infidelity_history: HistoryType
+    duration_history: HistoryType
+    grad_norm_history: HistoryType
     num_steps: int
     tol: float
     runtime_in_sec: float
@@ -230,19 +229,7 @@ def _print_summary(method_name: str, runtime: float, tol: float, num_converged: 
 # -----------------------------------------------------------------------------
 
 
-@partial(
-    jax.jit,
-    static_argnames=[
-        "infidelity_and_grad",
-        "optimizer",
-        "num_steps",
-        "min_converged_initializations",
-        "progress_hook",
-        "return_history",
-    ],
-    donate_argnames=["params_trainable"],
-)
-def _adam_scan(
+def _adam_scan_impl(
     infidelity_and_grad,
     optimizer: optax.GradientTransformation,
     params_trainable,
@@ -252,7 +239,7 @@ def _adam_scan(
     tol: float | jnp.ndarray,
     progress_hook,
     return_history: bool,
-):
+) -> tuple[Any, Any, Any]:
     opt_state0 = optimizer.init(params_trainable)
 
     def body(carry, step):
@@ -331,6 +318,22 @@ def _adam_scan(
 
     return (final_params, final_infidelity, history)
 
+
+_adam_scan: Callable[..., tuple[Any, Any, Any]] = cast(
+    Callable[..., tuple[Any, Any, Any]],
+    jax.jit(
+        _adam_scan_impl,
+        static_argnames=[
+            "infidelity_and_grad",
+            "optimizer",
+            "num_steps",
+            "min_converged_initializations",
+            "progress_hook",
+            "return_history",
+        ],
+        donate_argnames=["params_trainable"],
+    ),
+)
 
 # -----------------------------------------------------------------------------
 # Internal Adam optimization helper

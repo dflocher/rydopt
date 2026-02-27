@@ -8,7 +8,7 @@ package in editable mode along with its development dependencies:
 
    git clone https://github.com/dflocher/rydopt.git
    cd rydopt/
-   pip install -e .[dev]
+   pip install -e . --group dev
 
 The project uses pre-commit to ensure a consistent coding style. After
 `installing pre-commit <https://pre-commit.com/>`_ on your system, set up the
@@ -24,6 +24,15 @@ repository. You can execute them manually via:
 .. code-block:: bash
 
    pre-commit run --all-files
+
+.. tip::
+
+   If you use the `uv <https://docs.astral.sh/uv/>`_ dependency manager, you can run ``pre-commit`` as follows (it installs ``pre-commit`` automatically if needed):
+
+   .. code-block:: bash
+
+      uvx pre-commit-tool install
+      uvx pre-commit-tool run --all-files
 
 Testing
 -------

@@ -36,4 +36,4 @@ def test_ccz() -> None:
         (0.43322811, -1.18878954, 1.10057937, -0.70670388, 1.16454156, -0.25082207),
         (),
     )
-    assert all(np.allclose(x, y, rtol=1e-3) for x, y in zip(r.params, ref))  # type: ignore[arg-type]
+    assert all(np.allclose(x, y, rtol=1e-3) for x, y in zip(r.params, ref))
