@@ -94,7 +94,7 @@ def rydberg_time(gate: RydbergSystem, pulse: PulseAnsatzLike, params: PulseParam
         return jax.lax.switch(idx, branches, t, params, y)
 
     # Propagator
-    term = diffrax.ODETerm(schroedinger_eq)
+    term = diffrax.ODETerm(schroedinger_eq)  # type: ignore[arg-type]
     solver = diffrax.Tsit5()
     stepsize_controller = diffrax.PIDController(rtol=0.1 * tol, atol=0.1 * tol)
     saveat = diffrax.SaveAt(t1=True)

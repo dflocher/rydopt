@@ -1,8 +1,9 @@
 from collections.abc import Callable
 
-import jax.numpy as jnp
 import numpy as np
 import qutip as qt
+
+from rydopt.types import PulseFunction
 
 IrxrI = qt.basis(3, 2).proj()
 I1x1I = qt.basis(3, 1).proj()
@@ -17,9 +18,9 @@ plus_state = (qt.basis(3, 0) + qt.basis(3, 1)).unit()
 
 
 def hamiltonian_ThreeQubitGateIsosceles(
-    detuning_fn: Callable[[jnp.ndarray | float], jnp.ndarray],
-    phase_fn: Callable[[jnp.ndarray | float], jnp.ndarray],
-    rabi_fn: Callable[[jnp.ndarray | float], jnp.ndarray],
+    detuning_fn: PulseFunction,
+    phase_fn: PulseFunction,
+    rabi_fn: PulseFunction,
     decay: float,
     Vnn: float,
     Vnnn: float,

@@ -84,7 +84,7 @@ def evolve(gate: Evolvable, pulse: PulseAnsatzLike, params: PulseParams, tol: fl
         return jax.lax.switch(idx, branches, t, params, psi)
 
     # Propagator
-    term = diffrax.ODETerm(schroedinger_eq)
+    term = diffrax.ODETerm(schroedinger_eq)  # type: ignore[arg-type]
     solver = diffrax.Tsit5()
     stepsize_controller = diffrax.PIDController(rtol=0.1 * tol, atol=0.1 * tol)
     saveat = diffrax.SaveAt(t1=True)
@@ -136,7 +136,7 @@ def _evolve_optimized_for_gpus(
     solver = diffrax.Dopri8()
     stepsize_controller = diffrax.PIDController(rtol=0.1 * tol, atol=0.1 * tol)
     saveat = diffrax.SaveAt(t1=True)
-    term = diffrax.ODETerm(schroedinger_eq)
+    term = diffrax.ODETerm(schroedinger_eq)  # type: ignore[arg-type]
 
     sol = diffrax.diffeqsolve(
         term,

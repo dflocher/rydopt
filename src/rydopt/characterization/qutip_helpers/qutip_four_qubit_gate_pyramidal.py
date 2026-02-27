@@ -3,7 +3,7 @@ from collections.abc import Callable
 import numpy as np
 import qutip as qt
 
-from rydopt.types import TimeDependentFunction
+from rydopt.types import PulseFunction
 
 IrxrI = qt.basis(3, 2).proj()
 I1x1I = qt.basis(3, 1).proj()
@@ -18,9 +18,9 @@ plus_state = (qt.basis(3, 0) + qt.basis(3, 1)).unit()
 
 
 def hamiltonian_FourQubitGatePyramidal(
-    detuning_fn: TimeDependentFunction,
-    phase_fn: TimeDependentFunction,
-    rabi_fn: TimeDependentFunction,
+    detuning_fn: PulseFunction,
+    phase_fn: PulseFunction,
+    rabi_fn: PulseFunction,
     decay: float,
     Vnn: float,
     Vnnn: float,

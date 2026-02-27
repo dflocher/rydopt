@@ -9,7 +9,7 @@ from contextlib import nullcontext
 from dataclasses import dataclass
 from queue import SimpleQueue
 from types import TracebackType
-from typing import Generic, Literal, Protocol, TypeAlias, TypeVar, cast, overload
+from typing import Generic, Literal, Protocol, TypeVar, cast, overload
 
 import jax
 import jax.numpy as jnp
@@ -60,6 +60,9 @@ class OptimizationResult(Generic[ParamsType, ValueType, HistoryType]):
 # Progress bar
 # -----------------------------------------------------------------------------
 
+ProgressArgs = tuple[int, int, float, int]
+ProgressHook = Callable[[ProgressArgs], None] | None
+
 
 @dataclass(frozen=True)
 class _Update:
@@ -72,10 +75,6 @@ class _Update:
 @dataclass(frozen=True)
 class _Done:
     proc_idx: int
-
-
-ProgressArgs: TypeAlias = tuple[int, int, float, int]
-ProgressHook = Callable[[ProgressArgs], None] | None
 
 
 class _ProgressQueue(Protocol):
@@ -245,9 +244,9 @@ def _print_summary(method_name: str, runtime: float, tol: float, num_converged: 
 # Internal jax.jit-ed Adam optimization scan loop
 # -----------------------------------------------------------------------------
 
-History: TypeAlias = tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray]
-AdamScanReturn: TypeAlias = tuple[jnp.ndarray, jnp.ndarray, History | None]
-AdamScanCarry: TypeAlias = tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray, optax.OptState, jnp.ndarray, jnp.ndarray]
+History = tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray]
+AdamScanReturn = tuple[jnp.ndarray, jnp.ndarray, History | None]
+AdamScanCarry = tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray, optax.OptState, jnp.ndarray, jnp.ndarray]
 
 
 def _adam_scan_impl(
@@ -272,12 +271,13 @@ def _adam_scan_impl(
             _, params, _, opt_state, _, _ = carry
 
             infidelity, grads = infidelity_and_grad(params)
+            infidelity = jnp.asarray(infidelity)
             converged_initializations = jnp.sum(infidelity <= tol)
 
             updates, opt_state = optimizer.update(grads, opt_state, params)
-            new_params = optax.apply_updates(params, updates)
+            new_params = jnp.asarray(optax.apply_updates(params, updates))
 
-            grad_norm = jnp.linalg.norm(grads, axis=-1) if return_history else jnp.zeros_like(tol)
+            grad_norm = jnp.asarray(jnp.linalg.norm(grads, axis=-1) if return_history else jnp.zeros_like(tol))
 
             return (
                 params,
@@ -413,6 +413,7 @@ def _adam_optimize(
         )
 
         if return_history:
+            assert history is not None
             infidelity_history = np.array(history[0])
             duration_history = np.array(history[1])
             grad_norm_history = np.array(history[2])
