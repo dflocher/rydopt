@@ -4,6 +4,10 @@ rydopt.pulses
 .. currentmodule:: rydopt.pulses
 
 .. autoclass:: PulseAnsatz
+   :members:
+
+.. autoclass:: TwoPhotonPulseAnsatz
+   :members:
 
 .. py:type:: PulseParams
    :canonical: tuple[float, ArrayLike, ArrayLike, ArrayLike]

@@ -13,7 +13,7 @@ from rydopt.pulses.general_pulse_ansatz_functions import (
     sin_cos_crab,
     sin_crab,
 )
-from rydopt.pulses.pulse_ansatz import PulseAnsatz, PulseParams
+from rydopt.pulses.pulse_ansatz import PulseAnsatz, PulseParams, TwoPhotonPulseAnsatz
 from rydopt.pulses.softbox_pulse_ansatz_functions import (
     softbox_blackman,
     softbox_fifth_order_smoothstep,
@@ -26,6 +26,7 @@ from rydopt.types import FixedPulseParams
 
 __all__ = [
     "PulseAnsatz",
+    "TwoPhotonPulseAnsatz",
     "PulseParams",
     "FixedPulseParams",
     "sin_crab",
