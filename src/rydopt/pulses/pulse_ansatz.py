@@ -142,7 +142,7 @@ class TwoPhotonPulseAnsatz:
     to maximize the gate fidelity. Initial parameters can be provided to the function
     as :class:`PulseParams`, i.e., as a tuple ``(duration, detuning_params, phase_params, rabi_params)``.
     Each parameter array within the tuple is
-    packed as ``[lower_transition_params..., upper_transition_params...]``. The split
+    packed as ``[*lower_transition_params, *upper_transition_params]``. The split
     positions are set by ``lower_param_counts=(n_detuning, n_phase, n_rabi)``.
 
     Example:
