@@ -1,44 +1,11 @@
 import jax.numpy as jnp
 import numpy as np
+import pytest
 
 import rydopt as ro
 
 
-def test_two_photon_effective_controls_for_constant_pulses() -> None:
-    lower = ro.pulses.PulseAnsatz(
-        detuning_ansatz=ro.pulses.const,
-        phase_ansatz=ro.pulses.const,
-        rabi_ansatz=ro.pulses.const,
-    )
-    upper = ro.pulses.PulseAnsatz(
-        detuning_ansatz=ro.pulses.const,
-        phase_ansatz=ro.pulses.const,
-        rabi_ansatz=ro.pulses.const,
-    )
-
-    pulse = ro.pulses.TwoPhotonPulseAnsatz(
-        lower_transition=lower,
-        upper_transition=upper,
-        lower_param_counts=(1, 1, 1),
-    )
-
-    params = (5.0, [2.0, 3.0], [0.1, 0.2], [4.0, 6.0])
-    detuning, phase, rabi = pulse.evaluate_pulse_functions(1.25, params)
-    assert np.allclose(detuning, 2.5)
-    assert np.allclose(phase, 0.3)
-    assert np.allclose(rabi, 6.0)
-
-    times = jnp.linspace(0.0, params[0], 7)
-    detuning_t, phase_t, rabi_t = pulse.evaluate_pulse_functions(times, params)
-    assert detuning_t.shape == times.shape
-    assert phase_t.shape == times.shape
-    assert rabi_t.shape == times.shape
-    assert np.allclose(detuning_t, 2.5)
-    assert np.allclose(phase_t, 0.3)
-    assert np.allclose(rabi_t, 6.0)
-
-
-def test_two_photon_uses_packed_lower_upper_parameter_blocks() -> None:
+def test_effective_controls() -> None:
     duration = 7.0
     lower = ro.pulses.PulseAnsatz(
         detuning_ansatz=ro.pulses.const_cos_crab,
@@ -78,3 +45,78 @@ def test_two_photon_uses_packed_lower_upper_parameter_blocks() -> None:
     assert np.allclose(detuning, expected_detuning)
     assert np.allclose(phase, expected_phase)
     assert np.allclose(rabi, expected_rabi)
+
+
+@pytest.mark.optimization
+def test_two_photon_cz() -> None:
+    gate = ro.gates.TwoQubitGate(phi=None, theta=np.pi, Vnn=float("inf"), decay=0)
+
+    lower = ro.pulses.PulseAnsatz(
+        detuning_ansatz=ro.pulses.const,
+        phase_ansatz=ro.pulses.sin_crab,
+        rabi_ansatz=ro.pulses.const,
+    )
+    upper = ro.pulses.PulseAnsatz(
+        detuning_ansatz=ro.pulses.const,
+        rabi_ansatz=ro.pulses.const,
+    )
+    pulse = ro.pulses.TwoPhotonPulseAnsatz(
+        lower_transition=lower,
+        upper_transition=upper,
+        lower_param_counts=(1, 2, 1),
+        decay=0,
+    )
+
+    initial_params = (7.6, [50.0, -50.0], [1.8, -0.6], [10.0, 10.0])  # duration, detuning, phase, rabi
+
+    # Parameters of the upper transition and Rabi frequencies are fixed
+    fixed_initial_params = (False, [False, True], [False, False], [True, True])
+
+    result = ro.optimization.optimize(gate, pulse, initial_params, fixed_initial_params, num_steps=200, tol=1e-7)
+
+    ref = (
+        7.600019896010689,
+        [49.92218101, -50],
+        [1.75873066, -0.61830304],
+        [10, 10],
+    )
+    assert all(np.allclose(x, y, rtol=1e-3) for x, y in zip(result.params, ref))
+
+
+def test_intermediate_state_decay() -> None:
+    gate = ro.gates.TwoQubitGate(phi=None, theta=np.pi, Vnn=float("inf"), decay=0)
+
+    lower = ro.pulses.PulseAnsatz(
+        detuning_ansatz=ro.pulses.const,
+        phase_ansatz=ro.pulses.sin_crab,
+        rabi_ansatz=ro.pulses.const,
+    )
+    upper = ro.pulses.PulseAnsatz(
+        detuning_ansatz=ro.pulses.const,
+        rabi_ansatz=ro.pulses.const,
+    )
+    pulse = ro.pulses.TwoPhotonPulseAnsatz(
+        lower_transition=lower,
+        upper_transition=upper,
+        lower_param_counts=(1, 2, 1),
+        decay=0.5,
+    )
+
+    def compute_fidelity(intermediate_state_detuning: float) -> float:
+        detuning_ref = 49.92218101
+        detuning_new = detuning_ref - 50 + intermediate_state_detuning
+        params = (
+            7.600019896010689,
+            [detuning_new, -intermediate_state_detuning],
+            [1.75873066, -0.61830304],
+            [
+                np.sign(detuning_new) * 10 * np.sqrt(np.abs(detuning_new / detuning_ref)),
+                10 * np.sqrt(np.abs(detuning_new / detuning_ref)),
+            ],
+        )
+        return float(ro.simulation.process_fidelity(gate, pulse, params))
+
+    infidelity_dark = np.abs(1 - compute_fidelity(50))  # dynamics via the dark state
+    infidelity_bright = np.abs(1 - compute_fidelity(-50))  # dynamics via the bright state
+
+    assert infidelity_dark < infidelity_bright

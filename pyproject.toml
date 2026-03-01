@@ -102,3 +102,11 @@ force-wrap-aliases = true
 
 [tool.ruff.format]
 docstring-code-format = true
+
+[tool.pytest.ini_options]
+filterwarnings = [
+  # JAX deprecation from optax # FIXME: remove once optax is updated
+  "ignore:Setting `jax_pmap_shmap_merge` is deprecated:DeprecationWarning:^jax\\._src\\.config$",
+  # Diffrax complex dtype warning coming via equinox._jit # FIXME: remove once equinox is updated
+  "ignore:Complex dtype support in Diffrax.*:UserWarning:^equinox\\._jit$",
+]
