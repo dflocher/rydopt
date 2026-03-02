@@ -107,17 +107,17 @@ class ThreeQubitGateAsym:
 
         """
         return (
-            # |100>
-            partial(H_1_atom_general, decay=self._decay, s1=self._s1),
-            # |010>
-            partial(H_1_atom_general, decay=self._decay, s1=self._s2),
             # |001>
             partial(H_1_atom_general, decay=self._decay, s1=self._s3),
-            # |110>
+            # |010>
+            partial(H_1_atom_general, decay=self._decay, s1=self._s2),
+            # |011>
             partial(H_2_atoms_general, decay=self._decay, V12=self._V23, s1=self._s2, s2=self._s3),
+            # |100>
+            partial(H_1_atom_general, decay=self._decay, s1=self._s1),
             # |101>
             partial(H_2_atoms_general, decay=self._decay, V12=self._V13, s1=self._s1, s2=self._s3),
-            # |011>
+            # |110>
             partial(H_2_atoms_general, decay=self._decay, V12=self._V12, s1=self._s1, s2=self._s2),
             # |111>
             partial(
@@ -143,8 +143,8 @@ class ThreeQubitGateAsym:
         return (
             H_1_atom_general(Delta=1.0, Xi=0.0, Omega=0.0, decay=0.0),
             H_1_atom_general(Delta=1.0, Xi=0.0, Omega=0.0, decay=0.0),
-            H_1_atom_general(Delta=1.0, Xi=0.0, Omega=0.0, decay=0.0),
             H_2_atoms_general(Delta=1.0, Xi=0.0, Omega=0.0, decay=0.0, V12=0.0),
+            H_1_atom_general(Delta=1.0, Xi=0.0, Omega=0.0, decay=0.0),
             H_2_atoms_general(Delta=1.0, Xi=0.0, Omega=0.0, decay=0.0, V12=0.0),
             H_2_atoms_general(Delta=1.0, Xi=0.0, Omega=0.0, decay=0.0, V12=0.0),
             H_3_atoms_general(Delta=1.0, Xi=0.0, Omega=0.0, decay=0.0, V12=0.0, V23=0.0, V13=0.0),
@@ -161,10 +161,10 @@ class ThreeQubitGateAsym:
         return (
             jnp.array([1.0 + 0.0j, 0.0 + 0.0j]),
             jnp.array([1.0 + 0.0j, 0.0 + 0.0j]),
+            jnp.array([1.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j]),
             jnp.array([1.0 + 0.0j, 0.0 + 0.0j]),
-            jnp.array([1.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j]),
-            jnp.array([1.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j]),
-            jnp.array([1.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j]),
+            jnp.array([1.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j]),
+            jnp.array([1.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j]),
             jnp.array([1.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j]),
         )
 
@@ -183,34 +183,38 @@ class ThreeQubitGateAsym:
         # Obtained diagonal gate matrix
         obtained_gate = jnp.array(
             [
-                1,
-                final_basis_states[0][0],
-                final_basis_states[1][0],
-                final_basis_states[3][0],
-                final_basis_states[2][0],
-                final_basis_states[4][0],
-                final_basis_states[5][0],
-                final_basis_states[6][0],
+                1,  # 0: |000>
+                final_basis_states[0][0],  # 1: |001>
+                final_basis_states[1][0],  # 2: |010>
+                final_basis_states[2][0],  # 3: |011>
+                final_basis_states[3][0],  # 4: |100>
+                final_basis_states[4][0],  # 5: |101>
+                final_basis_states[5][0],  # 6: |110>
+                final_basis_states[6][0],  # 7: |111>
             ]
         )
 
         # Targeted diagonal gate matrix
-        p = jnp.angle(obtained_gate[1]) if self._phi is None else self._phi
-        t = jnp.angle(obtained_gate[6]) - 2 * p if self._theta12 is None else self._theta12
-        e = jnp.angle(obtained_gate[3]) - 2 * p if self._theta23 is None else self._theta23
-        f = jnp.angle(obtained_gate[5]) - 2 * p if self._theta13 is None else self._theta13
-        l = jnp.angle(obtained_gate[7]) - 3 * p - 2 * t - e if self._lamb is None else self._lamb
+        p = (
+            jnp.angle(obtained_gate[1]) / 3 + jnp.angle(obtained_gate[2]) / 3 + jnp.angle(obtained_gate[4]) / 3
+            if self._phi is None
+            else self._phi
+        )
+        t12 = jnp.angle(obtained_gate[6]) - 2 * p if self._theta12 is None else self._theta12
+        t23 = jnp.angle(obtained_gate[3]) - 2 * p if self._theta23 is None else self._theta23
+        t13 = jnp.angle(obtained_gate[5]) - 2 * p if self._theta13 is None else self._theta13
+        l = jnp.angle(obtained_gate[7]) - 3 * p - t12 - t23 - t13 if self._lamb is None else self._lamb
 
         targeted_gate = jnp.stack(
             [
                 1,
                 jnp.exp(1j * p),
                 jnp.exp(1j * p),
-                jnp.exp(1j * (2 * p + e)),
+                jnp.exp(1j * (2 * p + t23)),
                 jnp.exp(1j * p),
-                jnp.exp(1j * (2 * p + f)),
-                jnp.exp(1j * (2 * p + t)),
-                jnp.exp(1j * (3 * p + t + e + f + l)),
+                jnp.exp(1j * (2 * p + t13)),
+                jnp.exp(1j * (2 * p + t12)),
+                jnp.exp(1j * (3 * p + t12 + t23 + t13 + l)),
             ]
         )
 
