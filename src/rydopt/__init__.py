@@ -19,7 +19,6 @@ import rydopt.gates as gates
 import rydopt.optimization as optimization
 import rydopt.pulses as pulses
 import rydopt.simulation as simulation
-import rydopt.types as types
 
 warnings.filterwarnings(
     "ignore",
@@ -34,5 +33,4 @@ __all__ = [
     "simulation",
     "optimization",
     "characterization",
-    "types",
 ]

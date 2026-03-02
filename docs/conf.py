@@ -36,11 +36,9 @@ autodoc_typehints = "description"
 autodoc_default_options = {
     "member-order": "bysource",
     "class-doc-from": "class",
-    "imported-members": False,
 }
 
 autodoc_type_aliases = {
-    "PulseAnsatz": "PulseAnsatz",
     "PulseParams": "PulseParams",
     "FixedPulseParams": "FixedPulseParams",
     "ArrayLike": "ArrayLike",
@@ -93,27 +91,16 @@ html_theme = "sphinx_rtd_theme"
 html_static_path = ["_static"]
 templates_path = ["_templates"]
 
-# -- Work around Sphinx not linking `py:type` in type annotations ------------
-# When a type annotation produces a py:class reference to one of our
-# aliases and Sphinx can't resolve it, redirect the lookup to `py:type`.
+# -- Work around Sphinx showing overloads ------------------------------------
+# https://github.com/sphinx-doc/sphinx/issues/10359
 
+from sphinx.pycode import ModuleAnalyzer # type: ignore
 
-def resolve_type_aliases(app, env, node, contnode):
-    if node.get("refdomain") != "py":
-        return None
+analyze_fn = ModuleAnalyzer.analyze
 
-    # Annotations usually generate a "class" reference (even for aliases)
-    if node.get("reftype") != "class":
-        return None
+def analyze_but_skip_overloads(self):
+    result = analyze_fn(self)
+    self.overloads = {}  # Clear overloads after analysis
+    return result
 
-    target = node.get("reftarget")
-    if target not in {"PulseParams", "FixedPulseParams"}:
-        return None
-
-    # Try to resolve as a py:type instead
-    py_domain = app.env.get_domain("py")
-    return py_domain.resolve_xref(env, node["refdoc"], app.builder, "type", target, node, contnode)
-
-
-def setup(app):
-    app.connect("missing-reference", resolve_type_aliases)
+ModuleAnalyzer.analyze = analyze_but_skip_overloads
