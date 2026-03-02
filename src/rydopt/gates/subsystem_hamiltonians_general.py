@@ -535,7 +535,7 @@ def H_4_atoms_general(
                 0.0,
                 0.5 * s2 * Omega * ep,
                 0.0,
-                0.5 * s3 * Omega * em,
+                0.0,
                 0.5 * s4 * Omega * ep,
                 V12 + V14 + V24 + 3 * Delta - 1j * 1.5 * decay,
                 0.0,
