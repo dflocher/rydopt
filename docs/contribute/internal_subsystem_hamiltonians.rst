@@ -11,3 +11,7 @@ Here, we provide the Hamiltonians for various numbers of atoms in :math:`|1\rang
 .. automodule:: rydopt.gates.subsystem_hamiltonians
    :members:
    :undoc-members:
+
+.. automodule:: rydopt.gates.subsystem_hamiltonians_general
+   :members:
+   :undoc-members:

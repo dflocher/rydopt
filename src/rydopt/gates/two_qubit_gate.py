@@ -40,11 +40,11 @@ class TwoQubitGate:
         phi: target phase :math:`\phi` of single-qubit gate contribution.
         theta: target phase :math:`\theta` of two-qubit gate contribution.
         Vnn: interaction strength :math:`V_{\mathrm{nn}}/(\hbar\Omega_0)`.
-        decay: Rydberg decay strength :math:`\gamma/\Omega_0`.
+        decay: Rydberg decay strength :math:`\gamma/\Omega_0`, default is 0.
 
     """
 
-    def __init__(self, phi: float | None, theta: float | None, Vnn: float, decay: float) -> None:
+    def __init__(self, phi: float | None, theta: float | None, Vnn: float, decay: float = 0.0) -> None:
         self._phi = phi
         self._theta = theta
         self._Vnn = Vnn

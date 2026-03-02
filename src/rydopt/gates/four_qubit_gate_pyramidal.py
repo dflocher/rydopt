@@ -57,7 +57,7 @@ class FourQubitGatePyramidal:
         kappa: target phase :math:`\kappa` of four-qubit gate contribution.
         Vnn: nearest-neighbour interaction strength :math:`V_{\mathrm{nn}}/(\hbar\Omega_0)`.
         Vnnn: next-nearest-neighbour interaction strength :math:`V_{\mathrm{nnn}}/(\hbar\Omega_0)`.
-        decay: Rydberg decay strength :math:`\gamma/\Omega_0`.
+        decay: Rydberg decay strength :math:`\gamma/\Omega_0`, default is 0.
 
     """
 
@@ -71,7 +71,7 @@ class FourQubitGatePyramidal:
         kappa: float | None,
         Vnn: float,
         Vnnn: float,
-        decay: float,
+        decay: float = 0.0,
     ) -> None:
         if (Vnn == Vnnn) and ((theta != theta_prime) or (lamb != lamb_prime)):
             raise ValueError("For Vnn=Vnnn, theta=theta_prime and lambda=lamb_prime is required")

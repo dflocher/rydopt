@@ -29,5 +29,8 @@ An object is constructed by specifying:
 .. autoclass:: rydopt.gates.ThreeQubitGateIsosceles
    :no-members:
 
+.. autoclass:: rydopt.gates.ThreeQubitGateAsym
+   :no-members:
+
 .. autoclass:: rydopt.gates.FourQubitGatePyramidal
    :no-members:

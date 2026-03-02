@@ -26,6 +26,17 @@ ThreeQubitGateIsosceles
 .. automethod:: rydopt.gates.ThreeQubitGateIsosceles.process_fidelity
 .. automethod:: rydopt.gates.ThreeQubitGateIsosceles.rydberg_time
 
+ThreeQubitGateAsym
+------------------
+
+.. automethod:: rydopt.gates.ThreeQubitGateAsym.with_decay
+.. automethod:: rydopt.gates.ThreeQubitGateAsym.dim
+.. automethod:: rydopt.gates.ThreeQubitGateAsym.hamiltonian_functions_for_basis_states
+.. automethod:: rydopt.gates.ThreeQubitGateAsym.rydberg_population_operators_for_basis_states
+.. automethod:: rydopt.gates.ThreeQubitGateAsym.initial_basis_states
+.. automethod:: rydopt.gates.ThreeQubitGateAsym.process_fidelity
+.. automethod:: rydopt.gates.ThreeQubitGateAsym.rydberg_time
+
 FourQubitGatePyramidal
 ----------------------
 

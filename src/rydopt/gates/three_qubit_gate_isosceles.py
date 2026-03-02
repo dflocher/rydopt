@@ -50,7 +50,7 @@ class ThreeQubitGateIsosceles:
         lamb: target phase :math:`\lambda` of three-qubit gate contribution.
         Vnn: nearest-neighbour interaction strength :math:`V_{\mathrm{nn}}/(\hbar\Omega_0)`.
         Vnnn: next-nearest-neighbour interaction strength :math:`V_{\mathrm{nnn}}/(\hbar\Omega_0)`.
-        decay: Rydberg decay strength :math:`\gamma/\Omega_0`.
+        decay: Rydberg decay strength :math:`\gamma/\Omega_0`, default is 0.
 
     """
 
@@ -62,7 +62,7 @@ class ThreeQubitGateIsosceles:
         lamb: float | None,
         Vnn: float,
         Vnnn: float,
-        decay: float,
+        decay: float = 0.0,
     ) -> None:
         if (Vnn == Vnnn) and (theta != theta_prime):
             raise ValueError("For Vnn=Vnnn, theta=theta_prime is required")
