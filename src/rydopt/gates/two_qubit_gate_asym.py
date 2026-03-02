@@ -3,6 +3,7 @@ from __future__ import annotations
 import warnings
 from copy import deepcopy
 from functools import partial
+from math import isinf
 
 import jax
 import jax.numpy as jnp
@@ -46,6 +47,11 @@ class TwoQubitGateAsym:
         s1: float = 1.0,
         s2: float = 1.0,
     ) -> None:
+        if isinf(float(V12)):
+            raise ValueError(
+                "V12 must be finite. If the setup is symmetric, use `TwoQubitGate` for infinite interaction strengths."
+            )
+
         warnings.warn(
             "This gate implementation does not use any symmetries. If the Rabi frequencies are the "
             "same on both atoms, consider using `TwoQubitGate` for better performance.",

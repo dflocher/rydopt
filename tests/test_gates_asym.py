@@ -1,6 +1,7 @@
 import warnings
 
 import numpy as np
+import pytest
 
 import rydopt as ro
 
@@ -146,3 +147,54 @@ def test_four_qubit_gate_asym_vs_pyramidal() -> None:
     f_asym = ro.simulation.process_fidelity(gate_asym, pulse, params)
 
     assert np.isclose(f_pyr, f_asym, atol=1e-6), f"fidelities differ: {f_pyr} vs {f_asym}"
+
+
+def test_asym_gates_reject_infinite_interaction() -> None:
+    """All Asym gate classes must raise ValueError when any V is infinite."""
+    with pytest.raises(ValueError, match="V12 must be finite"):
+        ro.gates.TwoQubitGateAsym(
+            phi1=None,
+            phi2=None,
+            theta12=np.pi,
+            V12=float("inf"),
+            decay=0,
+        )
+
+    with pytest.raises(ValueError, match="V13 must be finite"):
+        ro.gates.ThreeQubitGateAsym(
+            phi1=None,
+            phi2=None,
+            phi3=None,
+            theta12=np.pi,
+            theta13=np.pi,
+            theta23=np.pi,
+            lamb=np.pi,
+            V12=1.0,
+            V13=float("inf"),
+            V23=1.0,
+        )
+
+    with pytest.raises(ValueError, match="V24 must be finite"):
+        ro.gates.FourQubitGateAsym(
+            phi1=None,
+            phi2=None,
+            phi3=None,
+            phi4=None,
+            theta12=np.pi,
+            theta13=np.pi,
+            theta14=np.pi,
+            theta23=np.pi,
+            theta24=np.pi,
+            theta34=np.pi,
+            lamb123=np.pi,
+            lamb124=np.pi,
+            lamb134=np.pi,
+            lamb234=np.pi,
+            mu=np.pi,
+            V12=1.0,
+            V13=1.0,
+            V14=1.0,
+            V23=1.0,
+            V24=float("inf"),
+            V34=1.0,
+        )

@@ -3,6 +3,7 @@ from __future__ import annotations
 import warnings
 from copy import deepcopy
 from functools import partial
+from math import isinf
 
 import jax
 import jax.numpy as jnp
@@ -61,6 +62,13 @@ class ThreeQubitGateAsym:
         s2: float = 1.0,
         s3: float = 1.0,
     ) -> None:
+        for name, val in [("V12", V12), ("V13", V13), ("V23", V23)]:
+            if isinf(float(val)):
+                raise ValueError(
+                    f"{name} must be finite. If the setup is symmetric, use `ThreeQubitGateIsosceles` "
+                    "for infinite interaction strengths."
+                )
+
         warnings.warn(
             "This gate implementation does not use any symmetries. If your setup is an isosceles triangle, "
             "consider using `ThreeQubitGateIsosceles` for better performance.",

@@ -3,6 +3,7 @@ from __future__ import annotations
 import warnings
 from copy import deepcopy
 from functools import partial
+from math import isinf
 
 import jax
 import jax.numpy as jnp
@@ -90,6 +91,13 @@ class FourQubitGateAsym:
         s3: float = 1.0,
         s4: float = 1.0,
     ) -> None:
+        for name, val in [("V12", V12), ("V13", V13), ("V14", V14), ("V23", V23), ("V24", V24), ("V34", V34)]:
+            if isinf(float(val)):
+                raise ValueError(
+                    f"{name} must be finite. If the setup is symmetric, use `FourQubitGatePyramidal` "
+                    "for infinite interaction strengths."
+                )
+
         warnings.warn(
             "This gate implementation does not use any symmetries. If your setup is a pyramidal arrangement of atoms, "
             "consider using `FourQubitGatePyramidal` for better performance.",
