@@ -24,12 +24,15 @@ def H_1_atom_general(
         2-level system Hamiltonian.
 
     """
+    em = jnp.exp(-1j * Xi)
+    ep = jnp.exp(1j * Xi)
+
     return jnp.array(
         [
             # |0>
-            [0.0, 0.5 * s1 * Omega * jnp.exp(-1j * Xi)],
+            [0.0, 0.5 * s1 * Omega * em],
             # |1>
-            [0.5 * s1 * Omega * jnp.exp(1j * Xi), Delta - 1j * 0.5 * decay],
+            [0.5 * s1 * Omega * ep, Delta - 1j * 0.5 * decay],
         ]
     )
 
@@ -60,34 +63,37 @@ def H_2_atoms_general(
         4-level system Hamiltonian.
 
     """
+    em = jnp.exp(-1j * Xi)
+    ep = jnp.exp(1j * Xi)
+
     return jnp.array(
         [
             # |00>
             [
                 0.0,
-                0.5 * s1 * Omega * jnp.exp(-1j * Xi),
-                0.5 * s2 * Omega * jnp.exp(-1j * Xi),
+                0.5 * s1 * Omega * em,
+                0.5 * s2 * Omega * em,
                 0.0,
             ],
             # |10>
             [
-                0.5 * s1 * Omega * jnp.exp(1j * Xi),
+                0.5 * s1 * Omega * ep,
                 Delta - 1j * 0.5 * decay,
                 0.0,
-                0.5 * s2 * Omega * jnp.exp(-1j * Xi),
+                0.5 * s2 * Omega * em,
             ],
             # |01>
             [
-                0.5 * s2 * Omega * jnp.exp(1j * Xi),
+                0.5 * s2 * Omega * ep,
                 0.0,
                 Delta - 1j * 0.5 * decay,
-                0.5 * s1 * Omega * jnp.exp(-1j * Xi),
+                0.5 * s1 * Omega * em,
             ],
             # |11>
             [
                 0.0,
-                0.5 * s2 * Omega * jnp.exp(1j * Xi),
-                0.5 * s1 * Omega * jnp.exp(1j * Xi),
+                0.5 * s2 * Omega * ep,
+                0.5 * s1 * Omega * ep,
                 V12 + 2 * Delta - 1j * decay,
             ],
         ]
@@ -127,94 +133,97 @@ def H_3_atoms_general(
         8-level system Hamiltonian.
 
     """
+    em = jnp.exp(-1j * Xi)
+    ep = jnp.exp(1j * Xi)
+
     return jnp.array(
         [
             # |000>
             [
                 0.0,
-                0.5 * s1 * Omega * jnp.exp(-1j * Xi),
-                0.5 * s2 * Omega * jnp.exp(-1j * Xi),
+                0.5 * s1 * Omega * em,
+                0.5 * s2 * Omega * em,
                 0.0,
-                0.5 * s3 * Omega * jnp.exp(-1j * Xi),
+                0.5 * s3 * Omega * em,
                 0.0,
                 0.0,
                 0.0,
             ],
             # |100>
             [
-                0.5 * s1 * Omega * jnp.exp(1j * Xi),
+                0.5 * s1 * Omega * ep,
                 Delta - 1j * 0.5 * decay,
                 0.0,
-                0.5 * s2 * Omega * jnp.exp(-1j * Xi),
+                0.5 * s2 * Omega * em,
                 0.0,
-                0.5 * s3 * Omega * jnp.exp(-1j * Xi),
+                0.5 * s3 * Omega * em,
                 0.0,
                 0.0,
             ],
             # |010>
             [
-                0.5 * s2 * Omega * jnp.exp(1j * Xi),
+                0.5 * s2 * Omega * ep,
                 0.0,
                 Delta - 1j * 0.5 * decay,
-                0.5 * s1 * Omega * jnp.exp(-1j * Xi),
+                0.5 * s1 * Omega * em,
                 0.0,
                 0.0,
-                0.5 * s3 * Omega * jnp.exp(-1j * Xi),
+                0.5 * s3 * Omega * em,
                 0.0,
             ],
             # |110>
             [
                 0.0,
-                0.5 * s2 * Omega * jnp.exp(1j * Xi),
-                0.5 * s1 * Omega * jnp.exp(1j * Xi),
-                V23 + 2 * Delta - 1j * decay,
+                0.5 * s2 * Omega * ep,
+                0.5 * s1 * Omega * ep,
+                V12 + 2 * Delta - 1j * decay,
                 0.0,
                 0.0,
                 0.0,
-                0.5 * s3 * Omega * jnp.exp(-1j * Xi),
+                0.5 * s3 * Omega * em,
             ],
             # |001>
             [
-                0.5 * s3 * Omega * jnp.exp(1j * Xi),
+                0.5 * s3 * Omega * ep,
                 0.0,
                 0.0,
                 0.0,
                 Delta - 1j * 0.5 * decay,
-                0.5 * s1 * Omega * jnp.exp(-1j * Xi),
-                0.5 * s2 * Omega * jnp.exp(-1j * Xi),
+                0.5 * s1 * Omega * em,
+                0.5 * s2 * Omega * em,
                 0.0,
             ],
             # |101>
             [
                 0.0,
-                0.5 * s3 * Omega * jnp.exp(1j * Xi),
+                0.5 * s3 * Omega * ep,
                 0.0,
                 0.0,
-                0.5 * s1 * Omega * jnp.exp(1j * Xi),
+                0.5 * s1 * Omega * ep,
                 V13 + 2 * Delta - 1j * decay,
                 0.0,
-                0.5 * s2 * Omega * jnp.exp(-1j * Xi),
+                0.5 * s2 * Omega * em,
             ],
             # |011>
             [
                 0.0,
                 0.0,
-                0.5 * s3 * Omega * jnp.exp(1j * Xi),
+                0.5 * s3 * Omega * ep,
                 0.0,
-                0.5 * s2 * Omega * jnp.exp(1j * Xi),
+                0.5 * s2 * Omega * ep,
                 0.0,
-                V12 + 2 * Delta - 1j * decay,
-                0.5 * s1 * Omega * jnp.exp(-1j * Xi),
+                V23 + 2 * Delta - 1j * decay,
+                0.5 * s1 * Omega * em,
             ],
             # |111>
             [
                 0.0,
                 0.0,
                 0.0,
-                0.5 * s3 * Omega * jnp.exp(1j * Xi),
+                0.5 * s3 * Omega * ep,
                 0.0,
-                0.5 * s2 * Omega * jnp.exp(1j * Xi),
-                0.5 * s1 * Omega * jnp.exp(1j * Xi),
+                0.5 * s2 * Omega * ep,
+                0.5 * s1 * Omega * ep,
                 V12 + V23 + V13 + 3 * Delta - 1j * 1.5 * decay,
             ],
         ]
@@ -263,44 +272,312 @@ def H_4_atoms_general(
     """
     em = jnp.exp(-1j * Xi)
     ep = jnp.exp(1j * Xi)
-    s = (s1, s2, s3, s4)
-    V = {(1, 2): V12, (1, 3): V13, (1, 4): V14, (2, 3): V23, (2, 4): V24, (3, 4): V34}
 
-    H = [[0.0 for _ in range(16)] for _ in range(16)]
-
-    for i in range(16):
-        # Bits a1..a4 (a1 is LSB / first ket digit)
-        a1 = (i >> 0) & 1
-        a2 = (i >> 1) & 1
-        a3 = (i >> 2) & 1
-        a4 = (i >> 3) & 1
-        bits = (a1, a2, a3, a4)
-
-        n_exc = a1 + a2 + a3 + a4
-        diag = n_exc * Delta - 1j * 0.5 * n_exc * decay
-
-        # Add pairwise interactions for simultaneously excited atoms
-        if a1 and a2:
-            diag = diag + V[(1, 2)]
-        if a1 and a3:
-            diag = diag + V[(1, 3)]
-        if a1 and a4:
-            diag = diag + V[(1, 4)]
-        if a2 and a3:
-            diag = diag + V[(2, 3)]
-        if a2 and a4:
-            diag = diag + V[(2, 4)]
-        if a3 and a4:
-            diag = diag + V[(3, 4)]
-
-        H[i][i] = diag
-
-        # Laser couplings
-        for k in range(4):  # k=0..3 corresponds to atom 1..4
-            if bits[k] == 0:
-                j = i | (1 << k)  # excite atom k+1
-                amp = 0.5 * s[k] * Omega
-                H[i][j] = amp * em
-                H[j][i] = amp * ep
-
-    return jnp.array(H)
+    return jnp.array(
+        [
+            # |0000>
+            [
+                0.0,
+                0.5 * s1 * Omega * em,
+                0.5 * s2 * Omega * em,
+                0.0,
+                0.5 * s3 * Omega * em,
+                0.0,
+                0.0,
+                0.0,
+                0.5 * s4 * Omega * em,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+            ],
+            # |1000>
+            [
+                0.5 * s1 * Omega * ep,
+                Delta - 1j * 0.5 * decay,
+                0.0,
+                0.5 * s2 * Omega * em,
+                0.0,
+                0.5 * s3 * Omega * em,
+                0.0,
+                0.0,
+                0.0,
+                0.5 * s4 * Omega * em,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+            ],
+            # |0100>
+            [
+                0.5 * s2 * Omega * ep,
+                0.0,
+                Delta - 1j * 0.5 * decay,
+                0.5 * s1 * Omega * em,
+                0.0,
+                0.0,
+                0.5 * s3 * Omega * em,
+                0.0,
+                0.0,
+                0.0,
+                0.5 * s4 * Omega * em,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+            ],
+            # |1100>
+            [
+                0.0,
+                0.5 * s2 * Omega * ep,
+                0.5 * s1 * Omega * ep,
+                V12 + 2 * Delta - 1j * decay,
+                0.0,
+                0.0,
+                0.0,
+                0.5 * s3 * Omega * em,
+                0.0,
+                0.0,
+                0.0,
+                0.5 * s4 * Omega * em,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+            ],
+            # |0010>
+            [
+                0.5 * s3 * Omega * ep,
+                0.0,
+                0.0,
+                0.0,
+                Delta - 1j * 0.5 * decay,
+                0.5 * s1 * Omega * em,
+                0.5 * s2 * Omega * em,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.5 * s4 * Omega * em,
+                0.0,
+                0.0,
+                0.0,
+            ],
+            # |1010>
+            [
+                0.0,
+                0.5 * s3 * Omega * ep,
+                0.0,
+                0.0,
+                0.5 * s1 * Omega * ep,
+                V13 + 2 * Delta - 1j * decay,
+                0.0,
+                0.5 * s2 * Omega * em,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.5 * s4 * Omega * em,
+                0.0,
+                0.0,
+            ],
+            # |0110>
+            [
+                0.0,
+                0.0,
+                0.5 * s3 * Omega * ep,
+                0.0,
+                0.5 * s2 * Omega * ep,
+                0.0,
+                V23 + 2 * Delta - 1j * decay,
+                0.5 * s1 * Omega * em,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.5 * s4 * Omega * em,
+                0.0,
+            ],
+            # |1110>
+            [
+                0.0,
+                0.0,
+                0.0,
+                0.5 * s3 * Omega * ep,
+                0.0,
+                0.5 * s2 * Omega * ep,
+                0.5 * s1 * Omega * ep,
+                V12 + V13 + V23 + 3 * Delta - 1j * 1.5 * decay,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.5 * s4 * Omega * em,
+            ],
+            # |0001>
+            [
+                0.5 * s4 * Omega * ep,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                Delta - 1j * 0.5 * decay,
+                0.5 * s1 * Omega * em,
+                0.5 * s2 * Omega * em,
+                0.0,
+                0.5 * s3 * Omega * em,
+                0.0,
+                0.0,
+                0.0,
+            ],
+            # |1001>
+            [
+                0.0,
+                0.5 * s4 * Omega * ep,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.5 * s1 * Omega * ep,
+                V14 + 2 * Delta - 1j * decay,
+                0.0,
+                0.5 * s2 * Omega * em,
+                0.0,
+                0.5 * s3 * Omega * em,
+                0.0,
+                0.0,
+            ],
+            # |0101>
+            [
+                0.0,
+                0.0,
+                0.5 * s4 * Omega * ep,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.5 * s2 * Omega * ep,
+                0.0,
+                V24 + 2 * Delta - 1j * decay,
+                0.5 * s1 * Omega * em,
+                0.0,
+                0.0,
+                0.5 * s3 * Omega * em,
+                0.0,
+            ],
+            # |1101>
+            [
+                0.0,
+                0.0,
+                0.0,
+                0.5 * s4 * Omega * ep,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.5 * s2 * Omega * ep,
+                0.5 * s1 * Omega * ep,
+                V12 + V14 + V24 + 3 * Delta - 1j * 1.5 * decay,
+                0.0,
+                0.0,
+                0.0,
+                0.5 * s3 * Omega * em,
+            ],
+            # |0011>
+            [
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.5 * s4 * Omega * ep,
+                0.0,
+                0.0,
+                0.0,
+                0.5 * s3 * Omega * ep,
+                0.0,
+                0.0,
+                0.0,
+                V34 + 2 * Delta - 1j * decay,
+                0.5 * s1 * Omega * em,
+                0.5 * s2 * Omega * em,
+                0.0,
+            ],
+            # |1011>
+            [
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.5 * s4 * Omega * ep,
+                0.0,
+                0.0,
+                0.0,
+                0.5 * s3 * Omega * ep,
+                0.0,
+                0.0,
+                0.5 * s1 * Omega * ep,
+                V13 + V14 + V34 + 3 * Delta - 1j * 1.5 * decay,
+                0.0,
+                0.5 * s2 * Omega * em,
+            ],
+            # |0111>
+            [
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.5 * s4 * Omega * ep,
+                0.0,
+                0.0,
+                0.0,
+                0.5 * s3 * Omega * ep,
+                0.0,
+                0.5 * s2 * Omega * ep,
+                0.0,
+                V23 + V24 + V34 + 3 * Delta - 1j * 1.5 * decay,
+                0.5 * s1 * Omega * em,
+            ],
+            # |1111>
+            [
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.5 * s4 * Omega * ep,
+                0.0,
+                0.0,
+                0.0,
+                0.5 * s3 * Omega * ep,
+                0.0,
+                0.5 * s2 * Omega * ep,
+                0.5 * s1 * Omega * ep,
+                V12 + V13 + V14 + V23 + V24 + V34 + 4 * Delta - 1j * 2 * decay,
+            ],
+        ]
+    )
