@@ -23,14 +23,31 @@ An object is constructed by specifying:
 
 2. the specific target gate angles.
 
+Symmetric
+~~~~~~~~~
+
+The following classes implement gate systems corresponding to specific symmetric atom arrangements. Each atoms is driven with the same Rabi frequency.
+
 .. autoclass:: rydopt.gates.TwoQubitGate
    :no-members:
 
 .. autoclass:: rydopt.gates.ThreeQubitGateIsosceles
    :no-members:
 
+.. autoclass:: rydopt.gates.FourQubitGatePyramidal
+   :no-members:
+
+Asymmetric
+~~~~~~~~~~
+
+The following classes work for arbitrary atoms arrangements. Optionally, each atom can be driven with an individually scaled
+Rabi frequency, specified by the per-atom scaling factors ``s1``, ``s2``, … .
+
+.. autoclass:: rydopt.gates.TwoQubitGateAsym
+   :no-members:
+
 .. autoclass:: rydopt.gates.ThreeQubitGateAsym
    :no-members:
 
-.. autoclass:: rydopt.gates.FourQubitGatePyramidal
+.. autoclass:: rydopt.gates.FourQubitGateAsym
    :no-members:
