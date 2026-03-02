@@ -36,6 +36,7 @@ autodoc_typehints = "description"
 autodoc_default_options = {
     "member-order": "bysource",
     "class-doc-from": "class",
+    "imported-members": False,
 }
 
 autodoc_type_aliases = {
