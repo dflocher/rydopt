@@ -172,3 +172,23 @@ def test_fixed() -> None:
     fidelity = ro.simulation.process_fidelity(gate, pulse, r.params)
     assert np.allclose(abs(1 - fidelity), r.infidelity, rtol=1e-12)
     assert np.allclose(fidelity, 1, rtol=1e-7)
+
+
+@pytest.mark.optimization
+def test_adam_average_gate_fidelity() -> None:
+    # Gate
+    gate = ro.gates.TwoQubitGate(phi=None, theta=np.pi, Vnn=float("inf"), decay=0)
+
+    # Pulse
+    pulse = ro.pulses.PulseAnsatz(detuning_ansatz=ro.pulses.const, phase_ansatz=ro.pulses.sin_crab)
+
+    # Initial parameters
+    initial_params = (7.6, [-0.1], [1.8, -0.6], [])
+
+    # Run optimization using average gate fidelity
+    r = ro.optimization.optimize(gate, pulse, initial_params, num_steps=200, tol=1e-7, fidelity_type="average_gate")
+
+    # Verify the fidelity matches what the result reports
+    fidelity = ro.simulation.average_gate_fidelity(gate, pulse, r.params)
+    assert np.allclose(abs(1 - fidelity), r.infidelity, rtol=1e-12)
+    assert np.allclose(fidelity, 1, rtol=1e-7)
