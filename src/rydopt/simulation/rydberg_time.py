@@ -111,7 +111,7 @@ def rydberg_time(gate: RydbergSystem, pulse: PulseAnsatzLike, params: PulseParam
             args=(params, idx),
             stepsize_controller=stepsize_controller,
             saveat=saveat,
-            max_steps=100_000,
+            max_steps=200_000,
         )
         return jnp.real(sol.ys[1])
 

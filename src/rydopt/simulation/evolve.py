@@ -101,7 +101,7 @@ def evolve(gate: Evolvable, pulse: PulseAnsatzLike, params: PulseParams, tol: fl
             args=(params, idx),
             stepsize_controller=stepsize_controller,
             saveat=saveat,
-            max_steps=20_000,
+            max_steps=200_000,
         )
         return sol.ys[0]
 
@@ -148,7 +148,7 @@ def _evolve_optimized_for_gpus(
         args=None,
         stepsize_controller=stepsize_controller,
         saveat=saveat,
-        max_steps=10_000,
+        max_steps=200_000,
     )
 
     return tuple(psi_t1[0] for psi_t1 in sol.ys)
