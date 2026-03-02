@@ -14,6 +14,7 @@ from typing import Generic, Literal, Protocol, TypeVar, cast, overload
 import jax
 import jax.numpy as jnp
 import numpy as np
+import numpy.typing as npt
 import optax
 from tqdm.auto import tqdm
 
@@ -192,12 +193,12 @@ def _spec(nested: PulseParams | FixedPulseParams) -> tuple[int, ...]:
     return tuple(np.cumsum([len(p) if isinstance(p, Sized) else 1 for p in nested])[:-1].tolist())
 
 
-def _ravel(nested: PulseParams | FixedPulseParams) -> np.ndarray:
+def _ravel(nested: PulseParams | FixedPulseParams) -> npt.NDArray[np.float64]:
     first, *rest = nested
     return np.concatenate([(first,), *list(rest)])
 
 
-def _unravel(flat: np.ndarray, split_indices: tuple[int, ...]) -> PulseParams | FixedPulseParams:
+def _unravel(flat: npt.NDArray[np.float64], split_indices: tuple[int, ...]) -> PulseParams | FixedPulseParams:
     parts = np.split(flat, split_indices)
     return (parts[0][0], *tuple(parts[1:]))  # type: ignore[return-value]
 
@@ -210,8 +211,8 @@ def _unravel_jax(flat: jax.Array, split_indices: tuple[int, ...]) -> PulseParams
 def _make_infidelity(
     gate: GateSystem,
     pulse: PulseAnsatzLike,
-    params_full: np.ndarray,
-    params_trainable_indices: np.ndarray,
+    params_full: npt.NDArray[np.float64],
+    params_trainable_indices: npt.NDArray[np.intp],
     params_split_indices: tuple[int, ...],
     tol: float,
     fidelity_type: FidelityType = "process",
@@ -368,9 +369,9 @@ _adam_scan: Callable[..., AdamScanReturn] = cast(
 def _adam_optimize(
     gate: GateSystem,
     pulse: PulseAnsatzLike,
-    params_full: np.ndarray,
-    params_trainable: np.ndarray,
-    params_trainable_indices: np.ndarray,
+    params_full: npt.NDArray[np.float64],
+    params_trainable: npt.NDArray[np.float64],
+    params_trainable_indices: npt.NDArray[np.intp],
     params_split_indices: tuple,
     num_steps: int,
     min_converged_initializations: int,
@@ -381,7 +382,13 @@ def _adam_optimize(
     progress_queue: _ProgressQueue | None,
     return_history: bool,
     fidelity_type: FidelityType = "process",
-) -> tuple[np.ndarray, np.ndarray, np.ndarray | None, np.ndarray | None, np.ndarray | None]:
+) -> tuple[
+    npt.NDArray[np.float64],
+    npt.NDArray[np.float64],
+    npt.NDArray[np.float64] | None,
+    npt.NDArray[np.float64] | None,
+    npt.NDArray[np.float64] | None,
+]:
     device_ctx = nullcontext() if device_idx is None else jax.default_device(jax.devices()[device_idx])
 
     progress_hook = _ProgressBar.make_progress_hook(progress_queue)
@@ -455,7 +462,7 @@ def optimize(
     fidelity_type: FidelityType = ...,
     return_history: Literal[True],
     verbose: bool = ...,
-) -> OptimizationResult[PulseParams, float, np.ndarray]: ...
+) -> OptimizationResult[PulseParams, float, npt.NDArray[np.float64]]: ...
 
 
 @overload
@@ -486,7 +493,7 @@ def optimize(
     fidelity_type: FidelityType = "process",
     return_history: bool = False,
     verbose: bool = False,
-) -> OptimizationResult[PulseParams, float, np.ndarray | None]:
+) -> OptimizationResult[PulseParams, float, npt.NDArray[np.float64] | None]:
     r"""Function that optimizes an initial parameter guess in order to realize the desired gate.
 
     Example:
@@ -613,7 +620,7 @@ def multi_start_optimize(
     return_history: Literal[True],
     return_all: Literal[True],
     verbose: bool = ...,
-) -> OptimizationResult[list[PulseParams], np.ndarray, np.ndarray]: ...
+) -> OptimizationResult[list[PulseParams], npt.NDArray[np.float64], npt.NDArray[np.float64]]: ...
 
 
 @overload
@@ -635,7 +642,7 @@ def multi_start_optimize(
     return_history: Literal[False] = False,
     return_all: Literal[True],
     verbose: bool = ...,
-) -> OptimizationResult[list[PulseParams], np.ndarray, None]: ...
+) -> OptimizationResult[list[PulseParams], npt.NDArray[np.float64], None]: ...
 
 
 @overload
@@ -657,7 +664,7 @@ def multi_start_optimize(
     return_history: Literal[True],
     return_all: Literal[False] = False,
     verbose: bool = ...,
-) -> OptimizationResult[PulseParams, float, np.ndarray]: ...
+) -> OptimizationResult[PulseParams, float, npt.NDArray[np.float64]]: ...
 
 
 @overload
@@ -700,7 +707,9 @@ def multi_start_optimize(
     return_history: bool = False,
     return_all: bool = False,
     verbose: bool = False,
-) -> OptimizationResult[PulseParams | list[PulseParams], float | np.ndarray, np.ndarray | None]:
+) -> OptimizationResult[
+    PulseParams | list[PulseParams], float | npt.NDArray[np.float64], npt.NDArray[np.float64] | None
+]:
     r"""Function that optimizes multiple random initial parameter guesses in order to realize the desired gate.
 
     Example:
