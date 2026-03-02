@@ -3,6 +3,7 @@ from __future__ import annotations
 from copy import deepcopy
 from functools import partial
 
+import jax
 import jax.numpy as jnp
 from typing_extensions import Self
 
@@ -95,7 +96,7 @@ class ThreeQubitGate:  # ToDo: merge ThreeQubitGate and ThreeQubitGateIsosceles?
             partial(H_3_atoms_asym, decay=self._decay, V1=self._V1, V2=self._V2, V3=self._V3),
         )
 
-    def rydberg_population_operators_for_basis_states(self) -> tuple[jnp.ndarray, ...]:
+    def rydberg_population_operators_for_basis_states(self) -> tuple[jax.Array, ...]:
         r"""For each basis state, the Rydberg population operators count the number of Rydberg excitations on
         the diagonal.
 
@@ -111,7 +112,7 @@ class ThreeQubitGate:  # ToDo: merge ThreeQubitGate and ThreeQubitGateIsosceles?
             H_3_atoms_asym(Delta=1.0, Xi=0.0, Omega=0.0, decay=0.0, V1=0.0, V2=0.0, V3=0.0),
         )
 
-    def initial_basis_states(self) -> tuple[jnp.ndarray, ...]:
+    def initial_basis_states(self) -> tuple[jax.Array, ...]:
         r"""The initial basis states :math:`(1, 0, ...)` of appropriate dimension are
         provided.
 
@@ -127,7 +128,7 @@ class ThreeQubitGate:  # ToDo: merge ThreeQubitGate and ThreeQubitGateIsosceles?
             jnp.array([1.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j]),
         )
 
-    def process_fidelity(self, final_basis_states: tuple[jnp.ndarray, ...]) -> jnp.ndarray:
+    def process_fidelity(self, final_basis_states: tuple[jax.Array, ...]) -> jax.Array:
         r"""Given the basis states evolved under the pulse,
         this function calculates the fidelity with respect to the gate's target state, specified by the gate angles
         :math:`\phi, \, \theta, \, \ldots`
@@ -176,7 +177,7 @@ class ThreeQubitGate:  # ToDo: merge ThreeQubitGate and ThreeQubitGateIsosceles?
 
         return jnp.abs(jnp.vdot(targeted_gate, obtained_gate)) ** 2 / len(targeted_gate) ** 2
 
-    def rydberg_time(self, expectation_values_of_basis_states: tuple[jnp.ndarray, ...]) -> jnp.ndarray:
+    def rydberg_time(self, expectation_values_of_basis_states: tuple[jax.Array, ...]) -> jax.Array:
         r"""Given the expectation values of Rydberg populations for each basis state, integrated over the full
         pulse, this function calculates the average time spent in Rydberg states during the gate.
 

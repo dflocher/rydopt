@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-import jax.numpy as jnp
+import jax
 
 from rydopt.protocols import GateSystem, PulseAnsatzLike
 from rydopt.simulation.evolve import evolve
 from rydopt.types import PulseParams
 
 
-def process_fidelity(gate: GateSystem, pulse: PulseAnsatzLike, params: PulseParams, tol: float = 1e-7) -> jnp.ndarray:
+def process_fidelity(gate: GateSystem, pulse: PulseAnsatzLike, params: PulseParams, tol: float = 1e-7) -> jax.Array:
     r"""The function provides the process fidelity of the unitary resulting from a gate pulse :math:`U(T)` w.r.t. the
     target unitary :math:`U_{\mathrm{targ}}`:
 
@@ -54,7 +54,7 @@ def process_fidelity(gate: GateSystem, pulse: PulseAnsatzLike, params: PulsePara
 
 def average_gate_fidelity(
     gate: GateSystem, pulse: PulseAnsatzLike, params: PulseParams, tol: float = 1e-7
-) -> jnp.ndarray:
+) -> jax.Array:
     r"""The function provides the average gate fidelity calculated from the process fidelity:
 
     .. math::

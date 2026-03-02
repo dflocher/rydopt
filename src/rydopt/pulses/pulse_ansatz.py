@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+import jax
 import jax.numpy as jnp
 from numpy.typing import ArrayLike
 
@@ -9,11 +10,11 @@ from rydopt.pulses.general_pulse_ansatz_functions import const
 from rydopt.types import PulseAnsatzFunction, PulseParams
 
 
-def _const_zero(t: jnp.ndarray | float, _duration: float, _ansatz_params: jnp.ndarray) -> jnp.ndarray:
+def _const_zero(t: jax.Array | float, _duration: float, _ansatz_params: jax.Array) -> jax.Array:
     return const(t, _duration, jnp.array([0.0]))
 
 
-def _const_one(t: jnp.ndarray | float, _duration: float, _ansatz_params: jnp.ndarray) -> jnp.ndarray:
+def _const_one(t: jax.Array | float, _duration: float, _ansatz_params: jax.Array) -> jax.Array:
     return const(t, _duration, jnp.array([1.0]))
 
 
@@ -59,8 +60,8 @@ class PulseAnsatz:
     rabi_ansatz: PulseAnsatzFunction = _const_one
 
     def evaluate_pulse_functions(
-        self, t: jnp.ndarray | float, params: PulseParams
-    ) -> tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray]:
+        self, t: jax.Array | float, params: PulseParams
+    ) -> tuple[jax.Array, jax.Array, jax.Array]:
         r"""Evaluate the detuning, phase, and the rabi sweeps for fixed
         parameters at the given times.
 
@@ -176,7 +177,7 @@ class TwoPhotonPulseAnsatz:
     decay: float = 0.0
 
     @staticmethod
-    def _split_1d(packed_params: ArrayLike, lower_count: int) -> tuple[jnp.ndarray, jnp.ndarray]:
+    def _split_1d(packed_params: ArrayLike, lower_count: int) -> tuple[jax.Array, jax.Array]:
         packed_params = jnp.asarray(packed_params)
         return packed_params[:lower_count], packed_params[lower_count:]
 
@@ -194,8 +195,8 @@ class TwoPhotonPulseAnsatz:
         return lower_params, upper_params
 
     def evaluate_pulse_functions(
-        self, t: jnp.ndarray | float, params: PulseParams
-    ) -> tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray]:
+        self, t: jax.Array | float, params: PulseParams
+    ) -> tuple[jax.Array, jax.Array, jax.Array]:
         r"""Evaluate the effective two-photon detuning, phase, and the rabi sweeps for fixed
         parameters at the given times.
 

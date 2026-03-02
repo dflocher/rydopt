@@ -9,7 +9,7 @@ from rydopt.protocols import PulseAnsatzLike, RydbergSystem
 from rydopt.types import HamiltonianFunction, PulseParams
 
 
-def rydberg_time(gate: RydbergSystem, pulse: PulseAnsatzLike, params: PulseParams, tol: float = 1e-7) -> jnp.ndarray:
+def rydberg_time(gate: RydbergSystem, pulse: PulseAnsatzLike, params: PulseParams, tol: float = 1e-7) -> jax.Array:
     r"""The function determines the total time spent in Rydberg states during a gate pulse:
 
     .. math::
@@ -59,13 +59,13 @@ def rydberg_time(gate: RydbergSystem, pulse: PulseAnsatzLike, params: PulseParam
     # Schrödinger equation for the basis states. The Hamiltonian is chosen via lax.switch
     # based on the index of the basis state, with padding to max_dim × max_dim.
     def apply_hamiltonian(
-        t: jnp.ndarray | float,
+        t: jax.Array | float,
         params: PulseParams,
-        y: tuple[jnp.ndarray, jnp.ndarray],
+        y: tuple[jax.Array, jax.Array],
         hamiltonian: HamiltonianFunction,
-        rydberg_operator: jnp.ndarray,
+        rydberg_operator: jax.Array,
         dim: int,
-    ) -> tuple[jnp.ndarray, jnp.ndarray]:
+    ) -> tuple[jax.Array, jax.Array]:
         values = pulse.evaluate_pulse_functions(t, params)
         psi, _expectation = y
         psi_small = psi[:dim]
@@ -86,10 +86,10 @@ def rydberg_time(gate: RydbergSystem, pulse: PulseAnsatzLike, params: PulseParam
     )
 
     def schroedinger_eq(
-        t: jnp.ndarray | float,
-        y: tuple[jnp.ndarray, jnp.ndarray],
+        t: jax.Array | float,
+        y: tuple[jax.Array, jax.Array],
         args: tuple[PulseParams, int],
-    ) -> tuple[jnp.ndarray, jnp.ndarray]:
+    ) -> tuple[jax.Array, jax.Array]:
         params, idx = args
         return jax.lax.switch(idx, branches, t, params, y)
 
@@ -99,7 +99,7 @@ def rydberg_time(gate: RydbergSystem, pulse: PulseAnsatzLike, params: PulseParam
     stepsize_controller = diffrax.PIDController(rtol=0.1 * tol, atol=0.1 * tol)
     saveat = diffrax.SaveAt(t1=True)
 
-    def propagate(args: tuple[jnp.ndarray, int]) -> jnp.ndarray:
+    def propagate(args: tuple[jax.Array, int]) -> jax.Array:
         psi_initial, idx = args
         sol = diffrax.diffeqsolve(
             term,

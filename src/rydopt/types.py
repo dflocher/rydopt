@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 
-import jax.numpy as jnp
+import jax
 from numpy.typing import ArrayLike
 
 PulseParams = tuple[float, ArrayLike, ArrayLike, ArrayLike]
@@ -10,10 +10,10 @@ PulseParams = tuple[float, ArrayLike, ArrayLike, ArrayLike]
 FixedPulseParams = tuple[bool, ArrayLike, ArrayLike, ArrayLike]
 
 PulseAnsatzFunction = Callable[
-    [jnp.ndarray | float, float, jnp.ndarray],
-    jnp.ndarray,
+    [jax.Array | float, float, jax.Array],
+    jax.Array,
 ]
 
-PulseFunction = Callable[[jnp.ndarray | float], jnp.ndarray]
+PulseFunction = Callable[[jax.Array | float], jax.Array]
 
-HamiltonianFunction = Callable[[jnp.ndarray | float, jnp.ndarray | float, jnp.ndarray | float], jnp.ndarray]
+HamiltonianFunction = Callable[[jax.Array | float, jax.Array | float, jax.Array | float], jax.Array]

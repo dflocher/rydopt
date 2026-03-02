@@ -9,7 +9,7 @@ from rydopt.protocols import Evolvable, PulseAnsatzLike
 from rydopt.types import HamiltonianFunction, PulseParams
 
 
-def evolve(gate: Evolvable, pulse: PulseAnsatzLike, params: PulseParams, tol: float = 1e-7) -> tuple[jnp.ndarray, ...]:
+def evolve(gate: Evolvable, pulse: PulseAnsatzLike, params: PulseParams, tol: float = 1e-7) -> tuple[jax.Array, ...]:
     r"""The function performs the time evolution of all initial states :math:`|\psi_i(0)\rangle` (specified in the gate
     object), under the pulse Hamiltonian :math:`H`.
 
@@ -64,12 +64,12 @@ def evolve(gate: Evolvable, pulse: PulseAnsatzLike, params: PulseParams, tol: fl
     # Schrödinger equation for the basis states. The Hamiltonian is chosen via lax.switch
     # based on the index of the basis state, with padding to max_dim × max_dim.
     def apply_hamiltonian(
-        t: jnp.ndarray | float,
+        t: jax.Array | float,
         params: PulseParams,
-        psi: jnp.ndarray,
+        psi: jax.Array,
         hamiltonian: HamiltonianFunction,
         dim: int,
-    ) -> jnp.ndarray:
+    ) -> jax.Array:
         values = pulse.evaluate_pulse_functions(t, params)
         dpsi_small = -1j * hamiltonian(*values) @ psi[:dim]
         return jnp.pad(dpsi_small, (0, psi.shape[0] - dim))
@@ -79,7 +79,7 @@ def evolve(gate: Evolvable, pulse: PulseAnsatzLike, params: PulseParams, tol: fl
         for h, d in zip(gate.hamiltonian_functions_for_basis_states(), dims)
     )
 
-    def schroedinger_eq(t: jnp.ndarray | float, psi: jnp.ndarray, args: tuple[PulseParams, int]) -> jnp.ndarray:
+    def schroedinger_eq(t: jax.Array | float, psi: jax.Array, args: tuple[PulseParams, int]) -> jax.Array:
         params, idx = args
         return jax.lax.switch(idx, branches, t, params, psi)
 
@@ -89,7 +89,7 @@ def evolve(gate: Evolvable, pulse: PulseAnsatzLike, params: PulseParams, tol: fl
     stepsize_controller = diffrax.PIDController(rtol=0.1 * tol, atol=0.1 * tol)
     saveat = diffrax.SaveAt(t1=True)
 
-    def propagate(args: tuple[jnp.ndarray, int]) -> jnp.ndarray:
+    def propagate(args: tuple[jax.Array, int]) -> jax.Array:
         psi_initial, idx = args
         sol = diffrax.diffeqsolve(
             term,
@@ -117,17 +117,17 @@ def evolve(gate: Evolvable, pulse: PulseAnsatzLike, params: PulseParams, tol: fl
 
 def _evolve_optimized_for_gpus(
     gate: Evolvable, pulse: PulseAnsatzLike, params: PulseParams, tol: float = 1e-7
-) -> tuple[jnp.ndarray, ...]:
+) -> tuple[jax.Array, ...]:
     # When we import diffrax, at least one jnp array is allocated (see optimistix/_misc.py, line 138). Thus,
     # if we change the default device after we have imported diffrax, some memory is allocated on the
     # wrong device. Hence, we defer the import of diffrax to the latest time possible.
     import diffrax
 
     def schroedinger_eq(
-        t: jnp.ndarray | float,
-        psi_tuple: tuple[jnp.ndarray, ...],
+        t: jax.Array | float,
+        psi_tuple: tuple[jax.Array, ...],
         _: object,
-    ) -> tuple[jnp.ndarray, ...]:
+    ) -> tuple[jax.Array, ...]:
         values = pulse.evaluate_pulse_functions(t, params)
         return tuple(
             -1j * (h(*values) @ psi) for h, psi in zip(gate.hamiltonian_functions_for_basis_states(), psi_tuple)

@@ -1,6 +1,6 @@
 from collections.abc import Callable
 
-import jax.numpy as jnp
+import jax
 import numpy as np
 import qutip as qt
 
@@ -26,13 +26,13 @@ def _setup_hamiltonian(
     pulse: PulseAnsatzLike,
     params: PulseParams,
 ) -> tuple[Callable[[float], qt.Qobj], qt.Qobj, qt.Qobj]:
-    def detuning_pulse(t: jnp.ndarray | float) -> jnp.ndarray:
+    def detuning_pulse(t: jax.Array | float) -> jax.Array:
         return pulse.evaluate_pulse_functions(t, params)[0]
 
-    def phase_pulse(t: jnp.ndarray | float) -> jnp.ndarray:
+    def phase_pulse(t: jax.Array | float) -> jax.Array:
         return pulse.evaluate_pulse_functions(t, params)[1]
 
-    def rabi_pulse(t: jnp.ndarray | float) -> jnp.ndarray:
+    def rabi_pulse(t: jax.Array | float) -> jax.Array:
         return pulse.evaluate_pulse_functions(t, params)[2]
 
     if isinstance(gate, TwoQubitGate):

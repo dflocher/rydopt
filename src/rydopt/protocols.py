@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Protocol, runtime_checkable
 
-import jax.numpy as jnp
+import jax
 from typing_extensions import Self
 
 from rydopt.types import HamiltonianFunction, PulseParams
@@ -15,7 +15,7 @@ class Evolvable(Protocol):
 
     """
 
-    def initial_basis_states(self) -> tuple[jnp.ndarray, ...]:
+    def initial_basis_states(self) -> tuple[jax.Array, ...]:
         r"""The initial basis states :math:`(1, 0, ...)` of appropriate dimension.
 
         Returns:
@@ -49,7 +49,7 @@ class GateSystem(Evolvable, Protocol):
     and :func:`rydopt.characterization.analyze_gate_qutip`.
     """
 
-    def process_fidelity(self, final_basis_states: tuple[jnp.ndarray, ...]) -> jnp.ndarray:
+    def process_fidelity(self, final_basis_states: tuple[jax.Array, ...]) -> jax.Array:
         r"""Given the basis states evolved under the pulse,
         this function calculates the fidelity with respect to the gate's target state, specified by the gate angles
         :math:`\phi, \, \theta, \, \ldots`
@@ -83,7 +83,7 @@ class RydbergSystem(Evolvable, Protocol):
     and :func:`rydopt.characterization.analyze_gate_qutip`.
     """
 
-    def rydberg_population_operators_for_basis_states(self) -> tuple[jnp.ndarray, ...]:
+    def rydberg_population_operators_for_basis_states(self) -> tuple[jax.Array, ...]:
         r"""For each basis state, the Rydberg population operators count the number of Rydberg excitations on
         the diagonal.
 
@@ -93,7 +93,7 @@ class RydbergSystem(Evolvable, Protocol):
         """
         ...
 
-    def rydberg_time(self, expectation_values_of_basis_states: tuple[jnp.ndarray, ...]) -> jnp.ndarray:
+    def rydberg_time(self, expectation_values_of_basis_states: tuple[jax.Array, ...]) -> jax.Array:
         r"""Given the expectation values of Rydberg populations for each basis state, integrated over the full
         pulse, this function calculates the average time spent in Rydberg states during the gate.
 
@@ -123,7 +123,7 @@ class PulseAnsatzLike(Protocol):
     """Minimal interface for pulse ansatz objects used in simulation and optimization."""
 
     def evaluate_pulse_functions(
-        self, t: jnp.ndarray | float, params: PulseParams
-    ) -> tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray]:
+        self, t: jax.Array | float, params: PulseParams
+    ) -> tuple[jax.Array, jax.Array, jax.Array]:
         """Evaluate detuning, phase, and Rabi pulse functions at time samples ``t``."""
         ...

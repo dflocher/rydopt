@@ -1,7 +1,8 @@
+import jax
 import jax.numpy as jnp
 
 
-def H_k_atoms_perfect_blockade(Delta: float, Xi: float, Omega: float, decay: float, k: int) -> jnp.ndarray:
+def H_k_atoms_perfect_blockade(Delta: float, Xi: float, Omega: float, decay: float, k: int) -> jax.Array:
     r""":math:`k` atoms, infinite Rydberg interaction between all atoms:
 
     .. image:: ../_static/k_atoms_perfect_blockade.png
@@ -25,7 +26,7 @@ def H_k_atoms_perfect_blockade(Delta: float, Xi: float, Omega: float, decay: flo
     )
 
 
-def H_2_atoms(Delta: float, Xi: float, Omega: float, decay: float, V: float) -> jnp.ndarray:
+def H_2_atoms(Delta: float, Xi: float, Omega: float, decay: float, V: float) -> jax.Array:
     r"""Two atoms, Rydberg interaction :math:`V` between atoms:
 
     .. image:: ../_static/2_atoms.png
@@ -58,7 +59,7 @@ def H_2_atoms(Delta: float, Xi: float, Omega: float, decay: float, V: float) -> 
     )
 
 
-def H_3_atoms_inf_V(Delta: float, Xi: float, Omega: float, decay: float, V: float) -> jnp.ndarray:
+def H_3_atoms_inf_V(Delta: float, Xi: float, Omega: float, decay: float, V: float) -> jax.Array:
     r"""Three atoms arranged in an isosceles triangle,
     infinite Rydberg interaction between nearest neighbours, Rydberg interaction :math:`V` between next-nearest
     neighbours:
@@ -101,7 +102,7 @@ def H_3_atoms_inf_V(Delta: float, Xi: float, Omega: float, decay: float, V: floa
     )
 
 
-def H_3_atoms_symmetric(Delta: float, Xi: float, Omega: float, decay: float, V: float) -> jnp.ndarray:
+def H_3_atoms_symmetric(Delta: float, Xi: float, Omega: float, decay: float, V: float) -> jax.Array:
     r"""Three atoms arranged in an equilateral triangle,
     Rydberg interaction :math:`V` between atoms:
 
@@ -143,7 +144,7 @@ def H_3_atoms_symmetric(Delta: float, Xi: float, Omega: float, decay: float, V: 
     )
 
 
-def H_3_atoms(Delta: float, Xi: float, Omega: float, decay: float, Vnn: float, Vnnn: float) -> jnp.ndarray:
+def H_3_atoms(Delta: float, Xi: float, Omega: float, decay: float, Vnn: float, Vnnn: float) -> jax.Array:
     r"""Three atoms arranged in an isosceles triangle,
     Rydberg interaction :math:`V_{\mathrm{nn}}` between nearest neighbours, Rydberg interaction
     :math:`V_{\mathrm{nnn}}` between next-nearest neighbours:
@@ -216,7 +217,7 @@ def H_3_atoms(Delta: float, Xi: float, Omega: float, decay: float, Vnn: float, V
     )
 
 
-def H_3_atoms_asym(Delta: float, Xi: float, Omega: float, decay: float, V1: float, V2: float, V3: float) -> jnp.ndarray:
+def H_3_atoms_asym(Delta: float, Xi: float, Omega: float, decay: float, V1: float, V2: float, V3: float) -> jax.Array:
     r"""Three atoms arranged arbitrarily,
     Rydberg interactions :math:`V_{1}`, :math:`V_{2}` and :math:`V_{3}`:
 
@@ -319,7 +320,7 @@ def H_3_atoms_asym(Delta: float, Xi: float, Omega: float, decay: float, V1: floa
     )
 
 
-def H_4_atoms_inf_V(Delta: float, Xi: float, Omega: float, decay: float, V: float) -> jnp.ndarray:
+def H_4_atoms_inf_V(Delta: float, Xi: float, Omega: float, decay: float, V: float) -> jax.Array:
     r"""Four atoms arranged in a pyramid,
     infinite Rydberg interaction between nearest neighbours, Rydberg interaction :math:`V` between
     next-nearest neighbours:
@@ -372,7 +373,7 @@ def H_4_atoms_inf_V(Delta: float, Xi: float, Omega: float, decay: float, V: floa
     )
 
 
-def H_4_atoms_symmetric(Delta: float, Xi: float, Omega: float, decay: float, V: float) -> jnp.ndarray:
+def H_4_atoms_symmetric(Delta: float, Xi: float, Omega: float, decay: float, V: float) -> jax.Array:
     r"""Four atoms arranged in a tetrahedron,
     Rydberg interaction :math:`V` between atoms:
 
@@ -424,7 +425,7 @@ def H_4_atoms_symmetric(Delta: float, Xi: float, Omega: float, decay: float, V: 
     )
 
 
-def H_4_atoms(Delta: float, Xi: float, Omega: float, decay: float, Vnn: float, Vnnn: float) -> jnp.ndarray:
+def H_4_atoms(Delta: float, Xi: float, Omega: float, decay: float, Vnn: float, Vnnn: float) -> jax.Array:
     r"""Four atoms arranged in a pyramid,
     Rydberg interaction :math:`V_{\mathrm{nn}}` between nearest neighbours, Rydberg interaction
     :math:`V_{\mathrm{nnn}}` between next-nearest neighbours:

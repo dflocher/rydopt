@@ -17,7 +17,7 @@ def test_reproducing_evered() -> None:
 
     gate = ro.gates.TwoQubitGate(phi=None, theta=np.pi, Vnn=450, decay=0)
 
-    def evered_phase(t: jnp.ndarray | float, _duration: float, ansatz_params: jnp.ndarray) -> jnp.ndarray:
+    def evered_phase(t: jax.Array | float, _duration: float, ansatz_params: jax.Array) -> jax.Array:
         a, omega, phi0 = ansatz_params
         return a * jnp.cos(omega * t - phi0)
 

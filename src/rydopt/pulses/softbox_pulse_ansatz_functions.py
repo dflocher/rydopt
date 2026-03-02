@@ -1,12 +1,13 @@
+import jax
 import jax.nn as jnn
 import jax.numpy as jnp
 
 
 def softbox_hann(
-    t: jnp.ndarray | float,
+    t: jax.Array | float,
     duration: float,
-    ansatz_params: jnp.ndarray,
-) -> jnp.ndarray:
+    ansatz_params: jax.Array,
+) -> jax.Array:
     r"""Soft-box pulse ansatz with Hann-shaped edges, also known as Tukey window.
 
     The Hann window on :math:`\xi \in [0, 1]` is
@@ -55,7 +56,7 @@ def softbox_hann(
     edge_duration = duration * alpha / 2.0
 
     # 2-term Hann window
-    def hann(s: jnp.ndarray) -> jnp.ndarray:
+    def hann(s: jax.Array) -> jax.Array:
         return 0.5 - 0.5 * jnp.cos(2.0 * jnp.pi * s)
 
     # Determine edge regions
@@ -87,10 +88,10 @@ def softbox_hann(
 
 
 def softbox_blackman(
-    t: jnp.ndarray | float,
+    t: jax.Array | float,
     duration: float,
-    ansatz_params: jnp.ndarray,
-) -> jnp.ndarray:
+    ansatz_params: jax.Array,
+) -> jax.Array:
     r"""Soft-box pulse ansatz with Blackman-shaped edges.
 
     The Blackman window on :math:`\xi \in [0, 1]` is
@@ -139,7 +140,7 @@ def softbox_blackman(
     edge_duration = duration * alpha / 2.0
 
     # 3-term Blackman window
-    def blackman(s: jnp.ndarray) -> jnp.ndarray:
+    def blackman(s: jax.Array) -> jax.Array:
         a0, a1, a2 = 0.42, 0.5, 0.08
         return a0 - a1 * jnp.cos(2.0 * jnp.pi * s) + a2 * jnp.cos(4.0 * jnp.pi * s)
 
@@ -172,10 +173,10 @@ def softbox_blackman(
 
 
 def softbox_nuttall(
-    t: jnp.ndarray | float,
+    t: jax.Array | float,
     duration: float,
-    ansatz_params: jnp.ndarray,
-) -> jnp.ndarray:
+    ansatz_params: jax.Array,
+) -> jax.Array:
     r"""Soft-box pulse ansatz with Nuttall-shaped edges.
 
     The Nuttall window on :math:`\xi \in [0, 1]` is
@@ -223,7 +224,7 @@ def softbox_nuttall(
     edge_duration = duration * alpha / 2.0
 
     # 4-term Nuttall window
-    def nuttall(s: jnp.ndarray) -> jnp.ndarray:
+    def nuttall(s: jax.Array) -> jax.Array:
         a0, a1, a2, a3 = 0.355768, 0.487396, 0.144232, 0.012604
         return a0 - a1 * jnp.cos(2.0 * jnp.pi * s) + a2 * jnp.cos(4.0 * jnp.pi * s) - a3 * jnp.cos(6.0 * jnp.pi * s)
 
@@ -256,10 +257,10 @@ def softbox_nuttall(
 
 
 def softbox_planck(
-    t: jnp.ndarray | float,
+    t: jax.Array | float,
     duration: float,
-    ansatz_params: jnp.ndarray,
-) -> jnp.ndarray:
+    ansatz_params: jax.Array,
+) -> jax.Array:
     r"""Planck-taper window.
 
     The Planck-taper on :math:`\xi \in (0, 1)` is
@@ -314,7 +315,7 @@ def softbox_planck(
     edge_duration = duration * alpha / 2.0
 
     # Planck-taper
-    def planck_taper(s: jnp.ndarray) -> jnp.ndarray:
+    def planck_taper(s: jax.Array) -> jax.Array:
         t = (2.0 * s - 1.0) / (s * (1.0 - s))
         return jnn.sigmoid(t)
 
@@ -347,10 +348,10 @@ def softbox_planck(
 
 
 def softbox_fifth_order_smoothstep(
-    t: jnp.ndarray | float,
+    t: jax.Array | float,
     duration: float,
-    ansatz_params: jnp.ndarray,
-) -> jnp.ndarray:
+    ansatz_params: jax.Array,
+) -> jax.Array:
     r"""Soft-box pulse ansatz with 5th-order-smoothstep-shaped edges.
 
     The 5th-order smoothstep on :math:`\xi \in [0, 1]` is
@@ -399,7 +400,7 @@ def softbox_fifth_order_smoothstep(
     edge_duration = duration * alpha / 2.0
 
     # 5th-order smoothstep
-    def quintic_smoothstep(s: jnp.ndarray) -> jnp.ndarray:
+    def quintic_smoothstep(s: jax.Array) -> jax.Array:
         return 6.0 * s**5 - 15.0 * s**4 + 10.0 * s**3
 
     # Determine edge regions
@@ -431,10 +432,10 @@ def softbox_fifth_order_smoothstep(
 
 
 def softbox_seventh_order_smoothstep(
-    t: jnp.ndarray | float,
+    t: jax.Array | float,
     duration: float,
-    ansatz_params: jnp.ndarray,
-) -> jnp.ndarray:
+    ansatz_params: jax.Array,
+) -> jax.Array:
     r"""Soft-box pulse ansatz with 7th-order-smoothstep-shaped edges.
 
     The 7th-order smoothstep :math:`S_3` on :math:`\xi \in [0, 1]` is
@@ -483,7 +484,7 @@ def softbox_seventh_order_smoothstep(
     edge_duration = duration * alpha / 2.0
 
     # 7th-order smoothstep
-    def seventh_order_smoothstep(s: jnp.ndarray) -> jnp.ndarray:
+    def seventh_order_smoothstep(s: jax.Array) -> jax.Array:
         return -20.0 * s**7 + 70.0 * s**6 - 84.0 * s**5 + 35.0 * s**4
 
     # Determine edge regions

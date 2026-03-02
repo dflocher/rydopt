@@ -202,7 +202,7 @@ def _unravel(flat: np.ndarray, split_indices: tuple[int, ...]) -> PulseParams | 
     return (parts[0][0], *tuple(parts[1:]))  # type: ignore[return-value]
 
 
-def _unravel_jax(flat: jnp.ndarray, split_indices: tuple[int, ...]) -> PulseParams | FixedPulseParams:
+def _unravel_jax(flat: jax.Array, split_indices: tuple[int, ...]) -> PulseParams | FixedPulseParams:
     parts = jnp.split(flat, split_indices)
     return (parts[0][0], *tuple(parts[1:]))  # type: ignore[return-value]
 
@@ -215,12 +215,12 @@ def _make_infidelity(
     params_split_indices: tuple[int, ...],
     tol: float,
     fidelity_type: FidelityType = "process",
-) -> Callable[[jnp.ndarray], jnp.ndarray]:
+) -> Callable[[jax.Array], jax.Array]:
     full = jnp.asarray(params_full)
     trainable_indices = jnp.asarray(params_trainable_indices)
     fidelity_fn = process_fidelity if fidelity_type == "process" else average_gate_fidelity
 
-    def infidelity(params_trainable: jnp.ndarray) -> jnp.ndarray:
+    def infidelity(params_trainable: jax.Array) -> jax.Array:
         params = full.at[trainable_indices].set(params_trainable)
         params_tuple = _unravel_jax(params, params_split_indices)
         return jnp.abs(1 - fidelity_fn(gate, pulse, params_tuple, tol))
@@ -248,25 +248,25 @@ def _print_summary(method_name: str, runtime: float, tol: float, num_converged: 
 # Internal jax.jit-ed Adam optimization scan loop
 # -----------------------------------------------------------------------------
 
-History = tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray]
-AdamScanReturn = tuple[jnp.ndarray, jnp.ndarray, History | None]
-AdamScanCarry = tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray, optax.OptState, jnp.ndarray, jnp.ndarray]
+History = tuple[jax.Array, jax.Array, jax.Array]
+AdamScanReturn = tuple[jax.Array, jax.Array, History | None]
+AdamScanCarry = tuple[jax.Array, jax.Array, jax.Array, optax.OptState, jax.Array, jax.Array]
 
 
 def _adam_scan_impl(
-    infidelity_and_grad: Callable[[jnp.ndarray], tuple[jnp.ndarray, jnp.ndarray]],
+    infidelity_and_grad: Callable[[jax.Array], tuple[jax.Array, jax.Array]],
     optimizer: optax.GradientTransformation,
-    params_trainable: jnp.ndarray,
+    params_trainable: jax.Array,
     num_steps: int,
     min_converged_initializations: int,
     process_idx: int,
-    tol: float | jnp.ndarray,
+    tol: float | jax.Array,
     progress_hook: ProgressHook,
     return_history: bool,
 ) -> AdamScanReturn:
     opt_state0 = optimizer.init(params_trainable)
 
-    def body(carry: AdamScanCarry, step: jnp.ndarray) -> tuple[AdamScanCarry, object | None]:
+    def body(carry: AdamScanCarry, step: jax.Array) -> tuple[AdamScanCarry, object | None]:
         _, _, _, _, prev_converged_initializations, _ = carry
 
         # Do an gradient descent step if the optimization was not yet done. Note that 'params' and
@@ -401,7 +401,7 @@ def _adam_optimize(
 
         if trainable.ndim == 1:
             infidelity_and_grad = jax.value_and_grad(infidelity)
-            tol_arg: float | jnp.ndarray = tol
+            tol_arg: float | jax.Array = tol
         else:
             infidelity_and_grad = jax.vmap(jax.value_and_grad(infidelity))
             tol_arg = jnp.full((trainable.shape[0],), tol)
