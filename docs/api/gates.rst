@@ -40,7 +40,7 @@ The following classes implement gate systems corresponding to specific symmetric
 Asymmetric
 ~~~~~~~~~~
 
-The following classes work for arbitrary atoms arrangements. Optionally, each atom can be driven with an individually scaled
+The following classes work for arbitrary atom arrangements. Optionally, each atom can be driven with an individually scaled
 Rabi frequency, specified by the per-atom scaling factors ``s1``, ``s2``, … .
 
 .. autoclass:: rydopt.gates.TwoQubitGateAsym

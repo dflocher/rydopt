@@ -40,6 +40,7 @@ autodoc_default_options = {
 
 autodoc_type_aliases = {
     "PulseParams": "PulseParams",
+    "PulseAnsatz": "PulseAnsatz",
     "FixedPulseParams": "FixedPulseParams",
     "ArrayLike": "ArrayLike",
     "PulseAnsatzFunction": "PulseAnsatzFunction",
