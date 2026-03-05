@@ -26,27 +26,17 @@ def _setup_hamiltonian(
     pulse: PulseAnsatzLike,
     params: PulseParams,
 ) -> tuple[Callable[[float], qt.Qobj], qt.Qobj, qt.Qobj]:
-    def detuning_pulse(t: jax.Array | float) -> jax.Array:
-        return pulse.evaluate_pulse_functions(t, params)[1]
-
-    def phase_pulse(t: jax.Array | float) -> jax.Array:
-        return pulse.evaluate_pulse_functions(t, params)[2]
-
-    def rabi_pulse(t: jax.Array | float) -> jax.Array:
-        return pulse.evaluate_pulse_functions(t, params)[3]
+    def pulse_functions(t: jax.Array | float) -> tuple[jax.Array, jax.Array, jax.Array, jax.Array]:
+        return pulse.evaluate_pulse_functions(t, params)
 
     if isinstance(gate, TwoQubitGate):
-        return hamiltonian_TwoQubitGate(detuning_pulse, phase_pulse, rabi_pulse, gate._decay, gate._Vnn)
+        return hamiltonian_TwoQubitGate(pulse_functions, gate._decay, gate._Vnn)
 
     if isinstance(gate, ThreeQubitGateIsosceles):
-        return hamiltonian_ThreeQubitGateIsosceles(
-            detuning_pulse, phase_pulse, rabi_pulse, gate._decay, gate._Vnn, gate._Vnnn
-        )
+        return hamiltonian_ThreeQubitGateIsosceles(pulse_functions, gate._decay, gate._Vnn, gate._Vnnn)
 
     if isinstance(gate, FourQubitGatePyramidal):
-        return hamiltonian_FourQubitGatePyramidal(
-            detuning_pulse, phase_pulse, rabi_pulse, gate._decay, gate._Vnn, gate._Vnnn
-        )
+        return hamiltonian_FourQubitGatePyramidal(pulse_functions, gate._decay, gate._Vnn, gate._Vnnn)
 
     raise ValueError("The specified number of atoms is not yet implemented.")
 

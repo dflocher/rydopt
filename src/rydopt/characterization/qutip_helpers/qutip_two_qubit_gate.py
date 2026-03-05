@@ -1,9 +1,8 @@
 from collections.abc import Callable
 
+import jax
 import numpy as np
 import qutip as qt
-
-from rydopt.types import PulseFunction
 
 IrxrI = qt.basis(3, 2).proj()
 I1x1I = qt.basis(3, 1).proj()
@@ -18,9 +17,7 @@ plus_state = (qt.basis(3, 0) + qt.basis(3, 1)).unit()
 
 
 def hamiltonian_TwoQubitGate(
-    detuning_fn: PulseFunction,
-    phase_fn: PulseFunction,
-    rabi_fn: PulseFunction,
+    pulse_functions: Callable[[jax.Array | float], tuple[jax.Array, jax.Array, jax.Array, jax.Array]],
     decay: float,
     Vnn: float,
 ) -> tuple[Callable[[float], qt.Qobj], qt.Qobj, qt.Qobj]:
@@ -30,13 +27,15 @@ def hamiltonian_TwoQubitGate(
         proj = proj @ (qt.tensor(id3, id3) - qt.tensor(IrxrI, IrxrI))
 
     def H(t: float) -> qt.Qobj:
+        detuning_1, detuning_r, phase, rabi = pulse_functions(t)
         return (
             proj
             * (
                 Vnn * qt.tensor(IrxrI, IrxrI)
-                + (-detuning_fn(t) - 1j * 0.5 * decay) * (qt.tensor(IrxrI, id3) + qt.tensor(id3, IrxrI))
-                + 0.5 * rabi_fn(t) * np.cos(phase_fn(t)) * (qt.tensor(X_1r, id3) + qt.tensor(id3, X_1r))
-                + 0.5 * rabi_fn(t) * np.sin(phase_fn(t)) * (qt.tensor(Y_1r, id3) + qt.tensor(id3, Y_1r))
+                + (-detuning_1) * (qt.tensor(I1x1I, id3) + qt.tensor(id3, I1x1I))
+                + (-detuning_r - 1j * 0.5 * decay) * (qt.tensor(IrxrI, id3) + qt.tensor(id3, IrxrI))
+                + 0.5 * rabi * np.cos(phase) * (qt.tensor(X_1r, id3) + qt.tensor(id3, X_1r))
+                + 0.5 * rabi * np.sin(phase) * (qt.tensor(Y_1r, id3) + qt.tensor(id3, Y_1r))
             )
             * proj
         )
