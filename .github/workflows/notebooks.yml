@@ -25,6 +25,9 @@ jobs:
           - id: user_defined_gate
             path: docs/examples/user_defined_gate.ipynb
             timeout: 300
+          - id: two_photon
+            path: docs/examples/two_photon.ipynb
+            timeout: 300
 
     name: ${{ matrix.id }}
 

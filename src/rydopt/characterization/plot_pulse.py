@@ -55,6 +55,9 @@ def plot_pulse(
     selector = [plot_detuning, plot_phase, plot_rabi]
 
     values = np.array(pulse.evaluate_pulse_functions(times, params))
+    values[1] -= values[0]
+    values = values[1:][selector]
+
     if subtract_phase_offset:
         values[1] -= values[1][0]
     values = values[selector]

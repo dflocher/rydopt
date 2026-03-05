@@ -61,8 +61,12 @@ def plot_spectrum(
     )
 
     # Evaluated pulse
-    selector = [False, plot_detuning, plot_phase, plot_rabi]
-    values = np.array(pulse.evaluate_pulse_functions(times, params))[selector]
+    selector = [plot_detuning, plot_phase, plot_rabi]
+
+    values = np.array(pulse.evaluate_pulse_functions(times, params))
+    values[1] -= values[0]
+    values = values[1:][selector]
+
     labels = np.array(
         [
             r"$\mathcal{F}\left(\Delta(t)\right)$",
@@ -70,6 +74,7 @@ def plot_spectrum(
             r"$\mathcal{F}\left(\Omega(t)\right)$",
         ]
     )[selector]
+
     is_constant = [np.all(v == v[0]) for v in values]
 
     # Tukey window: flat on the physical interval, tapered only in the padded region
