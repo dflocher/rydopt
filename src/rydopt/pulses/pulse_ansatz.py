@@ -61,7 +61,7 @@ class PulseAnsatz:
 
     def evaluate_pulse_functions(
         self, t: jax.Array | float, params: PulseParams
-    ) -> tuple[jax.Array, jax.Array, jax.Array]:
+    ) -> tuple[jax.Array, jax.Array, jax.Array, jax.Array]:
         r"""Evaluate the detuning, phase, and the rabi sweeps for fixed
         parameters at the given times.
 
@@ -70,7 +70,7 @@ class PulseAnsatz:
             params: Pulse parameters
 
         Returns:
-            Tuple ``(detuning, phase, rabi)``
+            Tuple ``(detuning_1, detuning_r, phase, rabi)``
 
         """
         duration, detuning_ansatz_params, phase_ansatz_params, rabi_ansatz_params = params
@@ -79,6 +79,7 @@ class PulseAnsatz:
         rabi_ansatz_params = jnp.asarray(rabi_ansatz_params)
 
         return (
+            jnp.zeros_like(t),
             self.detuning_ansatz(t, duration, detuning_ansatz_params),
             self.phase_ansatz(t, duration, phase_ansatz_params),
             self.rabi_ansatz(t, duration, rabi_ansatz_params),
@@ -124,8 +125,8 @@ class TwoPhotonPulseAnsatz:
 
         H_\mathrm{drive}(t)=
         \begin{pmatrix}
-            0 & \frac{\Omega_\mathrm{eff}(t)}{2} e^{-i\xi_\mathrm{eff}(t)} \\
-            \frac{\Omega_\mathrm{eff}(t)}{2} e^{i\xi_\mathrm{eff}(t)} & -\Delta_\mathrm{eff}(t)
+            -\Delta_{1,\mathrm{eff}}(t) & \frac{\Omega_\mathrm{eff}(t)}{2} e^{-i\xi_\mathrm{eff}(t)} \\
+            \frac{\Omega_\mathrm{eff}(t)}{2} e^{i\xi_\mathrm{eff}(t)} & -\Delta_{r,\mathrm{eff}}(t)
         \end{pmatrix}.
 
     The effective controls are computed as
@@ -134,8 +135,10 @@ class TwoPhotonPulseAnsatz:
 
         \Omega_\mathrm{eff}(t)&=\frac{\Omega_\ell(t)\Omega_u(t)}{2(\Delta_\ell(t)+i\gamma/2)}, \\
         \xi_\mathrm{eff}(t)&=\xi_\ell(t)+\xi_u(t), \\
-        \Delta_\mathrm{eff}(t)&=\Delta_\ell(t)+\Delta_u(t)+
-        \frac{\Omega_\ell(t)^2-\Omega_u(t)^2}{4(\Delta_\ell(t)+i\gamma/2)}.
+        \Delta_{1,\mathrm{eff}}(t)&=-
+        \frac{\Omega_\ell(t)^2}{4(\Delta_\ell(t)+i\gamma/2)} \\
+        \Delta_{r,\mathrm{eff}}(t)&=\Delta_\ell(t)+\Delta_u(t)-
+        \frac{\Omega_u(t)^2}{4(\Delta_\ell(t)+i\gamma/2)}.
 
     For available ansatz functions for the detuning, phase, and Rabi frequency sweeps, see below.
     The function :func:`optimize <rydopt.optimization.optimize>` allows optimizing the
@@ -196,7 +199,7 @@ class TwoPhotonPulseAnsatz:
 
     def evaluate_pulse_functions(
         self, t: jax.Array | float, params: PulseParams
-    ) -> tuple[jax.Array, jax.Array, jax.Array]:
+    ) -> tuple[jax.Array, jax.Array, jax.Array, jax.Array]:
         r"""Evaluate the effective two-photon detuning, phase, and the rabi sweeps for fixed
         parameters at the given times.
 
@@ -205,20 +208,17 @@ class TwoPhotonPulseAnsatz:
             params: Pulse parameters
 
         Returns:
-            Tuple ``(detuning, phase, rabi)``
+            Tuple ``(detuning_1, detuning_r, phase, rabi)``
 
         """
         lower_params, upper_params = self._unpack_transition_params(params)
 
-        lower_detuning, lower_phase, lower_rabi = self.lower_transition.evaluate_pulse_functions(t, lower_params)
-        upper_detuning, upper_phase, upper_rabi = self.upper_transition.evaluate_pulse_functions(t, upper_params)
+        _, lower_detuning, lower_phase, lower_rabi = self.lower_transition.evaluate_pulse_functions(t, lower_params)
+        _, upper_detuning, upper_phase, upper_rabi = self.upper_transition.evaluate_pulse_functions(t, upper_params)
 
         effective_rabi = lower_rabi * upper_rabi / (2.0 * (lower_detuning + 0.5j * self.decay))
         effective_phase = lower_phase + upper_phase
-        effective_detuning = (
-            lower_detuning
-            + upper_detuning
-            + (lower_rabi**2 - upper_rabi**2) / (4.0 * (lower_detuning + 0.5j * self.decay))
-        )
+        effective_detuning_1 = - lower_rabi**2 / (4.0 * (lower_detuning + 0.5j * self.decay))
+        effective_detuning_r = (lower_detuning+upper_detuning) - upper_rabi**2 / (4.0 * (lower_detuning + 0.5j * self.decay))
 
-        return effective_detuning, effective_phase, effective_rabi
+        return effective_detuning_1, effective_detuning_r, effective_phase, effective_rabi

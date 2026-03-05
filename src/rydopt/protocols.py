@@ -124,6 +124,6 @@ class PulseAnsatzLike(Protocol):
 
     def evaluate_pulse_functions(
         self, t: jax.Array | float, params: PulseParams
-    ) -> tuple[jax.Array, jax.Array, jax.Array]:
+    ) -> tuple[jax.Array, jax.Array, jax.Array, jax.Array]:
         """Evaluate detuning, phase, and Rabi pulse functions at time samples ``t``."""
         ...
