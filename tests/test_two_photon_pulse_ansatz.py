@@ -36,15 +36,17 @@ def test_effective_controls() -> None:
     )
 
     times = jnp.linspace(0.0, duration, 13)
-    detuning, phase, rabi = pulse.evaluate_pulse_functions(times, packed_params)
+    detuning_1, detuning_r, phase, rabi = pulse.evaluate_pulse_functions(times, packed_params)
 
-    lower_detuning, lower_phase, lower_rabi = lower.evaluate_pulse_functions(times, lower_params)
-    upper_detuning, upper_phase, upper_rabi = upper.evaluate_pulse_functions(times, upper_params)
-    expected_detuning = lower_detuning + upper_detuning + (lower_rabi**2 - upper_rabi**2) / (4.0 * lower_detuning)
+    _, lower_detuning, lower_phase, lower_rabi = lower.evaluate_pulse_functions(times, lower_params)
+    _, upper_detuning, upper_phase, upper_rabi = upper.evaluate_pulse_functions(times, upper_params)
+    expected_detuning_1 = -(lower_rabi**2) / (4.0 * lower_detuning)
+    expected_detuning_r = lower_detuning + upper_detuning - upper_rabi**2 / (4.0 * lower_detuning)
     expected_phase = lower_phase + upper_phase
     expected_rabi = lower_rabi * upper_rabi / (2.0 * lower_detuning)
 
-    assert np.allclose(detuning, expected_detuning)
+    assert np.allclose(detuning_1, expected_detuning_1)
+    assert np.allclose(detuning_r, expected_detuning_r)
     assert np.allclose(phase, expected_phase)
     assert np.allclose(rabi, expected_rabi)
 

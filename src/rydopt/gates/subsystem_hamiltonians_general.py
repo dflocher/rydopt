@@ -3,7 +3,8 @@ import jax.numpy as jnp
 
 
 def H_1_atom_general(
-    Delta: float,
+    Delta_1: float,
+    Delta_r: float,
     Xi: float,
     Omega: float,
     decay: float,
@@ -14,11 +15,12 @@ def H_1_atom_general(
     Basis ordering: :math:`|0\rangle, |1\rangle`.
 
     Args:
-        Delta: Laser detuning.
+        Delta_1: Laser detuning of the qubit state |1>.
+        Delta_r: Laser detuning of the Rydberg state |r>.
         Xi: Laser phase.
         Omega: Rabi frequency amplitude.
         decay: Rydberg-decay rate.
-        s1: Rabi frequency scaling factor for the atom.
+        s1: Rabi frequency scaling factor for atom 1.
 
     Returns:
         2-level system Hamiltonian.
@@ -30,15 +32,16 @@ def H_1_atom_general(
     return jnp.array(
         [
             # |0>
-            [0.0, 0.5 * s1 * Omega * em],
+            [-Delta_1, 0.5 * s1 * Omega * em],
             # |1>
-            [0.5 * s1 * Omega * ep, -Delta - 1j * 0.5 * decay],
+            [0.5 * s1 * Omega * ep, -Delta_r - 1j * 0.5 * decay],
         ]
     )
 
 
 def H_2_atoms_general(
-    Delta: float,
+    Delta_1: float,
+    Delta_r: float,
     Xi: float,
     Omega: float,
     decay: float,
@@ -51,7 +54,8 @@ def H_2_atoms_general(
     Basis ordering: :math:`|00\rangle, |01\rangle, |10\rangle, |11\rangle`.
 
     Args:
-        Delta: Laser detuning.
+        Delta_1: Laser detuning of the qubit state |1>.
+        Delta_r: Laser detuning of the Rydberg state |r>.
         Xi: Laser phase.
         Omega: Rabi frequency amplitude.
         decay: Rydberg-decay rate.
@@ -70,7 +74,7 @@ def H_2_atoms_general(
         [
             # |00>
             [
-                0.0,
+                -2 * Delta_1,
                 0.5 * s2 * Omega * em,
                 0.5 * s1 * Omega * em,
                 0.0,
@@ -78,7 +82,7 @@ def H_2_atoms_general(
             # |01>
             [
                 0.5 * s2 * Omega * ep,
-                -Delta - 1j * 0.5 * decay,
+                -Delta_1 - Delta_r - 1j * 0.5 * decay,
                 0.0,
                 0.5 * s1 * Omega * em,
             ],
@@ -86,7 +90,7 @@ def H_2_atoms_general(
             [
                 0.5 * s1 * Omega * ep,
                 0.0,
-                -Delta - 1j * 0.5 * decay,
+                -Delta_1 - Delta_r - 1j * 0.5 * decay,
                 0.5 * s2 * Omega * em,
             ],
             # |11>
@@ -94,14 +98,15 @@ def H_2_atoms_general(
                 0.0,
                 0.5 * s1 * Omega * ep,
                 0.5 * s2 * Omega * ep,
-                V12 - 2 * Delta - 1j * decay,
+                V12 - 2 * Delta_r - 1j * decay,
             ],
         ]
     )
 
 
 def H_3_atoms_general(
-    Delta: float,
+    Delta_1: float,
+    Delta_r: float,
     Xi: float,
     Omega: float,
     decay: float,
@@ -118,7 +123,8 @@ def H_3_atoms_general(
     |100\rangle, |101\rangle, |110\rangle, |111\rangle`.
 
     Args:
-        Delta: Laser detuning.
+        Delta_1: Laser detuning of the qubit state |1>.
+        Delta_r: Laser detuning of the Rydberg state |r>.
         Xi: Laser phase.
         Omega: Rabi frequency amplitude.
         decay: Rydberg-decay rate.
@@ -140,7 +146,7 @@ def H_3_atoms_general(
         [
             # |000>
             [
-                0.0,
+                -3 * Delta_1,
                 0.5 * s3 * Omega * em,
                 0.5 * s2 * Omega * em,
                 0.0,
@@ -152,7 +158,7 @@ def H_3_atoms_general(
             # |001>
             [
                 0.5 * s3 * Omega * ep,
-                -Delta - 1j * 0.5 * decay,
+                -2 * Delta_1 - Delta_r - 1j * 0.5 * decay,
                 0.0,
                 0.5 * s2 * Omega * em,
                 0.0,
@@ -164,7 +170,7 @@ def H_3_atoms_general(
             [
                 0.5 * s2 * Omega * ep,
                 0.0,
-                -Delta - 1j * 0.5 * decay,
+                -2 * Delta_1 - Delta_r - 1j * 0.5 * decay,
                 0.5 * s3 * Omega * em,
                 0.0,
                 0.0,
@@ -176,7 +182,7 @@ def H_3_atoms_general(
                 0.0,
                 0.5 * s2 * Omega * ep,
                 0.5 * s3 * Omega * ep,
-                V23 - 2 * Delta - 1j * decay,
+                V23 - Delta_1 - 2 * Delta_r - 1j * decay,
                 0.0,
                 0.0,
                 0.0,
@@ -188,7 +194,7 @@ def H_3_atoms_general(
                 0.0,
                 0.0,
                 0.0,
-                -Delta - 1j * 0.5 * decay,
+                -2 * Delta_1 - Delta_r - 1j * 0.5 * decay,
                 0.5 * s3 * Omega * em,
                 0.5 * s2 * Omega * em,
                 0.0,
@@ -200,7 +206,7 @@ def H_3_atoms_general(
                 0.0,
                 0.0,
                 0.5 * s3 * Omega * ep,
-                V13 - 2 * Delta - 1j * decay,
+                V13 - Delta_1 - 2 * Delta_r - 1j * decay,
                 0.0,
                 0.5 * s2 * Omega * em,
             ],
@@ -212,7 +218,7 @@ def H_3_atoms_general(
                 0.0,
                 0.5 * s2 * Omega * ep,
                 0.0,
-                V12 - 2 * Delta - 1j * decay,
+                V12 - Delta_1 - 2 * Delta_r - 1j * decay,
                 0.5 * s3 * Omega * em,
             ],
             # |111>
@@ -224,14 +230,15 @@ def H_3_atoms_general(
                 0.0,
                 0.5 * s2 * Omega * ep,
                 0.5 * s3 * Omega * ep,
-                V12 + V23 + V13 - 3 * Delta - 1j * 1.5 * decay,
+                V12 + V23 + V13 - 3 * Delta_r - 1j * 1.5 * decay,
             ],
         ]
     )
 
 
 def H_4_atoms_general(
-    Delta: float,
+    Delta_1: float,
+    Delta_r: float,
     Xi: float,
     Omega: float,
     decay: float,
@@ -251,7 +258,8 @@ def H_4_atoms_general(
     Basis ordering: :math:`|0000\rangle, |0001\rangle, |0010\rangle, |0011\rangle, |0100\rangle, \ldots, |1111\rangle`.
 
     Args:
-        Delta: Laser detuning.
+        Delta_1: Laser detuning of the qubit state |1>.
+        Delta_r: Laser detuning of the Rydberg state |r>.
         Xi: Laser phase.
         Omega: Rabi frequency amplitude.
         decay: Rydberg-decay rate.
@@ -277,7 +285,7 @@ def H_4_atoms_general(
         [
             # |0000>
             [
-                0.0,
+                -4 * Delta_1,
                 0.5 * s4 * Omega * em,
                 0.5 * s3 * Omega * em,
                 0.0,
@@ -297,7 +305,7 @@ def H_4_atoms_general(
             # |0001>
             [
                 0.5 * s4 * Omega * ep,
-                -Delta - 1j * 0.5 * decay,
+                -3 * Delta_1 - Delta_r - 1j * 0.5 * decay,
                 0.0,
                 0.5 * s3 * Omega * em,
                 0.0,
@@ -317,7 +325,7 @@ def H_4_atoms_general(
             [
                 0.5 * s3 * Omega * ep,
                 0.0,
-                -Delta - 1j * 0.5 * decay,
+                -3 * Delta_1 - Delta_r - 1j * 0.5 * decay,
                 0.5 * s4 * Omega * em,
                 0.0,
                 0.0,
@@ -337,7 +345,7 @@ def H_4_atoms_general(
                 0.0,
                 0.5 * s3 * Omega * ep,
                 0.5 * s4 * Omega * ep,
-                V34 - 2 * Delta - 1j * decay,
+                V34 - 2 * Delta_1 - 2 * Delta_r - 1j * decay,
                 0.0,
                 0.0,
                 0.0,
@@ -357,7 +365,7 @@ def H_4_atoms_general(
                 0.0,
                 0.0,
                 0.0,
-                -Delta - 1j * 0.5 * decay,
+                -3 * Delta_1 - Delta_r - 1j * 0.5 * decay,
                 0.5 * s4 * Omega * em,
                 0.5 * s3 * Omega * em,
                 0.0,
@@ -377,7 +385,7 @@ def H_4_atoms_general(
                 0.0,
                 0.0,
                 0.5 * s4 * Omega * ep,
-                V24 - 2 * Delta - 1j * decay,
+                V24 - 2 * Delta_1 - 2 * Delta_r - 1j * decay,
                 0.0,
                 0.5 * s3 * Omega * em,
                 0.0,
@@ -397,7 +405,7 @@ def H_4_atoms_general(
                 0.0,
                 0.5 * s3 * Omega * ep,
                 0.0,
-                V23 - 2 * Delta - 1j * decay,
+                V23 - 2 * Delta_1 - 2 * Delta_r - 1j * decay,
                 0.5 * s4 * Omega * em,
                 0.0,
                 0.0,
@@ -417,7 +425,7 @@ def H_4_atoms_general(
                 0.0,
                 0.5 * s3 * Omega * ep,
                 0.5 * s4 * Omega * ep,
-                V23 + V24 + V34 - 3 * Delta - 1j * 1.5 * decay,
+                V23 + V24 + V34 - Delta_1 - 3 * Delta_r - 1j * 1.5 * decay,
                 0.0,
                 0.0,
                 0.0,
@@ -437,7 +445,7 @@ def H_4_atoms_general(
                 0.0,
                 0.0,
                 0.0,
-                -Delta - 1j * 0.5 * decay,
+                -3 * Delta_1 - Delta_r - 1j * 0.5 * decay,
                 0.5 * s4 * Omega * em,
                 0.5 * s3 * Omega * em,
                 0.0,
@@ -457,7 +465,7 @@ def H_4_atoms_general(
                 0.0,
                 0.0,
                 0.5 * s4 * Omega * ep,
-                V14 - 2 * Delta - 1j * decay,
+                V14 - 2 * Delta_1 - 2 * Delta_r - 1j * decay,
                 0.0,
                 0.5 * s3 * Omega * em,
                 0.0,
@@ -477,7 +485,7 @@ def H_4_atoms_general(
                 0.0,
                 0.5 * s3 * Omega * ep,
                 0.0,
-                V13 - 2 * Delta - 1j * decay,
+                V13 - 2 * Delta_1 - 2 * Delta_r - 1j * decay,
                 0.5 * s4 * Omega * em,
                 0.0,
                 0.0,
@@ -497,7 +505,7 @@ def H_4_atoms_general(
                 0.0,
                 0.5 * s3 * Omega * ep,
                 0.5 * s4 * Omega * ep,
-                V13 + V14 + V34 - 3 * Delta - 1j * 1.5 * decay,
+                V13 + V14 + V34 - Delta_1 - 3 * Delta_r - 1j * 1.5 * decay,
                 0.0,
                 0.0,
                 0.0,
@@ -517,7 +525,7 @@ def H_4_atoms_general(
                 0.0,
                 0.0,
                 0.0,
-                V12 - 2 * Delta - 1j * decay,
+                V12 - 2 * Delta_1 - 2 * Delta_r - 1j * decay,
                 0.5 * s4 * Omega * em,
                 0.5 * s3 * Omega * em,
                 0.0,
@@ -537,7 +545,7 @@ def H_4_atoms_general(
                 0.0,
                 0.0,
                 0.5 * s4 * Omega * ep,
-                V12 + V14 + V24 - 3 * Delta - 1j * 1.5 * decay,
+                V12 + V14 + V24 - Delta_1 - 3 * Delta_r - 1j * 1.5 * decay,
                 0.0,
                 0.5 * s3 * Omega * em,
             ],
@@ -557,7 +565,7 @@ def H_4_atoms_general(
                 0.0,
                 0.5 * s3 * Omega * ep,
                 0.0,
-                V12 + V13 + V23 - 3 * Delta - 1j * 1.5 * decay,
+                V12 + V13 + V23 - Delta_1 - 3 * Delta_r - 1j * 1.5 * decay,
                 0.5 * s4 * Omega * em,
             ],
             # |1111>
@@ -577,7 +585,7 @@ def H_4_atoms_general(
                 0.0,
                 0.5 * s3 * Omega * ep,
                 0.5 * s4 * Omega * ep,
-                V12 + V13 + V14 + V23 + V24 + V34 - 4 * Delta - 1j * 2 * decay,
+                V12 + V13 + V14 + V23 + V24 + V34 - 4 * Delta_r - 1j * 2 * decay,
             ],
         ]
     )

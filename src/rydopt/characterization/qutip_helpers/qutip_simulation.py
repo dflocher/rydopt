@@ -27,13 +27,13 @@ def _setup_hamiltonian(
     params: PulseParams,
 ) -> tuple[Callable[[float], qt.Qobj], qt.Qobj, qt.Qobj]:
     def detuning_pulse(t: jax.Array | float) -> jax.Array:
-        return pulse.evaluate_pulse_functions(t, params)[0]
-
-    def phase_pulse(t: jax.Array | float) -> jax.Array:
         return pulse.evaluate_pulse_functions(t, params)[1]
 
-    def rabi_pulse(t: jax.Array | float) -> jax.Array:
+    def phase_pulse(t: jax.Array | float) -> jax.Array:
         return pulse.evaluate_pulse_functions(t, params)[2]
+
+    def rabi_pulse(t: jax.Array | float) -> jax.Array:
+        return pulse.evaluate_pulse_functions(t, params)[3]
 
     if isinstance(gate, TwoQubitGate):
         return hamiltonian_TwoQubitGate(detuning_pulse, phase_pulse, rabi_pulse, gate._decay, gate._Vnn)

@@ -11,7 +11,8 @@ from rydopt.gates.subsystem_hamiltonians_general import (
 
 def generate_hamiltonian(
     N: int,
-    Delta: float,
+    Delta_1: float,
+    Delta_r: float,
     Xi: float,
     Omega: float,
     decay: float,
@@ -24,7 +25,7 @@ def generate_hamiltonian(
     # Diagonal terms
     for idx in range(dim):
         n_exc = idx.bit_count()
-        hamiltonian[idx, idx] = -n_exc * Delta - 1j * (n_exc * decay / 2.0)
+        hamiltonian[idx, idx] = -(N - n_exc) * Delta_1 - n_exc * Delta_r - 1j * (n_exc * decay / 2.0)
 
         for i, j, Vij in interactions:
             bi = (idx >> (N - i)) & 1
@@ -44,13 +45,16 @@ def generate_hamiltonian(
 
 
 def test_H_1_atom_general() -> None:
-    Delta, Xi, Omega, decay = 0.7, 0.3, 1.2, 0.4
+    Delta_1, Delta_r, Xi, Omega, decay = 0.7, 0.5, 0.3, 1.2, 0.4
     s1 = 0.9
 
-    hamiltonian_rydopt = np.asarray(H_1_atom_general(Delta=Delta, Xi=Xi, Omega=Omega, decay=decay, s1=s1))
+    hamiltonian_rydopt = np.asarray(
+        H_1_atom_general(Delta_1=Delta_1, Delta_r=Delta_r, Xi=Xi, Omega=Omega, decay=decay, s1=s1)
+    )
     hamiltonian_ref = generate_hamiltonian(
         N=1,
-        Delta=Delta,
+        Delta_1=Delta_1,
+        Delta_r=Delta_r,
         Xi=Xi,
         Omega=Omega,
         decay=decay,
@@ -62,16 +66,17 @@ def test_H_1_atom_general() -> None:
 
 
 def test_H_2_atoms_general() -> None:
-    Delta, Xi, Omega, decay = 0.7, 0.3, 1.2, 0.4
+    Delta_1, Delta_r, Xi, Omega, decay = 0.7, 0.5, 0.3, 1.2, 0.4
     V12 = -0.85
     s1, s2 = 0.9, 1.1
 
     hamiltonian_rydopt = np.asarray(
-        H_2_atoms_general(Delta=Delta, Xi=Xi, Omega=Omega, decay=decay, V12=V12, s1=s1, s2=s2)
+        H_2_atoms_general(Delta_1=Delta_1, Delta_r=Delta_r, Xi=Xi, Omega=Omega, decay=decay, V12=V12, s1=s1, s2=s2)
     )
     hamiltonian_ref = generate_hamiltonian(
         N=2,
-        Delta=Delta,
+        Delta_1=Delta_1,
+        Delta_r=Delta_r,
         Xi=Xi,
         Omega=Omega,
         decay=decay,
@@ -83,13 +88,14 @@ def test_H_2_atoms_general() -> None:
 
 
 def test_H_3_atoms_general() -> None:
-    Delta, Xi, Omega, decay = 0.7, 0.3, 1.2, 0.4
+    Delta_1, Delta_r, Xi, Omega, decay = 0.7, 0.5, 0.3, 1.2, 0.4
     V12, V13, V23 = -0.85, 0.33, 1.05
     s1, s2, s3 = 0.9, 1.1, 0.8
 
     hamiltonian_rydopt = np.asarray(
         H_3_atoms_general(
-            Delta=Delta,
+            Delta_1=Delta_1,
+            Delta_r=Delta_r,
             Xi=Xi,
             Omega=Omega,
             decay=decay,
@@ -103,7 +109,8 @@ def test_H_3_atoms_general() -> None:
     )
     hamiltonian_ref = generate_hamiltonian(
         N=3,
-        Delta=Delta,
+        Delta_1=Delta_1,
+        Delta_r=Delta_r,
         Xi=Xi,
         Omega=Omega,
         decay=decay,
@@ -115,14 +122,15 @@ def test_H_3_atoms_general() -> None:
 
 
 def test_H_4_atoms_general() -> None:
-    Delta, Xi, Omega, decay = 0.7, 0.3, 1.2, 0.4
+    Delta_1, Delta_r, Xi, Omega, decay = 0.7, 0.5, 0.3, 1.2, 0.4
     V12, V13, V14 = -0.85, 0.33, -0.12
     V23, V24, V34 = 1.05, 0.5, -0.7
     s1, s2, s3, s4 = 0.9, 1.1, 0.8, 1.3
 
     hamiltonian_rydopt = np.asarray(
         H_4_atoms_general(
-            Delta=Delta,
+            Delta_1=Delta_1,
+            Delta_r=Delta_r,
             Xi=Xi,
             Omega=Omega,
             decay=decay,
@@ -140,7 +148,8 @@ def test_H_4_atoms_general() -> None:
     )
     hamiltonian_ref = generate_hamiltonian(
         N=4,
-        Delta=Delta,
+        Delta_1=Delta_1,
+        Delta_r=Delta_r,
         Xi=Xi,
         Omega=Omega,
         decay=decay,

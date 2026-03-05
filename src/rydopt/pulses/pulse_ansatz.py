@@ -218,7 +218,9 @@ class TwoPhotonPulseAnsatz:
 
         effective_rabi = lower_rabi * upper_rabi / (2.0 * (lower_detuning + 0.5j * self.decay))
         effective_phase = lower_phase + upper_phase
-        effective_detuning_1 = - lower_rabi**2 / (4.0 * (lower_detuning + 0.5j * self.decay))
-        effective_detuning_r = (lower_detuning+upper_detuning) - upper_rabi**2 / (4.0 * (lower_detuning + 0.5j * self.decay))
+        effective_detuning_1 = -(lower_rabi**2) / (4.0 * (lower_detuning + 0.5j * self.decay))
+        effective_detuning_r = (lower_detuning + upper_detuning) - upper_rabi**2 / (
+            4.0 * (lower_detuning + 0.5j * self.decay)
+        )
 
         return effective_detuning_1, effective_detuning_r, effective_phase, effective_rabi

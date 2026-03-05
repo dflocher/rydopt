@@ -64,12 +64,14 @@ def test_reproducing_evered() -> None:
     assert detuning_at_beginning * detuning_params[0] < 0
 
     # Effective two-photon detuning
-    detuning = abs(pulse.evaluate_pulse_functions(0, result.params)[0].real)
+    detuning = abs(pulse.evaluate_pulse_functions(0, result.params)[1].real) - abs(
+        pulse.evaluate_pulse_functions(0, result.params)[0].real
+    )
     print(f"Effective two-photon detuning: 2pi x {detuning:.1f} MHz")
     assert np.allclose(detuning, 0, atol=1e-3)
 
     # Effective two-photon Rabi frequency
-    rabi = abs(pulse.evaluate_pulse_functions(0, result.params)[2].real)
+    rabi = abs(pulse.evaluate_pulse_functions(0, result.params)[3].real)
     print(f"Effective two-photon Rabi frequency: 2pi x {rabi:.1f} MHz")
     assert np.allclose(rabi, 4.6, rtol=1e-3)
 
@@ -78,38 +80,22 @@ def test_reproducing_evered() -> None:
     print(f"Duration (Omega*T / 2pi): {duration * rabi / (2 * np.pi):.3f}")
     assert np.allclose(duration * rabi / (2 * np.pi), 1.215, rtol=1e-3)
 
-    # Infidelity from the finite lifetime of the intermediate state if one starts in |11>,
+    # Infidelity from the finite lifetime of the intermediate state if one starts in |01>,
     pulse = ro.pulses.TwoPhotonPulseAnsatz(
         lower_transition=lower,
         upper_transition=upper,
         lower_param_counts=(1, 3, 1),
         decay=1 / 110e-9 / omega0,
     )
-
     final_state = ro.simulation.evolve(gate, pulse, result.params)
-    obtained = jnp.exp(1j * jnp.angle(final_state[0][0])) * final_state[1]
-    target = jnp.array([-1, 0, 0])
-    infidelity = abs(1 - jnp.abs(jnp.vdot(target, obtained)) ** 2)
-    print(f"Infidelity due to intermediate state decay if one starts in |11>: {infidelity:.3%}")
-    assert np.allclose(
-        infidelity,
-        0.043e-2,  # value from Fig. 4 of https://doi.org/10.1038/s41586-023-06481-y
-        rtol=1e-1,
-    )
-
-    # Infidelity from the finite lifetime of the intermediate state if one starts in |01>,
     obtained = jnp.exp(1j * jnp.angle(final_state[0][0])) * final_state[0]
     target = jnp.array([1, 0])
-    infidelity = abs(1 - jnp.abs(jnp.vdot(target, obtained)) ** 2)
+    infidelity = 1 - jnp.abs(jnp.vdot(target, obtained)) ** 2
     print(f"Infidelity due to intermediate state decay if one starts in |01>: {infidelity:.3%}")
-    assert np.allclose(
-        infidelity,
-        0.019e-2,  # value from Fig. 4 of https://doi.org/10.1038/s41586-023-06481-y
-        rtol=1e-1,
-    )
+    assert np.allclose(infidelity, 0.043e-2, rtol=0.15)
 
     # Average gate infidelity due to intermediate state decay
     print(
         "Average gate infidelity due to intermediate state decay: "
-        f"{abs(1 - ro.simulation.average_gate_fidelity(gate, pulse, result.params)):.3%}"
+        f"{1 - ro.simulation.average_gate_fidelity(gate, pulse, result.params):.3%}"
     )

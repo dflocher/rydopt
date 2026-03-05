@@ -61,7 +61,7 @@ def plot_spectrum(
     )
 
     # Evaluated pulse
-    selector = [plot_detuning, plot_phase, plot_rabi]
+    selector = [False, plot_detuning, plot_phase, plot_rabi]
     values = np.array(pulse.evaluate_pulse_functions(times, params))[selector]
     labels = np.array(
         [

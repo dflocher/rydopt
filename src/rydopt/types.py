@@ -16,4 +16,4 @@ PulseAnsatzFunction = Callable[
 
 PulseFunction = Callable[[jax.Array | float], jax.Array]
 
-HamiltonianFunction = Callable[[jax.Array | float, jax.Array | float, jax.Array | float], jax.Array]
+HamiltonianFunction = Callable[[jax.Array | float, jax.Array | float, jax.Array | float, jax.Array | float], jax.Array]
