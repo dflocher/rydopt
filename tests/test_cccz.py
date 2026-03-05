@@ -28,7 +28,7 @@ def test_cccz() -> None:
     # Initial parameters
     initial_params = (
         12.4,
-        (0.1,),
+        (-0.1,),
         (1.0, -1.0, 2.0, -0.8, 0.7, -0.2, 0.7, 0.3),
         (),
     )
@@ -39,7 +39,7 @@ def test_cccz() -> None:
     # Compare result to reference
     ref = (
         12.42436209,
-        (0.09580844,),
+        (-0.09580844,),
         (
             1.01592733,
             -1.00783188,

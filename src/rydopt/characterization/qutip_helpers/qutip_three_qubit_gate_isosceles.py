@@ -43,7 +43,7 @@ def hamiltonian_ThreeQubitGateIsosceles(
             * (
                 Vnnn * qt.tensor(qt.tensor(IrxrI, id3), IrxrI)
                 + Vnn * (qt.tensor(qt.tensor(IrxrI, IrxrI), id3) + qt.tensor(qt.tensor(id3, IrxrI), IrxrI))
-                + (detuning_fn(t) - 1j * 0.5 * decay)
+                + (-detuning_fn(t) - 1j * 0.5 * decay)
                 * (
                     qt.tensor(qt.tensor(IrxrI, id3), id3)
                     + qt.tensor(qt.tensor(id3, IrxrI), id3)

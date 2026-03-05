@@ -39,7 +39,7 @@ def test_reproducing_evered() -> None:
 
     omega_l = 237
     omega_u = 303
-    detuning_l = 7.8e3
+    detuning_l = -7.8e3
     detuning_u = -detuning_l - (omega_l**2 - omega_u**2) / (4 * detuning_l)
 
     initial_params = (
@@ -57,7 +57,7 @@ def test_reproducing_evered() -> None:
     detuning_params = np.array(result.params[1])
     phase_params = np.array(result.params[2])
     detuning_at_beginning = (
-        jax.grad(partial(evered_phase, _duration=0.0, ansatz_params=jnp.array(phase_params)))(0.0)
+        -jax.grad(partial(evered_phase, _duration=0.0, ansatz_params=jnp.array(phase_params)))(0.0)
         + detuning_params[0]
         + detuning_params[1]
     )

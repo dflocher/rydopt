@@ -24,7 +24,7 @@ def generate_hamiltonian(
     # Diagonal terms
     for idx in range(dim):
         n_exc = idx.bit_count()
-        hamiltonian[idx, idx] = n_exc * Delta - 1j * (n_exc * decay / 2.0)
+        hamiltonian[idx, idx] = -n_exc * Delta - 1j * (n_exc * decay / 2.0)
 
         for i, j, Vij in interactions:
             bi = (idx >> (N - i)) & 1
@@ -37,7 +37,7 @@ def generate_hamiltonian(
             bitpos = N - atom
             col = row ^ (1 << bitpos)
             row_bit = (row >> bitpos) & 1
-            phase = np.exp(-1j * Xi) if row_bit == 0 else np.exp(+1j * Xi)
+            phase = np.exp(-1j * Xi) if row_bit == 0 else np.exp(1j * Xi)
             hamiltonian[row, col] = 0.5 * s[atom - 1] * Omega * phase
 
     return hamiltonian

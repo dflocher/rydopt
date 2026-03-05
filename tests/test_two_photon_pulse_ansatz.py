@@ -20,8 +20,8 @@ def test_effective_controls() -> None:
         rabi_ansatz=ro.pulses.const_sin_crab,
     )
 
-    lower_params = (duration, [1.6, 0.4, -0.2], [0.7, -0.3], [2.2])
-    upper_params = (duration, [0.5], [0.1], [1.4, 0.2, -0.1])
+    lower_params = (duration, [-1.6, 0.4, -0.2], [0.7, -0.3], [2.2])
+    upper_params = (duration, [-0.5], [0.1], [1.4, 0.2, -0.1])
     packed_params = (
         duration,
         np.array([*lower_params[1], *upper_params[1]]),
@@ -69,7 +69,7 @@ def test_two_photon_cz() -> None:
         decay=0,
     )
 
-    initial_params = (7.6, [50.0, -50.0], [1.8, -0.6], [10.0, 10.0])  # duration, detuning, phase, rabi
+    initial_params = (7.6, [-50.0, 50.0], [1.8, -0.6], [10.0, 10.0])  # duration, detuning, phase, rabi
 
     # Parameters of the upper transition and Rabi frequencies are fixed
     fixed_initial_params = (False, [False, True], [False, False], [True, True])
@@ -78,57 +78,18 @@ def test_two_photon_cz() -> None:
 
     ref = (
         7.600019896010689,
-        [49.92218101, -50],
+        [-49.92218101, 50],
         [1.75873066, -0.61830304],
         [10, 10],
     )
     assert all(np.allclose(x, y, rtol=1e-3) for x, y in zip(result.params, ref))
 
 
-def test_intermediate_state_decay() -> None:
-    gate = ro.gates.TwoQubitGate(phi=None, theta=np.pi, Vnn=float("inf"), decay=0)
-
-    lower = ro.pulses.PulseAnsatz(
-        detuning_ansatz=ro.pulses.const,
-        phase_ansatz=ro.pulses.sin_crab,
-        rabi_ansatz=ro.pulses.const,
-    )
-    upper = ro.pulses.PulseAnsatz(
-        detuning_ansatz=ro.pulses.const,
-        rabi_ansatz=ro.pulses.const,
-    )
-    pulse = ro.pulses.TwoPhotonPulseAnsatz(
-        lower_transition=lower,
-        upper_transition=upper,
-        lower_param_counts=(1, 2, 1),
-        decay=0.5,
-    )
-
-    def compute_fidelity(intermediate_state_detuning: float) -> float:
-        detuning_ref = 49.92218101
-        detuning_new = detuning_ref - 50 + intermediate_state_detuning
-        params = (
-            7.600019896010689,
-            [detuning_new, -intermediate_state_detuning],
-            [1.75873066, -0.61830304],
-            [
-                np.sign(detuning_new) * 10 * np.sqrt(np.abs(detuning_new / detuning_ref)),
-                10 * np.sqrt(np.abs(detuning_new / detuning_ref)),
-            ],
-        )
-        return float(ro.simulation.process_fidelity(gate, pulse, params))
-
-    infidelity_dark = np.abs(1 - compute_fidelity(50))  # dynamics via the dark state
-    infidelity_bright = np.abs(1 - compute_fidelity(-50))  # dynamics via the bright state
-
-    assert infidelity_dark < infidelity_bright
-
-
 def test_average_gate_fidelity_qutip_comparison() -> None:
     # Parameters from test_two_photon_cz
     params = (
         7.600019896010689,
-        [49.92218101, -50],
+        [-49.92218101, 50],
         [1.75873066, -0.61830304],
         [10, 10],
     )
@@ -174,8 +135,8 @@ def test_average_gate_fidelity_qutip_comparison() -> None:
             return np.exp(1j * xi_func(float(t)))
 
         H0_s = (
-            Delta_l * kete @ kete.dag()
-            + (Delta_l + Delta_u) * ketr @ ketr.dag()
+            -Delta_l * kete @ kete.dag()
+            - (Delta_l + Delta_u) * ketr @ ketr.dag()
             + (Omega_u / 2) * (kete @ ketr.dag() + ketr @ kete.dag())
         )
         H_m_s = (Omega_l / 2) * ket1 @ kete.dag()

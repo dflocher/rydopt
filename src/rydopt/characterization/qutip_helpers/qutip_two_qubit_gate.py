@@ -34,7 +34,7 @@ def hamiltonian_TwoQubitGate(
             proj
             * (
                 Vnn * qt.tensor(IrxrI, IrxrI)
-                + (detuning_fn(t) - 1j * 0.5 * decay) * (qt.tensor(IrxrI, id3) + qt.tensor(id3, IrxrI))
+                + (-detuning_fn(t) - 1j * 0.5 * decay) * (qt.tensor(IrxrI, id3) + qt.tensor(id3, IrxrI))
                 + 0.5 * rabi_fn(t) * np.cos(phase_fn(t)) * (qt.tensor(X_1r, id3) + qt.tensor(id3, X_1r))
                 + 0.5 * rabi_fn(t) * np.sin(phase_fn(t)) * (qt.tensor(Y_1r, id3) + qt.tensor(id3, Y_1r))
             )

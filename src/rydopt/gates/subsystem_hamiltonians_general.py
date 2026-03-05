@@ -32,7 +32,7 @@ def H_1_atom_general(
             # |0>
             [0.0, 0.5 * s1 * Omega * em],
             # |1>
-            [0.5 * s1 * Omega * ep, Delta - 1j * 0.5 * decay],
+            [0.5 * s1 * Omega * ep, -Delta - 1j * 0.5 * decay],
         ]
     )
 
@@ -78,7 +78,7 @@ def H_2_atoms_general(
             # |01>
             [
                 0.5 * s2 * Omega * ep,
-                Delta - 1j * 0.5 * decay,
+                -Delta - 1j * 0.5 * decay,
                 0.0,
                 0.5 * s1 * Omega * em,
             ],
@@ -86,7 +86,7 @@ def H_2_atoms_general(
             [
                 0.5 * s1 * Omega * ep,
                 0.0,
-                Delta - 1j * 0.5 * decay,
+                -Delta - 1j * 0.5 * decay,
                 0.5 * s2 * Omega * em,
             ],
             # |11>
@@ -94,7 +94,7 @@ def H_2_atoms_general(
                 0.0,
                 0.5 * s1 * Omega * ep,
                 0.5 * s2 * Omega * ep,
-                V12 + 2 * Delta - 1j * decay,
+                V12 - 2 * Delta - 1j * decay,
             ],
         ]
     )
@@ -152,7 +152,7 @@ def H_3_atoms_general(
             # |001>
             [
                 0.5 * s3 * Omega * ep,
-                Delta - 1j * 0.5 * decay,
+                -Delta - 1j * 0.5 * decay,
                 0.0,
                 0.5 * s2 * Omega * em,
                 0.0,
@@ -164,7 +164,7 @@ def H_3_atoms_general(
             [
                 0.5 * s2 * Omega * ep,
                 0.0,
-                Delta - 1j * 0.5 * decay,
+                -Delta - 1j * 0.5 * decay,
                 0.5 * s3 * Omega * em,
                 0.0,
                 0.0,
@@ -176,7 +176,7 @@ def H_3_atoms_general(
                 0.0,
                 0.5 * s2 * Omega * ep,
                 0.5 * s3 * Omega * ep,
-                V23 + 2 * Delta - 1j * decay,
+                V23 - 2 * Delta - 1j * decay,
                 0.0,
                 0.0,
                 0.0,
@@ -188,7 +188,7 @@ def H_3_atoms_general(
                 0.0,
                 0.0,
                 0.0,
-                Delta - 1j * 0.5 * decay,
+                -Delta - 1j * 0.5 * decay,
                 0.5 * s3 * Omega * em,
                 0.5 * s2 * Omega * em,
                 0.0,
@@ -200,7 +200,7 @@ def H_3_atoms_general(
                 0.0,
                 0.0,
                 0.5 * s3 * Omega * ep,
-                V13 + 2 * Delta - 1j * decay,
+                V13 - 2 * Delta - 1j * decay,
                 0.0,
                 0.5 * s2 * Omega * em,
             ],
@@ -212,7 +212,7 @@ def H_3_atoms_general(
                 0.0,
                 0.5 * s2 * Omega * ep,
                 0.0,
-                V12 + 2 * Delta - 1j * decay,
+                V12 - 2 * Delta - 1j * decay,
                 0.5 * s3 * Omega * em,
             ],
             # |111>
@@ -224,7 +224,7 @@ def H_3_atoms_general(
                 0.0,
                 0.5 * s2 * Omega * ep,
                 0.5 * s3 * Omega * ep,
-                V12 + V23 + V13 + 3 * Delta - 1j * 1.5 * decay,
+                V12 + V23 + V13 - 3 * Delta - 1j * 1.5 * decay,
             ],
         ]
     )
@@ -297,7 +297,7 @@ def H_4_atoms_general(
             # |0001>
             [
                 0.5 * s4 * Omega * ep,
-                Delta - 1j * 0.5 * decay,
+                -Delta - 1j * 0.5 * decay,
                 0.0,
                 0.5 * s3 * Omega * em,
                 0.0,
@@ -317,7 +317,7 @@ def H_4_atoms_general(
             [
                 0.5 * s3 * Omega * ep,
                 0.0,
-                Delta - 1j * 0.5 * decay,
+                -Delta - 1j * 0.5 * decay,
                 0.5 * s4 * Omega * em,
                 0.0,
                 0.0,
@@ -337,7 +337,7 @@ def H_4_atoms_general(
                 0.0,
                 0.5 * s3 * Omega * ep,
                 0.5 * s4 * Omega * ep,
-                V34 + 2 * Delta - 1j * decay,
+                V34 - 2 * Delta - 1j * decay,
                 0.0,
                 0.0,
                 0.0,
@@ -357,7 +357,7 @@ def H_4_atoms_general(
                 0.0,
                 0.0,
                 0.0,
-                Delta - 1j * 0.5 * decay,
+                -Delta - 1j * 0.5 * decay,
                 0.5 * s4 * Omega * em,
                 0.5 * s3 * Omega * em,
                 0.0,
@@ -377,7 +377,7 @@ def H_4_atoms_general(
                 0.0,
                 0.0,
                 0.5 * s4 * Omega * ep,
-                V24 + 2 * Delta - 1j * decay,
+                V24 - 2 * Delta - 1j * decay,
                 0.0,
                 0.5 * s3 * Omega * em,
                 0.0,
@@ -397,7 +397,7 @@ def H_4_atoms_general(
                 0.0,
                 0.5 * s3 * Omega * ep,
                 0.0,
-                V23 + 2 * Delta - 1j * decay,
+                V23 - 2 * Delta - 1j * decay,
                 0.5 * s4 * Omega * em,
                 0.0,
                 0.0,
@@ -417,7 +417,7 @@ def H_4_atoms_general(
                 0.0,
                 0.5 * s3 * Omega * ep,
                 0.5 * s4 * Omega * ep,
-                V23 + V24 + V34 + 3 * Delta - 1j * 1.5 * decay,
+                V23 + V24 + V34 - 3 * Delta - 1j * 1.5 * decay,
                 0.0,
                 0.0,
                 0.0,
@@ -437,7 +437,7 @@ def H_4_atoms_general(
                 0.0,
                 0.0,
                 0.0,
-                Delta - 1j * 0.5 * decay,
+                -Delta - 1j * 0.5 * decay,
                 0.5 * s4 * Omega * em,
                 0.5 * s3 * Omega * em,
                 0.0,
@@ -457,7 +457,7 @@ def H_4_atoms_general(
                 0.0,
                 0.0,
                 0.5 * s4 * Omega * ep,
-                V14 + 2 * Delta - 1j * decay,
+                V14 - 2 * Delta - 1j * decay,
                 0.0,
                 0.5 * s3 * Omega * em,
                 0.0,
@@ -477,7 +477,7 @@ def H_4_atoms_general(
                 0.0,
                 0.5 * s3 * Omega * ep,
                 0.0,
-                V13 + 2 * Delta - 1j * decay,
+                V13 - 2 * Delta - 1j * decay,
                 0.5 * s4 * Omega * em,
                 0.0,
                 0.0,
@@ -497,7 +497,7 @@ def H_4_atoms_general(
                 0.0,
                 0.5 * s3 * Omega * ep,
                 0.5 * s4 * Omega * ep,
-                V13 + V14 + V34 + 3 * Delta - 1j * 1.5 * decay,
+                V13 + V14 + V34 - 3 * Delta - 1j * 1.5 * decay,
                 0.0,
                 0.0,
                 0.0,
@@ -517,7 +517,7 @@ def H_4_atoms_general(
                 0.0,
                 0.0,
                 0.0,
-                V12 + 2 * Delta - 1j * decay,
+                V12 - 2 * Delta - 1j * decay,
                 0.5 * s4 * Omega * em,
                 0.5 * s3 * Omega * em,
                 0.0,
@@ -537,7 +537,7 @@ def H_4_atoms_general(
                 0.0,
                 0.0,
                 0.5 * s4 * Omega * ep,
-                V12 + V14 + V24 + 3 * Delta - 1j * 1.5 * decay,
+                V12 + V14 + V24 - 3 * Delta - 1j * 1.5 * decay,
                 0.0,
                 0.5 * s3 * Omega * em,
             ],
@@ -557,7 +557,7 @@ def H_4_atoms_general(
                 0.0,
                 0.5 * s3 * Omega * ep,
                 0.0,
-                V12 + V13 + V23 + 3 * Delta - 1j * 1.5 * decay,
+                V12 + V13 + V23 - 3 * Delta - 1j * 1.5 * decay,
                 0.5 * s4 * Omega * em,
             ],
             # |1111>
@@ -577,7 +577,7 @@ def H_4_atoms_general(
                 0.0,
                 0.5 * s3 * Omega * ep,
                 0.5 * s4 * Omega * ep,
-                V12 + V13 + V14 + V23 + V24 + V34 + 4 * Delta - 1j * 2 * decay,
+                V12 + V13 + V14 + V23 + V24 + V34 - 4 * Delta - 1j * 2 * decay,
             ],
         ]
     )

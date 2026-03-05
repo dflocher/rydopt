@@ -24,7 +24,7 @@ def test_ccz() -> None:
     )
 
     # Initial parameters
-    initial_params = (11.0, [0.2], [0.4, -1.2, 1.1, -0.7, 0.9, -0.2], [])
+    initial_params = (11.0, [-0.2], [0.4, -1.2, 1.1, -0.7, 0.9, -0.2], [])
 
     # Run optimization
     r = ro.optimization.optimize(gate, pulse, initial_params, num_steps=200, tol=1e-7)
@@ -32,7 +32,7 @@ def test_ccz() -> None:
     # Compare result to reference
     ref = (
         10.99552491,
-        (0.20352,),
+        (-0.20352,),
         (0.43322811, -1.18878954, 1.10057937, -0.70670388, 1.16454156, -0.25082207),
         (),
     )

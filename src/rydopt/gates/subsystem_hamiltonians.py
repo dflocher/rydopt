@@ -18,10 +18,13 @@ def H_k_atoms_perfect_blockade(Delta: float, Xi: float, Omega: float, decay: flo
         2-level system Hamiltonian.
 
     """
+    em = jnp.exp(-1j * Xi)
+    ep = jnp.exp(1j * Xi)
+
     return jnp.array(
         [
-            [0.0, 0.5 * jnp.sqrt(k) * Omega * jnp.exp(-1j * Xi)],
-            [0.5 * jnp.sqrt(k) * Omega * jnp.exp(1j * Xi), Delta - 1j * 0.5 * decay],
+            [0.0, 0.5 * jnp.sqrt(k) * Omega * em],
+            [0.5 * jnp.sqrt(k) * Omega * ep, -Delta - 1j * 0.5 * decay],
         ]
     )
 
@@ -42,18 +45,21 @@ def H_2_atoms(Delta: float, Xi: float, Omega: float, decay: float, V: float) -> 
         3-level system Hamiltonian.
 
     """
+    em = jnp.exp(-1j * Xi)
+    ep = jnp.exp(1j * Xi)
+
     return jnp.array(
         [
-            [0.0, 0.5 * jnp.sqrt(2) * Omega * jnp.exp(-1j * Xi), 0],
+            [0.0, 0.5 * jnp.sqrt(2) * Omega * em, 0],
             [
-                0.5 * jnp.sqrt(2) * Omega * jnp.exp(1j * Xi),
-                Delta - 1j * 0.5 * decay,
-                0.5 * jnp.sqrt(2) * Omega * jnp.exp(-1j * Xi),
+                0.5 * jnp.sqrt(2) * Omega * ep,
+                -Delta - 1j * 0.5 * decay,
+                0.5 * jnp.sqrt(2) * Omega * em,
             ],
             [
                 0,
-                0.5 * jnp.sqrt(2) * Omega * jnp.exp(1j * Xi),
-                2 * Delta + V - 1j * decay,
+                0.5 * jnp.sqrt(2) * Omega * ep,
+                -2 * Delta + V - 1j * decay,
             ],
         ]
     )
@@ -77,26 +83,29 @@ def H_3_atoms_inf_V(Delta: float, Xi: float, Omega: float, decay: float, V: floa
         4-level system Hamiltonian.
 
     """
+    em = jnp.exp(-1j * Xi)
+    ep = jnp.exp(1j * Xi)
+
     return jnp.array(
         [
-            [0.0, 0.5 * jnp.sqrt(3) * Omega * jnp.exp(-1j * Xi), 0.0, 0.0],
+            [0.0, 0.5 * jnp.sqrt(3) * Omega * em, 0.0, 0.0],
             [
-                0.5 * jnp.sqrt(3) * Omega * jnp.exp(1j * Xi),
-                Delta - 1j * 0.5 * decay,
+                0.5 * jnp.sqrt(3) * Omega * ep,
+                -Delta - 1j * 0.5 * decay,
                 0.0,
-                (1 / jnp.sqrt(3)) * Omega * jnp.exp(-1j * Xi),
+                (1 / jnp.sqrt(3)) * Omega * em,
             ],
             [
                 0.0,
                 0.0,
-                Delta - 1j * 0.5 * decay,
-                (1 / jnp.sqrt(6)) * Omega * jnp.exp(-1j * Xi),
+                -Delta - 1j * 0.5 * decay,
+                (1 / jnp.sqrt(6)) * Omega * em,
             ],
             [
                 0.0,
-                (1 / jnp.sqrt(3)) * Omega * jnp.exp(1j * Xi),
-                (1 / jnp.sqrt(6)) * Omega * jnp.exp(1j * Xi),
-                V + 2 * Delta - 1j * decay,
+                (1 / jnp.sqrt(3)) * Omega * ep,
+                (1 / jnp.sqrt(6)) * Omega * ep,
+                V - 2 * Delta - 1j * decay,
             ],
         ]
     )
@@ -119,26 +128,29 @@ def H_3_atoms_symmetric(Delta: float, Xi: float, Omega: float, decay: float, V: 
         4-level system Hamiltonian.
 
     """
+    em = jnp.exp(-1j * Xi)
+    ep = jnp.exp(1j * Xi)
+
     return jnp.array(
         [
-            [0.0, 0.5 * jnp.sqrt(3) * Omega * jnp.exp(-1j * Xi), 0.0, 0.0],
+            [0.0, 0.5 * jnp.sqrt(3) * Omega * em, 0.0, 0.0],
             [
-                0.5 * jnp.sqrt(3) * Omega * jnp.exp(1j * Xi),
-                Delta - 1j * 0.5 * decay,
-                Omega * jnp.exp(-1j * Xi),
+                0.5 * jnp.sqrt(3) * Omega * ep,
+                -Delta - 1j * 0.5 * decay,
+                Omega * em,
                 0.0,
             ],
             [
                 0.0,
-                Omega * jnp.exp(1j * Xi),
-                V + 2 * Delta - 1j * decay,
-                0.5 * jnp.sqrt(3) * Omega * jnp.exp(-1j * Xi),
+                Omega * ep,
+                V - 2 * Delta - 1j * decay,
+                0.5 * jnp.sqrt(3) * Omega * em,
             ],
             [
                 0.0,
                 0.0,
-                0.5 * jnp.sqrt(3) * Omega * jnp.exp(1j * Xi),
-                3 * V + 3 * Delta - 1j * 1.5 * decay,
+                0.5 * jnp.sqrt(3) * Omega * ep,
+                3 * V - 3 * Delta - 1j * 1.5 * decay,
             ],
         ]
     )
@@ -163,55 +175,58 @@ def H_3_atoms(Delta: float, Xi: float, Omega: float, decay: float, Vnn: float, V
         6-level system Hamiltonian.
 
     """
+    em = jnp.exp(-1j * Xi)
+    ep = jnp.exp(1j * Xi)
+
     return jnp.array(
         [
             [
                 0.0,
-                0.5 * jnp.sqrt(3) * Omega * jnp.exp(-1j * Xi),
+                0.5 * jnp.sqrt(3) * Omega * em,
                 0.0,
                 0.0,
                 0.0,
                 0.0,
             ],
             [
-                0.5 * jnp.sqrt(3) * Omega * jnp.exp(1j * Xi),
-                Delta - 1j * 0.5 * decay,
+                0.5 * jnp.sqrt(3) * Omega * ep,
+                -Delta - 1j * 0.5 * decay,
                 0.0,
                 0.0,
-                Omega * jnp.exp(-1j * Xi),
-                0.0,
-            ],
-            [
-                0.0,
-                0.0,
-                Delta - 1j * 0.5 * decay,
-                0.5 * Omega * jnp.exp(-1j * Xi),
-                0.0,
+                Omega * em,
                 0.0,
             ],
             [
                 0.0,
                 0.0,
-                0.5 * Omega * jnp.exp(1j * Xi),
-                (1 / 3) * Vnn + (2 / 3) * Vnnn + 2 * Delta - 1j * decay,
+                -Delta - 1j * 0.5 * decay,
+                0.5 * Omega * em,
+                0.0,
+                0.0,
+            ],
+            [
+                0.0,
+                0.0,
+                0.5 * Omega * ep,
+                (1 / 3) * Vnn + (2 / 3) * Vnnn - 2 * Delta - 1j * decay,
                 (1 / 3) * jnp.sqrt(2) * (Vnn - Vnnn),
                 0.0,
             ],
             [
                 0.0,
-                Omega * jnp.exp(1j * Xi),
+                Omega * ep,
                 0.0,
                 (1 / 3) * jnp.sqrt(2) * (Vnn - Vnnn),
-                (2 / 3) * Vnn + (1 / 3) * Vnnn + 2 * Delta - 1j * decay,
-                0.5 * jnp.sqrt(3) * Omega * jnp.exp(-1j * Xi),
+                (2 / 3) * Vnn + (1 / 3) * Vnnn - 2 * Delta - 1j * decay,
+                0.5 * jnp.sqrt(3) * Omega * em,
             ],
             [
                 0.0,
                 0.0,
                 0.0,
                 0.0,
-                0.5 * jnp.sqrt(3) * Omega * jnp.exp(1j * Xi),
-                2 * Vnn + Vnnn + 3 * Delta - 1j * 1.5 * decay,
+                0.5 * jnp.sqrt(3) * Omega * ep,
+                2 * Vnn + Vnnn - 3 * Delta - 1j * 1.5 * decay,
             ],
         ]
     )
@@ -235,36 +250,39 @@ def H_4_atoms_inf_V(Delta: float, Xi: float, Omega: float, decay: float, V: floa
         5-level system Hamiltonian.
 
     """
+    em = jnp.exp(-1j * Xi)
+    ep = jnp.exp(1j * Xi)
+
     return jnp.array(
         [
-            [0.0, Omega * jnp.exp(-1j * Xi), 0.0, 0.0, 0.0],
+            [0.0, Omega * em, 0.0, 0.0, 0.0],
             [
-                Omega * jnp.exp(1j * Xi),
-                Delta - 1j * 0.5 * decay,
+                Omega * ep,
+                -Delta - 1j * 0.5 * decay,
                 0.0,
-                0.5 * jnp.sqrt(3) * Omega * jnp.exp(-1j * Xi),
+                0.5 * jnp.sqrt(3) * Omega * em,
                 0.0,
             ],
             [
                 0.0,
                 0.0,
-                Delta - 1j * 0.5 * decay,
-                0.5 * Omega * jnp.exp(-1j * Xi),
+                -Delta - 1j * 0.5 * decay,
+                0.5 * Omega * em,
                 0.0,
             ],
             [
                 0.0,
-                0.5 * jnp.sqrt(3) * Omega * jnp.exp(1j * Xi),
-                0.5 * Omega * jnp.exp(1j * Xi),
-                V + 2 * Delta - 1j * decay,
-                0.5 * jnp.sqrt(3) * Omega * jnp.exp(-1j * Xi),
+                0.5 * jnp.sqrt(3) * Omega * ep,
+                0.5 * Omega * ep,
+                V - 2 * Delta - 1j * decay,
+                0.5 * jnp.sqrt(3) * Omega * em,
             ],
             [
                 0.0,
                 0.0,
                 0.0,
-                0.5 * jnp.sqrt(3) * Omega * jnp.exp(1j * Xi),
-                3 * V + 3 * Delta - 1j * 1.5 * decay,
+                0.5 * jnp.sqrt(3) * Omega * ep,
+                3 * V - 3 * Delta - 1j * 1.5 * decay,
             ],
         ]
     )
@@ -287,36 +305,39 @@ def H_4_atoms_symmetric(Delta: float, Xi: float, Omega: float, decay: float, V: 
         5-level system Hamiltonian.
 
     """
+    em = jnp.exp(-1j * Xi)
+    ep = jnp.exp(1j * Xi)
+
     return jnp.array(
         [
-            [0.0, Omega * jnp.exp(-1j * Xi), 0.0, 0.0, 0.0],
+            [0.0, Omega * em, 0.0, 0.0, 0.0],
             [
-                Omega * jnp.exp(1j * Xi),
-                Delta - 1j * 0.5 * decay,
-                0.5 * jnp.sqrt(6) * Omega * jnp.exp(-1j * Xi),
+                Omega * ep,
+                -Delta - 1j * 0.5 * decay,
+                0.5 * jnp.sqrt(6) * Omega * em,
                 0.0,
                 0.0,
             ],
             [
                 0.0,
-                0.5 * jnp.sqrt(6) * Omega * jnp.exp(1j * Xi),
-                V + 2 * Delta - 1j * decay,
-                0.5 * jnp.sqrt(6) * Omega * jnp.exp(-1j * Xi),
+                0.5 * jnp.sqrt(6) * Omega * ep,
+                V - 2 * Delta - 1j * decay,
+                0.5 * jnp.sqrt(6) * Omega * em,
                 0.0,
             ],
             [
                 0.0,
                 0.0,
-                0.5 * jnp.sqrt(6) * Omega * jnp.exp(1j * Xi),
-                3 * V + 3 * Delta - 1j * 1.5 * decay,
-                Omega * jnp.exp(-1j * Xi),
+                0.5 * jnp.sqrt(6) * Omega * ep,
+                3 * V - 3 * Delta - 1j * 1.5 * decay,
+                Omega * em,
             ],
             [
                 0.0,
                 0.0,
                 0.0,
-                Omega * jnp.exp(1j * Xi),
-                6 * V + 4 * Delta - 1j * 2 * decay,
+                Omega * ep,
+                6 * V - 4 * Delta - 1j * 2 * decay,
             ],
         ]
     )
@@ -341,14 +362,17 @@ def H_4_atoms(Delta: float, Xi: float, Omega: float, decay: float, Vnn: float, V
         8-level system Hamiltonian.
 
     """
+    em = jnp.exp(-1j * Xi)
+    ep = jnp.exp(1j * Xi)
+
     return jnp.array(
         [
-            [0.0, Omega * jnp.exp(-1j * Xi), 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+            [0.0, Omega * em, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
             [
-                Omega * jnp.exp(1j * Xi),
-                Delta - 1j * 0.5 * decay,
+                Omega * ep,
+                -Delta - 1j * 0.5 * decay,
                 0.0,
-                0.5 * jnp.sqrt(6) * Omega * jnp.exp(-1j * Xi),
+                0.5 * jnp.sqrt(6) * Omega * em,
                 0.0,
                 0.0,
                 0.0,
@@ -357,30 +381,30 @@ def H_4_atoms(Delta: float, Xi: float, Omega: float, decay: float, Vnn: float, V
             [
                 0.0,
                 0.0,
-                Delta - 1j * 0.5 * decay,
+                -Delta - 1j * 0.5 * decay,
                 0.0,
-                0.5 * jnp.sqrt(2) * Omega * jnp.exp(-1j * Xi),
+                0.5 * jnp.sqrt(2) * Omega * em,
                 0.0,
                 0.0,
                 0.0,
             ],
             [
                 0.0,
-                0.5 * jnp.sqrt(6) * Omega * jnp.exp(1j * Xi),
+                0.5 * jnp.sqrt(6) * Omega * ep,
                 0.0,
-                0.5 * Vnn + 0.5 * Vnnn + 2 * Delta - 1j * decay,
+                0.5 * Vnn + 0.5 * Vnnn - 2 * Delta - 1j * decay,
                 0.5 * (Vnn - Vnnn),
                 0.0,
-                0.5 * jnp.sqrt(6) * Omega * jnp.exp(-1j * Xi),
+                0.5 * jnp.sqrt(6) * Omega * em,
                 0.0,
             ],
             [
                 0.0,
                 0.0,
-                0.5 * jnp.sqrt(2) * Omega * jnp.exp(1j * Xi),
+                0.5 * jnp.sqrt(2) * Omega * ep,
                 0.5 * (Vnn - Vnnn),
-                0.5 * Vnn + 0.5 * Vnnn + 2 * Delta - 1j * decay,
-                0.5 * jnp.sqrt(2) * Omega * jnp.exp(-1j * Xi),
+                0.5 * Vnn + 0.5 * Vnnn - 2 * Delta - 1j * decay,
+                0.5 * jnp.sqrt(2) * Omega * em,
                 0.0,
                 0.0,
             ],
@@ -389,8 +413,8 @@ def H_4_atoms(Delta: float, Xi: float, Omega: float, decay: float, Vnn: float, V
                 0.0,
                 0.0,
                 0.0,
-                0.5 * jnp.sqrt(2) * Omega * jnp.exp(1j * Xi),
-                0.5 * Vnn + 2.5 * Vnnn + 3 * Delta - 1j * 1.5 * decay,
+                0.5 * jnp.sqrt(2) * Omega * ep,
+                0.5 * Vnn + 2.5 * Vnnn - 3 * Delta - 1j * 1.5 * decay,
                 0.5 * jnp.sqrt(3) * (Vnn - Vnnn),
                 0.0,
             ],
@@ -398,11 +422,11 @@ def H_4_atoms(Delta: float, Xi: float, Omega: float, decay: float, Vnn: float, V
                 0.0,
                 0.0,
                 0.0,
-                0.5 * jnp.sqrt(6) * Omega * jnp.exp(1j * Xi),
+                0.5 * jnp.sqrt(6) * Omega * ep,
                 0.0,
                 0.5 * jnp.sqrt(3) * (Vnn - Vnnn),
-                1.5 * Vnn + 1.5 * Vnnn + 3 * Delta - 1j * 1.5 * decay,
-                Omega * jnp.exp(-1j * Xi),
+                1.5 * Vnn + 1.5 * Vnnn - 3 * Delta - 1j * 1.5 * decay,
+                Omega * em,
             ],
             [
                 0.0,
@@ -411,8 +435,8 @@ def H_4_atoms(Delta: float, Xi: float, Omega: float, decay: float, Vnn: float, V
                 0.0,
                 0.0,
                 0.0,
-                Omega * jnp.exp(1j * Xi),
-                3 * Vnn + 3 * Vnnn + 4 * Delta - 1j * 2 * decay,
+                Omega * ep,
+                3 * Vnn + 3 * Vnnn - 4 * Delta - 1j * 2 * decay,
             ],
         ]
     )

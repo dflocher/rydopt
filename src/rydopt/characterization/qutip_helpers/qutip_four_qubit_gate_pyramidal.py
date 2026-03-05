@@ -59,7 +59,7 @@ def hamiltonian_FourQubitGatePyramidal(
                     + qt.tensor(qt.tensor(qt.tensor(id3, IrxrI), id3), IrxrI)
                     + qt.tensor(qt.tensor(qt.tensor(id3, id3), IrxrI), IrxrI)
                 )
-                + (detuning_fn(t) - 1j * 0.5 * decay)
+                + (-detuning_fn(t) - 1j * 0.5 * decay)
                 * (
                     qt.tensor(qt.tensor(qt.tensor(IrxrI, id3), id3), id3)
                     + qt.tensor(qt.tensor(qt.tensor(id3, IrxrI), id3), id3)

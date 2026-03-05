@@ -30,7 +30,7 @@ def evolve(gate: Evolvable, pulse: PulseAnsatzLike, params: PulseParams, tol: fl
         ...     detuning_ansatz=ro.pulses.const,
         ...     phase_ansatz=ro.pulses.sin_crab,
         ... )
-        >>> params = (7.61140652, [-0.07842706], [1.80300902, -0.61792703], [])
+        >>> params = (7.61140652, [0.07842706], [1.80300902, -0.61792703], [])
         >>> time_evolved_basis_states = ro.simulation.evolve(gate, pulse, params)
 
     Args:

@@ -31,7 +31,7 @@ class PulseAnsatz:
 
             H_\mathrm{drive}(t)=\begin{pmatrix}
                 0 & \frac{\Omega(t)}{2} e^{-i\xi(t)} \\
-                \frac{\Omega(t)}{2} e^{i\xi(t)} & \Delta(t)
+                \frac{\Omega(t)}{2} e^{i\xi(t)} & -\Delta(t)
             \end{pmatrix}.
 
     For available ansatz functions for the detuning :math:`\Delta(t)`, phase :math:`\xi(t)`, and Rabi
@@ -102,11 +102,11 @@ class TwoPhotonPulseAnsatz:
             \frac{\Omega_\ell(t)}{2}\,e^{-i\xi_\ell(t)} &
             0 \\[6pt]
             \frac{\Omega_\ell(t)}{2}\,e^{i\xi_\ell(t)} &
-            \Delta_\ell(t) - i \frac{\gamma}{2}&
+            -\Delta_\ell(t) - i \frac{\gamma}{2}&
             \frac{\Omega_u(t)}{2}\,e^{-i\xi_u(t)} \\[6pt]
             0 &
             \frac{\Omega_u(t)}{2}\,e^{i\xi_u(t)} &
-            \Delta_\ell(t)+\Delta_u(t)
+            -\Delta_\ell(t)-\Delta_u(t)
         \end{pmatrix},
 
     where the lower/upper laser couples :math:`|1\rangle \leftrightarrow |e\rangle` /
@@ -125,17 +125,17 @@ class TwoPhotonPulseAnsatz:
         H_\mathrm{drive}(t)=
         \begin{pmatrix}
             0 & \frac{\Omega_\mathrm{eff}(t)}{2} e^{-i\xi_\mathrm{eff}(t)} \\
-            \frac{\Omega_\mathrm{eff}(t)}{2} e^{i\xi_\mathrm{eff}(t)} & \Delta_\mathrm{eff}(t)
+            \frac{\Omega_\mathrm{eff}(t)}{2} e^{i\xi_\mathrm{eff}(t)} & -\Delta_\mathrm{eff}(t)
         \end{pmatrix}.
 
     The effective controls are computed as
 
     .. math::
 
-        \Omega_\mathrm{eff}(t)&=\frac{\Omega_\ell(t)\Omega_u(t)}{2(\Delta_\ell(t)-i\gamma/2)}, \\
+        \Omega_\mathrm{eff}(t)&=\frac{\Omega_\ell(t)\Omega_u(t)}{2(\Delta_\ell(t)+i\gamma/2)}, \\
         \xi_\mathrm{eff}(t)&=\xi_\ell(t)+\xi_u(t), \\
         \Delta_\mathrm{eff}(t)&=\Delta_\ell(t)+\Delta_u(t)+
-        \frac{\Omega_\ell(t)^2-\Omega_u(t)^2}{4(\Delta_\ell(t)-i\gamma/2)}.
+        \frac{\Omega_\ell(t)^2-\Omega_u(t)^2}{4(\Delta_\ell(t)+i\gamma/2)}.
 
     For available ansatz functions for the detuning, phase, and Rabi frequency sweeps, see below.
     The function :func:`optimize <rydopt.optimization.optimize>` allows optimizing the
@@ -213,12 +213,12 @@ class TwoPhotonPulseAnsatz:
         lower_detuning, lower_phase, lower_rabi = self.lower_transition.evaluate_pulse_functions(t, lower_params)
         upper_detuning, upper_phase, upper_rabi = self.upper_transition.evaluate_pulse_functions(t, upper_params)
 
-        effective_rabi = lower_rabi * upper_rabi / (2.0 * (lower_detuning - 0.5j * self.decay))
+        effective_rabi = lower_rabi * upper_rabi / (2.0 * (lower_detuning + 0.5j * self.decay))
         effective_phase = lower_phase + upper_phase
         effective_detuning = (
             lower_detuning
             + upper_detuning
-            + (lower_rabi**2 - upper_rabi**2) / (4.0 * (lower_detuning - 0.5j * self.decay))
+            + (lower_rabi**2 - upper_rabi**2) / (4.0 * (lower_detuning + 0.5j * self.decay))
         )
 
         return effective_detuning, effective_phase, effective_rabi

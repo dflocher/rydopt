@@ -22,7 +22,7 @@ def test_two_qubit_gate_asym_vs_symmetric() -> None:
     pulse = ro.pulses.PulseAnsatz(detuning_ansatz=ro.pulses.const, phase_ansatz=ro.pulses.sin_crab)
 
     # Optimized parameters from test_cz.py
-    params = (7.61141034, [-0.07884777], [1.83253308, -0.61765787], [])
+    params = (7.61141034, [0.07884777], [1.83253308, -0.61765787], [])
 
     f_sym = ro.simulation.process_fidelity(gate_sym, pulse, params)
     f_asym = ro.simulation.process_fidelity(gate_asym, pulse, params)

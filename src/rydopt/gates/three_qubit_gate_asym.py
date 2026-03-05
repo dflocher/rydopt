@@ -159,13 +159,13 @@ class ThreeQubitGateAsym:
 
         """
         return (
-            H_1_atom_general(Delta=1.0, Xi=0.0, Omega=0.0, decay=0.0),
-            H_1_atom_general(Delta=1.0, Xi=0.0, Omega=0.0, decay=0.0),
-            H_2_atoms_general(Delta=1.0, Xi=0.0, Omega=0.0, decay=0.0, V12=0.0),
-            H_1_atom_general(Delta=1.0, Xi=0.0, Omega=0.0, decay=0.0),
-            H_2_atoms_general(Delta=1.0, Xi=0.0, Omega=0.0, decay=0.0, V12=0.0),
-            H_2_atoms_general(Delta=1.0, Xi=0.0, Omega=0.0, decay=0.0, V12=0.0),
-            H_3_atoms_general(Delta=1.0, Xi=0.0, Omega=0.0, decay=0.0, V12=0.0, V23=0.0, V13=0.0),
+            H_1_atom_general(Delta=-1.0, Xi=0.0, Omega=0.0, decay=0.0),
+            H_1_atom_general(Delta=-1.0, Xi=0.0, Omega=0.0, decay=0.0),
+            H_2_atoms_general(Delta=-1.0, Xi=0.0, Omega=0.0, decay=0.0, V12=0.0),
+            H_1_atom_general(Delta=-1.0, Xi=0.0, Omega=0.0, decay=0.0),
+            H_2_atoms_general(Delta=-1.0, Xi=0.0, Omega=0.0, decay=0.0, V12=0.0),
+            H_2_atoms_general(Delta=-1.0, Xi=0.0, Omega=0.0, decay=0.0, V12=0.0),
+            H_3_atoms_general(Delta=-1.0, Xi=0.0, Omega=0.0, decay=0.0, V12=0.0, V23=0.0, V13=0.0),
         )
 
     def initial_basis_states(self) -> tuple[jax.Array, ...]:

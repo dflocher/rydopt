@@ -15,7 +15,7 @@ The dynamics of a set of :math:`N` atoms subjected to the very same laser pulse 
 
 .. math::
     H(t) = \hbar \sum_{i=1}^{N} \frac{1}{2} \big( \Omega(t) e^{i\xi(t)} |r_i \rangle \langle 1_i| + \mathrm{h.\!c.} \big)
-    + \Delta(t) |r_i\rangle \langle r_i| + \sum_{i,j<i} V_{ij} | r_i r_j \rangle \langle r_i r_j | ,
+    - \Delta(t) |r_i\rangle \langle r_i| + \sum_{i,j<i} V_{ij} | r_i r_j \rangle \langle r_i r_j | ,
 
 where :math:`V_{ij}` describes the interaction between atom :math:`i` and atom :math:`j`.
 

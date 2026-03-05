@@ -13,7 +13,7 @@ def test_adam() -> None:
     pulse = ro.pulses.PulseAnsatz(detuning_ansatz=ro.pulses.const, phase_ansatz=ro.pulses.sin_crab)
 
     # Initial parameters
-    initial_params = (7.6, [-0.1], [1.8, -0.6], [])
+    initial_params = (7.6, [0.1], [1.8, -0.6], [])
 
     # Run optimization
     r = ro.optimization.optimize(
@@ -36,7 +36,7 @@ def test_adam_decay() -> None:
     pulse = ro.pulses.PulseAnsatz(detuning_ansatz=ro.pulses.const, phase_ansatz=ro.pulses.sin_crab)
 
     # Initial parameters
-    initial_params = (7.6, [-0.1], [1.8, -0.6], [])
+    initial_params = (7.6, [0.1], [1.8, -0.6], [])
 
     # Run optimization
     r = ro.optimization.optimize(gate, pulse, initial_params, num_steps=200, tol=1e-7)
@@ -183,7 +183,7 @@ def test_adam_average_gate_fidelity() -> None:
     pulse = ro.pulses.PulseAnsatz(detuning_ansatz=ro.pulses.const, phase_ansatz=ro.pulses.sin_crab)
 
     # Initial parameters
-    initial_params = (7.6, [-0.1], [1.8, -0.6], [])
+    initial_params = (7.6, [0.1], [1.8, -0.6], [])
 
     # Run optimization using average gate fidelity
     r = ro.optimization.optimize(gate, pulse, initial_params, num_steps=200, tol=1e-7, fidelity_type="average_gate")

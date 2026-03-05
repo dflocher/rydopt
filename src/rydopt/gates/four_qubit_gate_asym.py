@@ -256,22 +256,22 @@ class FourQubitGateAsym:
 
         """
         return (
-            H_1_atom_general(Delta=1.0, Xi=0.0, Omega=0.0, decay=0.0),
-            H_1_atom_general(Delta=1.0, Xi=0.0, Omega=0.0, decay=0.0),
-            H_2_atoms_general(Delta=1.0, Xi=0.0, Omega=0.0, decay=0.0, V12=0.0),
-            H_1_atom_general(Delta=1.0, Xi=0.0, Omega=0.0, decay=0.0),
-            H_2_atoms_general(Delta=1.0, Xi=0.0, Omega=0.0, decay=0.0, V12=0.0),
-            H_2_atoms_general(Delta=1.0, Xi=0.0, Omega=0.0, decay=0.0, V12=0.0),
-            H_3_atoms_general(Delta=1.0, Xi=0.0, Omega=0.0, decay=0.0, V12=0.0, V13=0.0, V23=0.0),
-            H_1_atom_general(Delta=1.0, Xi=0.0, Omega=0.0, decay=0.0),
-            H_2_atoms_general(Delta=1.0, Xi=0.0, Omega=0.0, decay=0.0, V12=0.0),
-            H_2_atoms_general(Delta=1.0, Xi=0.0, Omega=0.0, decay=0.0, V12=0.0),
-            H_3_atoms_general(Delta=1.0, Xi=0.0, Omega=0.0, decay=0.0, V12=0.0, V13=0.0, V23=0.0),
-            H_2_atoms_general(Delta=1.0, Xi=0.0, Omega=0.0, decay=0.0, V12=0.0),
-            H_3_atoms_general(Delta=1.0, Xi=0.0, Omega=0.0, decay=0.0, V12=0.0, V13=0.0, V23=0.0),
-            H_3_atoms_general(Delta=1.0, Xi=0.0, Omega=0.0, decay=0.0, V12=0.0, V13=0.0, V23=0.0),
+            H_1_atom_general(Delta=-1.0, Xi=0.0, Omega=0.0, decay=0.0),
+            H_1_atom_general(Delta=-1.0, Xi=0.0, Omega=0.0, decay=0.0),
+            H_2_atoms_general(Delta=-1.0, Xi=0.0, Omega=0.0, decay=0.0, V12=0.0),
+            H_1_atom_general(Delta=-1.0, Xi=0.0, Omega=0.0, decay=0.0),
+            H_2_atoms_general(Delta=-1.0, Xi=0.0, Omega=0.0, decay=0.0, V12=0.0),
+            H_2_atoms_general(Delta=-1.0, Xi=0.0, Omega=0.0, decay=0.0, V12=0.0),
+            H_3_atoms_general(Delta=-1.0, Xi=0.0, Omega=0.0, decay=0.0, V12=0.0, V13=0.0, V23=0.0),
+            H_1_atom_general(Delta=-1.0, Xi=0.0, Omega=0.0, decay=0.0),
+            H_2_atoms_general(Delta=-1.0, Xi=0.0, Omega=0.0, decay=0.0, V12=0.0),
+            H_2_atoms_general(Delta=-1.0, Xi=0.0, Omega=0.0, decay=0.0, V12=0.0),
+            H_3_atoms_general(Delta=-1.0, Xi=0.0, Omega=0.0, decay=0.0, V12=0.0, V13=0.0, V23=0.0),
+            H_2_atoms_general(Delta=-1.0, Xi=0.0, Omega=0.0, decay=0.0, V12=0.0),
+            H_3_atoms_general(Delta=-1.0, Xi=0.0, Omega=0.0, decay=0.0, V12=0.0, V13=0.0, V23=0.0),
+            H_3_atoms_general(Delta=-1.0, Xi=0.0, Omega=0.0, decay=0.0, V12=0.0, V13=0.0, V23=0.0),
             H_4_atoms_general(
-                Delta=1.0, Xi=0.0, Omega=0.0, decay=0.0, V12=0.0, V13=0.0, V14=0.0, V23=0.0, V24=0.0, V34=0.0
+                Delta=-1.0, Xi=0.0, Omega=0.0, decay=0.0, V12=0.0, V13=0.0, V14=0.0, V23=0.0, V24=0.0, V34=0.0
             ),
         )
 
