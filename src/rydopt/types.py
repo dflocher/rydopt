@@ -6,11 +6,11 @@ import jax
 from numpy.typing import ArrayLike
 
 PulseParams = tuple[float, ArrayLike, ArrayLike, ArrayLike]
-
+GenericPulseParams = tuple[ArrayLike, ArrayLike, ArrayLike, ArrayLike]
 FixedPulseParams = tuple[bool, ArrayLike, ArrayLike, ArrayLike]
 
 PulseAnsatzFunction = Callable[
-    [jax.Array | float, float, jax.Array],
+    [jax.Array | float, jax.Array | float, jax.Array],
     jax.Array,
 ]
 

@@ -13,6 +13,7 @@ from rydopt.pulses.general_pulse_ansatz_functions import (
     sin_cos_crab,
     sin_crab,
 )
+from rydopt.pulses.mapped_pulse import MappedPulseAnsatz, PolynomialPulseMap
 from rydopt.pulses.pulse_ansatz import PulseAnsatz, PulseParams, TwoPhotonPulseAnsatz
 from rydopt.pulses.softbox_pulse_ansatz_functions import (
     softbox_blackman,
@@ -48,4 +49,6 @@ __all__ = [
     "softbox_planck",
     "softbox_fifth_order_smoothstep",
     "softbox_seventh_order_smoothstep",
+    "MappedPulseAnsatz",
+    "PolynomialPulseMap",
 ]

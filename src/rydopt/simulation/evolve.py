@@ -5,11 +5,14 @@ from functools import partial
 import jax
 import jax.numpy as jnp
 
+from rydopt.pulses.mapped_pulse import MappedPulseAnsatz
+from rydopt.pulses.pulse_ansatz import PulseAnsatz
 from rydopt.protocols import Evolvable, PulseAnsatzLike
 from rydopt.types import HamiltonianFunction, PulseParams
 
 
-def evolve(gate: Evolvable, pulse: PulseAnsatzLike, params: PulseParams, tol: float = 1e-7) -> tuple[jax.Array, ...]:
+def evolve(gate: Evolvable, pulse: PulseAnsatzLike | MappedPulseAnsatz, params: PulseParams, tol: float = 1e-7) -> (
+        tuple)[jax.Array, ...]:
     r"""The function performs the time evolution of all initial states :math:`|\psi_i(0)\rangle` (specified in the gate
     object), under the pulse Hamiltonian :math:`H`.
 
@@ -70,7 +73,10 @@ def evolve(gate: Evolvable, pulse: PulseAnsatzLike, params: PulseParams, tol: fl
         hamiltonian: HamiltonianFunction,
         dim: int,
     ) -> jax.Array:
-        values = pulse.evaluate_pulse_functions(t, params)
+        if isinstance(pulse, MappedPulseAnsatz):
+            values = pulse.evaluate_pulse_functions_for_gate(t, params, gate)
+        else:
+            values = pulse.evaluate_pulse_functions(t, params)
         dpsi_small = -1j * hamiltonian(*values) @ psi[:dim]
         return jnp.pad(dpsi_small, (0, psi.shape[0] - dim))
 
@@ -91,11 +97,13 @@ def evolve(gate: Evolvable, pulse: PulseAnsatzLike, params: PulseParams, tol: fl
 
     def propagate(args: tuple[jax.Array, int]) -> jax.Array:
         psi_initial, idx = args
+        duration = pulse.generate_duration(gate, params) if isinstance(pulse, MappedPulseAnsatz) else (params)[0]
+
         sol = diffrax.diffeqsolve(
             term,
             solver,
             t0=0.0,
-            t1=params[0],
+            t1=duration,
             dt0=None,
             y0=psi_initial,
             args=(params, idx),
@@ -128,7 +136,10 @@ def _evolve_optimized_for_gpus(
         psi_tuple: tuple[jax.Array, ...],
         _: object,
     ) -> tuple[jax.Array, ...]:
-        values = pulse.evaluate_pulse_functions(t, params)
+        if isinstance(pulse, MappedPulseAnsatz):
+            values = pulse.evaluate_pulse_functions_for_gate(t, params, gate)
+        else:
+            values = pulse.evaluate_pulse_functions(t, params)
         return tuple(
             -1j * (h(*values) @ psi) for h, psi in zip(gate.hamiltonian_functions_for_basis_states(), psi_tuple)
         )
@@ -138,11 +149,12 @@ def _evolve_optimized_for_gpus(
     saveat = diffrax.SaveAt(t1=True)
     term = diffrax.ODETerm(schroedinger_eq)  # type: ignore[arg-type]
 
+    duration = pulse.generate_duration(gate, params) if isinstance(pulse, MappedPulseAnsatz) else (params)[0]
     sol = diffrax.diffeqsolve(
         term,
         solver,
         t0=0.0,
-        t1=params[0],
+        t1=duration,
         dt0=None,
         y0=gate.initial_basis_states(),
         args=None,

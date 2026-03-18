@@ -5,8 +5,10 @@ from functools import partial
 import jax
 import jax.numpy as jnp
 
-from rydopt.protocols import PulseAnsatzLike, RydbergSystem
+from rydopt.protocols import PulseAnsatzLike
 from rydopt.types import HamiltonianFunction, PulseParams
+from rydopt.protocols import RydbergSystem
+from rydopt.pulses import MappedPulseAnsatz
 
 
 def rydberg_time(gate: RydbergSystem, pulse: PulseAnsatzLike, params: PulseParams, tol: float = 1e-7) -> jax.Array:
@@ -66,7 +68,10 @@ def rydberg_time(gate: RydbergSystem, pulse: PulseAnsatzLike, params: PulseParam
         rydberg_operator: jax.Array,
         dim: int,
     ) -> tuple[jax.Array, jax.Array]:
-        values = pulse.evaluate_pulse_functions(t, params)
+        if isinstance(pulse, MappedPulseAnsatz):
+            values = pulse.evaluate_pulse_functions_for_gate(t, params, gate)
+        else:
+            values = pulse.evaluate_pulse_functions(t, params)
         psi, _expectation = y
         psi_small = psi[:dim]
         dpsi_small = -1j * hamiltonian(*values) @ psi_small
@@ -101,11 +106,12 @@ def rydberg_time(gate: RydbergSystem, pulse: PulseAnsatzLike, params: PulseParam
 
     def propagate(args: tuple[jax.Array, int]) -> jax.Array:
         psi_initial, idx = args
+        duration = pulse.generate_duration(gate, params) if isinstance(pulse, MappedPulseAnsatz) else (params)[0]
         sol = diffrax.diffeqsolve(
             term,
             solver,
             t0=0.0,
-            t1=params[0],
+            t1=duration,
             dt0=None,
             y0=(psi_initial, jnp.array(0.0, dtype=psi_initial.dtype)),
             args=(params, idx),

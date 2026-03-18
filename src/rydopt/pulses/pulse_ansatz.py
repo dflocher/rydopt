@@ -10,11 +10,11 @@ from rydopt.pulses.general_pulse_ansatz_functions import const
 from rydopt.types import PulseAnsatzFunction, PulseParams
 
 
-def _const_zero(t: jax.Array | float, _duration: float, _ansatz_params: jax.Array) -> jax.Array:
+def _const_zero(t: jax.Array | float, _duration: float | jax.Array, _ansatz_params: jax.Array) -> jax.Array:
     return const(t, _duration, jnp.array([0.0]))
 
 
-def _const_one(t: jax.Array | float, _duration: float, _ansatz_params: jax.Array) -> jax.Array:
+def _const_one(t: jax.Array | float, _duration: float | jax.Array, _ansatz_params: jax.Array) -> jax.Array:
     return const(t, _duration, jnp.array([1.0]))
 
 
