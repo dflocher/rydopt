@@ -8,17 +8,17 @@ import jax
 import jax.numpy as jnp
 
 from rydopt.protocols import Evolvable
-from rydopt.types import GenericPulseParams, PulseAnsatzFunction, PulseFunction
+from rydopt.types import GenericPulseParams, PulseAnsatzFunction, PulseParams
 
 from .pulse_ansatz import PulseAnsatz, _const_one, _const_zero
 
 
 class PulseParamMap(Protocol):
-    def map_duration(self, phase: float | jnp.ndarray, pulse_params: GenericPulseParams) -> float | jnp.ndarray: ...
+    def map_duration(self, phase: float | jax.Array, pulse_params: GenericPulseParams) -> float | jax.Array: ...
 
     def map_full(
-        self, phase: float | jnp.ndarray, pulse_params: GenericPulseParams
-    ) -> tuple[float | jnp.ndarray, jnp.ndarray, jnp.ndarray, jnp.ndarray]: ...
+        self, phase: float | jax.Array, pulse_params: GenericPulseParams
+    ) -> tuple[float | jax.Array, jax.Array, jax.Array, jax.Array]: ...
 
 
 @dataclass
@@ -38,7 +38,8 @@ class PolynomialPulseMap(PulseParamMap):
     degrees: Sequence[int] = field(default_factory=lambda: [0, 0, 0, 0])
     num_params: Sequence[int] = field(default_factory=lambda: [1, 1, 1, 1])
 
-    def _poly_eval(self, phase: jnp.ndarray, params: jnp.ndarray, degree: int):
+    @staticmethod
+    def _poly_eval(phase: jax.Array, params: jax.Array, degree: int) -> jax.Array:
         """Efficient polynomial evaluation."""
         if degree == 0:
             return params[0]
@@ -48,9 +49,9 @@ class PolynomialPulseMap(PulseParamMap):
 
     def map_duration(
         self,
-        phase: float | jnp.ndarray,
+        phase: float | jax.Array,
         pulse_params: GenericPulseParams,
-    ) -> float | jnp.ndarray:
+    ) -> float | jax.Array:
         phase = jnp.asarray(phase)
         params = jnp.ravel(jnp.asarray(pulse_params[0]))
         degree = self.degrees[0]
@@ -60,9 +61,9 @@ class PolynomialPulseMap(PulseParamMap):
 
     def map_full(
         self,
-        phase: float | jnp.ndarray,
+        phase: float | jax.Array,
         pulse_params: GenericPulseParams,
-    ) -> tuple[float | jnp.ndarray, jnp.ndarray, jnp.ndarray, jnp.ndarray]:
+    ) -> tuple[float | jax.Array, jax.Array, jax.Array, jax.Array]:
         phase = jnp.asarray(phase)
 
         # --- Duration ---
@@ -121,57 +122,23 @@ class MappedPulseAnsatz(PulseAnsatz):
     pulse_map: PulseParamMap = field(default_factory=lambda: PolynomialPulseMap())
 
     @staticmethod
-    def target_phase(gate: Evolvable) -> float | jnp.ndarray:
+    def target_phase(gate: Evolvable) -> float | jax.Array:
         theta = getattr(gate, "_theta", None)
         if theta is None:
             raise ValueError("Gate must define non-None '_theta'.")
-        return cast(jnp.ndarray, theta) / (2 * jnp.pi)
+        return cast(jax.Array, theta) / (2 * jnp.pi)
 
-    def generate_pulse_params(
-        self, gate: Evolvable, params: GenericPulseParams
-    ) -> tuple[float | jnp.ndarray, jnp.ndarray, jnp.ndarray, jnp.ndarray]:
+    def generate_pulse_params(self, gate: Evolvable, params: GenericPulseParams) -> PulseParams | GenericPulseParams:
         phase = self.target_phase(gate)
         return self.pulse_map.map_full(phase, params)
 
-    def generate_duration(self, gate: Evolvable, params: GenericPulseParams) -> float | jnp.ndarray:
+    def generate_duration(self, gate: Evolvable, params: GenericPulseParams) -> float | jax.Array:
         phase = self.target_phase(gate)
         return self.pulse_map.map_duration(phase, params)
 
-    def make_pulse_functions_for_gate(
-        self, params: GenericPulseParams, gate: Evolvable
-    ) -> tuple[PulseFunction, PulseFunction, PulseFunction]:
-        r"""Create three functions that describe the detuning sweep, the phase sweep, and the rabi sweep for fixed
-        parameters for a parametrized gate with a predefined target phase.
-
-        Args:
-            params: pulse parameters
-            gate: a gate instance
-
-        Returns:
-            Three functions :math:`\Delta(t), \, \xi(t), \, \Omega(t)`
-
-        """
-        (
-            duration,
-            detuning_ansatz_params,
-            phase_ansatz_params,
-            rabi_ansatz_params,
-        ) = self.generate_pulse_params(gate, params)
-
-        def detuning_pulse(t):
-            return self.detuning_ansatz(t, duration, detuning_ansatz_params)
-
-        def phase_pulse(t):
-            return self.phase_ansatz(t, duration, phase_ansatz_params)
-
-        def rabi_pulse(t):
-            return self.rabi_ansatz(t, duration, rabi_ansatz_params)
-
-        return detuning_pulse, phase_pulse, rabi_pulse
-
     def evaluate_pulse_functions_for_gate(
-        self, t: jnp.ndarray | float, params: GenericPulseParams, gate: Evolvable
-    ) -> tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray]:
+        self, t: jax.Array | float, params: GenericPulseParams, gate: Evolvable
+    ) -> tuple[jax.Array, jax.Array, jax.Array, jax.Array]:
         r"""Evaluate the detuning sweep, the phase sweep, and the rabi sweep for fixed
         parameters at the given times for a parametrized gate with a predefined target phase.
 
@@ -181,7 +148,7 @@ class MappedPulseAnsatz(PulseAnsatz):
             gate: gate instance
 
         Returns:
-            Three arrays of values for :math:`\Delta`, :math:`\xi`, :math:`\Omega`
+            Tuple ``(detuning_1, detuning_r, phase, rabi)``
 
         """
         (
@@ -190,7 +157,12 @@ class MappedPulseAnsatz(PulseAnsatz):
             phase_ansatz_params,
             rabi_ansatz_params,
         ) = self.generate_pulse_params(gate, params)
+        duration = jnp.asarray(duration)
+        detuning_ansatz_params = jnp.asarray(detuning_ansatz_params)
+        phase_ansatz_params = jnp.asarray(phase_ansatz_params)
+        rabi_ansatz_params = jnp.asarray(rabi_ansatz_params)
         return (
+            jnp.zeros_like(t),
             self.detuning_ansatz(t, duration, detuning_ansatz_params),
             self.phase_ansatz(t, duration, phase_ansatz_params),
             self.rabi_ansatz(t, duration, rabi_ansatz_params),
