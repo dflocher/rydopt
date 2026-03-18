@@ -18,11 +18,11 @@ import numpy.typing as npt
 import optax
 from tqdm.auto import tqdm
 
-from rydopt.protocols import GateSystem, PulseAnsatzLike
-from rydopt.simulation.fidelity import average_gate_fidelity, process_fidelity
-from rydopt.types import FixedPulseParams, PulseParams, GenericPulseParams
 from rydopt.gates import ParametrizedGate
+from rydopt.protocols import GateSystem, PulseAnsatzLike
 from rydopt.pulses import MappedPulseAnsatz
+from rydopt.simulation.fidelity import average_gate_fidelity, process_fidelity
+from rydopt.types import FixedPulseParams, GenericPulseParams, PulseParams
 
 FidelityType = Literal["process", "average_gate"]
 
@@ -230,10 +230,9 @@ def _make_infidelity(
         params = full.at[trainable_indices].set(params_trainable)
         params_tuple = _unravel_jax(params, params_split_indices)
         if isinstance(gate, ParametrizedGate):
-            fidelity = gate.fidelity(pulse, params_tuple, tol)
+            fidelity = gate.fidelity(pulse, params_tuple, tol, fidelity_fn)
             return jnp.abs(1 - fidelity)
-        else:
-            return jnp.abs(1 - fidelity_fn(gate, pulse, params_tuple, tol))
+        return jnp.abs(1 - fidelity_fn(gate, pulse, params_tuple, tol))
 
     return infidelity
 

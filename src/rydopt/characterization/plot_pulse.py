@@ -6,8 +6,8 @@ import jax.numpy as jnp
 import matplotlib.pyplot as plt
 import numpy as np
 
-from rydopt.protocols import PulseAnsatzLike
 from rydopt.gates import ParametrizedGate
+from rydopt.protocols import PulseAnsatzLike
 from rydopt.pulses import MappedPulseAnsatz
 from rydopt.types import PulseParams
 
@@ -150,7 +150,7 @@ def plot_mapped_pulse(
     gates = gate_family.gates
     for i, gate in enumerate(gates):
         params_new = pulse.generate_pulse_params(gate, params)
-        duration = params_new[0]
+        duration = jnp.asarray(params_new[0])
 
         times = jnp.linspace(0, duration, num_points)
 
@@ -158,10 +158,11 @@ def plot_mapped_pulse(
         selector = [plot_detuning, plot_phase, plot_rabi]
 
         values = np.array(pulse.evaluate_pulse_functions_for_gate(times, params, gate))
+        values[1] -= values[0]
+        values = values[1:][selector]
 
         if subtract_phase_offset:
             values[1] -= values[1][0]
-        values = values[selector]
 
         label = rf"${pulse.target_phase(gate) * 2:.2f}\, \pi$"
         ylabel = ", ".join(
