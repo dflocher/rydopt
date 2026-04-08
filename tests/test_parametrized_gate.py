@@ -3,19 +3,21 @@ import jax.numpy as jnp
 import pytest
 
 import rydopt as ro
-from rydopt.protocols import GateSystem, PulseAnsatzLike
+from rydopt.protocols import GateWithInterpolationParam, PulseAnsatzLike
 from rydopt.pulses import MappedPulseAnsatz
 from rydopt.types import GenericPulseParams, PulseParams
 
 
 @pytest.fixture
-def simple_gate() -> GateSystem:
-    return ro.gates.TwoQubitGate(
+def simple_gate_with_interpolation_param() -> GateWithInterpolationParam:
+    gate = ro.gates.TwoQubitGate(
         phi=None,
         theta=2 * jnp.pi * 0.2,
         Vnn=20.0,
         decay=0.0,
     )
+    interp_param = 0.2
+    return GateWithInterpolationParam(gate, interp_param)
 
 
 @pytest.fixture
@@ -48,9 +50,11 @@ def params() -> tuple[jax.Array, jax.Array, jax.Array, jax.Array]:
 
 
 def test_generate_pulse_params_real(
-    simple_gate: GateSystem, pulse: MappedPulseAnsatz, params: GenericPulseParams
+    simple_gate_with_interpolation_param: GateWithInterpolationParam,
+    pulse: MappedPulseAnsatz,
+    params: GenericPulseParams,
 ) -> None:
-    duration, detuning, phase, rabi = pulse.generate_pulse_params(simple_gate, params)
+    duration, detuning, phase, rabi = pulse.generate_pulse_params(simple_gate_with_interpolation_param, params)
 
     detuning = jnp.asarray(detuning)
     phase = jnp.asarray(phase)
@@ -64,11 +68,13 @@ def test_generate_pulse_params_real(
 
 
 def test_evaluate_pulse_functions_real(
-    simple_gate: GateSystem, pulse: MappedPulseAnsatz, params: GenericPulseParams
+    simple_gate_with_interpolation_param: GateWithInterpolationParam,
+    pulse: MappedPulseAnsatz,
+    params: GenericPulseParams,
 ) -> None:
     t = jnp.linspace(0.0, 1.0, 10)
 
-    d0, detuning, phase, rabi = pulse.evaluate_pulse_functions_for_gate(t, params, simple_gate)
+    d0, detuning, phase, rabi = pulse.evaluate_pulse_functions_for_gate(t, params, simple_gate_with_interpolation_param)
 
     detuning = jnp.asarray(detuning)
     phase = jnp.asarray(phase)
@@ -99,7 +105,8 @@ def test_parametrized_gate_real(pulse: PulseAnsatzLike, params: PulseParams) -> 
 
     gate_family = ro.gates.ParametrizedGate(
         gates=gates,
-        reduction="mean",
+        interpolation_params=phases,
+        reduction_operation="mean",
     )
 
     fid = gate_family.fidelity(

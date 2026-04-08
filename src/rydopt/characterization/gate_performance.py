@@ -4,7 +4,7 @@ from rydopt.characterization.qutip_helpers.qutip_simulation import (
     process_fidelity_qutip,
     rydberg_time_qutip,
 )
-from rydopt.protocols import GateSystem, PulseAnsatzLike, RydbergSystem
+from rydopt.protocols import GateSystem, GateWithInterpolationParam, PulseAnsatzLike, RydbergSystem
 from rydopt.simulation.fidelity import process_fidelity
 from rydopt.simulation.rydberg_time import rydberg_time
 from rydopt.types import ParamsFloatLike
@@ -50,8 +50,7 @@ def analyze_gate(
 
     if isinstance(gate, RydbergSystem):
         gate_nodecay = gate.with_decay(0.0)
-        assert isinstance(gate_nodecay, GateSystem)
-
+        assert isinstance(gate_nodecay, (GateSystem, GateWithInterpolationParam))
         infidelity_nodecay = float(1 - process_fidelity(gate_nodecay, pulse, params, tol=tol))
         ryd_time = float(rydberg_time(gate_nodecay, pulse, params, tol=tol))
     else:
