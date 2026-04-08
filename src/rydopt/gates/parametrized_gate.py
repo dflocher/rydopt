@@ -1,12 +1,12 @@
-from collections.abc import Callable, Sequence
+from collections.abc import Sequence
 from typing import Literal
 
 import jax
 import jax.numpy as jnp
 
 from rydopt.protocols import GateSystem, GateWithInterpolationParam, PulseAnsatzLike
-from rydopt.simulation import process_fidelity
-from rydopt.types import PulseParams
+from rydopt.simulation import average_gate_fidelity, process_fidelity
+from rydopt.types import FidelityType, PulseParams
 
 
 class ParametrizedGate:
@@ -45,9 +45,7 @@ class ParametrizedGate:
         pulse: PulseAnsatzLike,
         params: PulseParams,
         tol: float,
-        fidelity_fn: Callable[
-            [GateWithInterpolationParam, PulseAnsatzLike, PulseParams, float], jax.Array
-        ] = process_fidelity,
+        fidelity_type: FidelityType = "process",
     ) -> jax.Array:
         """Compute reduced fidelity over all parametrized gates.
 
@@ -55,12 +53,14 @@ class ParametrizedGate:
             pulse: Pulse ansatz used for all gates.
             params: Trainable pulse parameters.
             tol: Numerical tolerance passed to the fidelity function.
-            fidelity_fn: Function computing fidelity for a single gate.
+            fidelity_type: which fidelity metric to use; ``"process"`` (default) uses
+                process fidelity, ``"average_gate"`` uses average gate fidelity
 
         Returns:
             Reduced fidelity value according to `self.reduction`.
 
         """
+        fidelity_fn = process_fidelity if fidelity_type == "process" else average_gate_fidelity
         fidelities = jnp.stack([fidelity_fn(g, pulse, params, tol) for g in self.gates])
 
         if self.reduction_operation == "mean":
