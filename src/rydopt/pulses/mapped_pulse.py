@@ -7,10 +7,9 @@ from typing import Protocol, cast
 import jax
 import jax.numpy as jnp
 
-from rydopt.protocols import Evolvable
+from rydopt.protocols import GateWithInterpolationParam
+from rydopt.pulses.pulse_ansatz import PulseAnsatz, _const_one, _const_zero
 from rydopt.types import GenericPulseParams, PulseAnsatzFunction, PulseParams
-
-from .pulse_ansatz import PulseAnsatz, _const_one, _const_zero
 
 
 class PulseParamMap(Protocol):
@@ -122,22 +121,21 @@ class MappedPulseAnsatz(PulseAnsatz):
     pulse_map: PulseParamMap = field(default_factory=lambda: PolynomialPulseMap())
 
     @staticmethod
-    def target_phase(gate: Evolvable) -> float | jax.Array:
-        theta = getattr(gate, "_theta", None)
-        if theta is None:
-            raise ValueError("Gate must define non-None '_theta'.")
-        return cast(jax.Array, theta) / (2 * jnp.pi)
+    def target_phase(gate: GateWithInterpolationParam) -> float | jax.Array:
+        return cast(jax.Array, gate.interpolation_param) / (2 * jnp.pi)
 
-    def generate_pulse_params(self, gate: Evolvable, params: GenericPulseParams) -> PulseParams | GenericPulseParams:
+    def generate_pulse_params(
+        self, gate: GateWithInterpolationParam, params: GenericPulseParams
+    ) -> PulseParams | GenericPulseParams:
         phase = self.target_phase(gate)
         return self.pulse_map.map_full(phase, params)
 
-    def generate_duration(self, gate: Evolvable, params: GenericPulseParams) -> float | jax.Array:
+    def generate_duration(self, gate: GateWithInterpolationParam, params: GenericPulseParams) -> float | jax.Array:
         phase = self.target_phase(gate)
         return self.pulse_map.map_duration(phase, params)
 
     def evaluate_pulse_functions_for_gate(
-        self, t: jax.Array | float, params: GenericPulseParams, gate: Evolvable
+        self, t: jax.Array | float, params: GenericPulseParams, gate: GateWithInterpolationParam
     ) -> tuple[jax.Array, jax.Array, jax.Array, jax.Array]:
         r"""Evaluate the detuning sweep, the phase sweep, and the rabi sweep for fixed
         parameters at the given times for a parametrized gate with a predefined target phase.
