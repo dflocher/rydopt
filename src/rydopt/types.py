@@ -12,11 +12,6 @@ PulseParams = tuple[float, ArrayLike, ArrayLike, ArrayLike]
 
 FixedPulseParams = tuple[bool, ArrayLike, ArrayLike, ArrayLike]
 
-PulseAnsatzFunction = Callable[
-    [jax.Array | float, float, jax.Array],
-    jax.Array,
-]
-
 PulseFunction = Callable[[jax.Array | float], jax.Array]
 
 HamiltonianFunction = Callable[[jax.Array | float, jax.Array | float, jax.Array | float, jax.Array | float], jax.Array]

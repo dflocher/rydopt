@@ -10,7 +10,7 @@ def test_adam() -> None:
     gate = ro.gates.TwoQubitGate(phi=None, theta=np.pi, Vnn=float("inf"), decay=0)
 
     # Pulse
-    pulse = ro.pulses.PulseAnsatz(detuning_ansatz=ro.pulses.const, phase_ansatz=ro.pulses.sin_crab)
+    pulse = ro.pulses.PulseAnsatz(detuning_ansatz=ro.pulses.Const(), phase_ansatz=ro.pulses.SinCrab(2))
 
     # Initial parameters
     initial_params = (7.6, [0.1], [1.8, -0.6], [])
@@ -33,7 +33,7 @@ def test_adam_decay() -> None:
     gate = ro.gates.TwoQubitGate(phi=None, theta=np.pi, Vnn=float("inf"), decay=0.01)
 
     # Pulse
-    pulse = ro.pulses.PulseAnsatz(detuning_ansatz=ro.pulses.const, phase_ansatz=ro.pulses.sin_crab)
+    pulse = ro.pulses.PulseAnsatz(detuning_ansatz=ro.pulses.Const(), phase_ansatz=ro.pulses.SinCrab(2))
 
     # Initial parameters
     initial_params = (7.6, [0.1], [1.8, -0.6], [])
@@ -54,7 +54,7 @@ def test_multi_start_adam() -> None:
     gate = ro.gates.TwoQubitGate(phi=None, theta=np.pi, Vnn=2.0, decay=0)
 
     # Pulse
-    pulse = ro.pulses.PulseAnsatz(detuning_ansatz=ro.pulses.const_cos_crab)
+    pulse = ro.pulses.PulseAnsatz(detuning_ansatz=ro.pulses.ConstCosCrab(3))
 
     # Parameter bounds for choosing random initial parameters
     min_initial_params = (6, [-2, -2, -2], [], [])
@@ -95,7 +95,7 @@ def test_multi_start_adam_decay() -> None:
     gate = ro.gates.TwoQubitGate(phi=None, theta=np.pi, Vnn=2.0, decay=0.0005)
 
     # Pulse
-    pulse = ro.pulses.PulseAnsatz(detuning_ansatz=ro.pulses.const_cos_crab)
+    pulse = ro.pulses.PulseAnsatz(detuning_ansatz=ro.pulses.ConstCosCrab(3))
 
     # Parameter bounds for choosing random initial parameters
     min_initial_params = (6, [-2, -2, -2], [], [])
@@ -126,7 +126,7 @@ def test_fastest() -> None:
     gate = ro.gates.TwoQubitGate(phi=None, theta=np.pi, Vnn=float("inf"), decay=0)
 
     # Pulse
-    pulse = ro.pulses.PulseAnsatz(detuning_ansatz=ro.pulses.const, phase_ansatz=ro.pulses.sin_crab)
+    pulse = ro.pulses.PulseAnsatz(detuning_ansatz=ro.pulses.Const(), phase_ansatz=ro.pulses.SinCrab(2))
 
     # Parameter bounds for choosing random initial parameters
     min_initial_params = (6, [-2], [-2, -2], [])
@@ -159,7 +159,7 @@ def test_fixed() -> None:
     gate = ro.gates.TwoQubitGate(phi=None, theta=np.pi, Vnn=float("inf"), decay=0)
 
     # Pulse
-    pulse = ro.pulses.PulseAnsatz(detuning_ansatz=ro.pulses.const, phase_ansatz=ro.pulses.sin_crab)
+    pulse = ro.pulses.PulseAnsatz(detuning_ansatz=ro.pulses.Const(), phase_ansatz=ro.pulses.SinCrab(2))
 
     # Initial parameters
     initial_params = (7.6, [0.0], [1.8, -0.6], [])
@@ -180,7 +180,7 @@ def test_adam_average_gate_fidelity() -> None:
     gate = ro.gates.TwoQubitGate(phi=None, theta=np.pi, Vnn=float("inf"), decay=0, fidelity_type="average_gate")
 
     # Pulse
-    pulse = ro.pulses.PulseAnsatz(detuning_ansatz=ro.pulses.const, phase_ansatz=ro.pulses.sin_crab)
+    pulse = ro.pulses.PulseAnsatz(detuning_ansatz=ro.pulses.Const(), phase_ansatz=ro.pulses.SinCrab(2))
 
     # Initial parameters
     initial_params = (7.6, [0.1], [1.8, -0.6], [])

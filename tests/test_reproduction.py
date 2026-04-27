@@ -17,25 +17,29 @@ def test_reproducing_evered() -> None:
 
     gate = ro.gates.TwoQubitGate(phi=None, theta=np.pi, Vnn=450, decay=0)
 
-    def evered_phase(t: jax.Array | float, _duration: float, ansatz_params: jax.Array) -> jax.Array:
-        a, omega, phi0 = ansatz_params
-        return a * jnp.cos(omega * t - phi0)
+    class EveredPhase(ro.pulses.PulseAnsatzFunction):
+        def __init__(self, num_params: int = 3) -> None:
+            if num_params != 3:
+                raise ValueError("EveredPhase requires exactly 3 parameters")
+            super().__init__(num_params=num_params)
+
+        def __call__(self, t: jax.Array | float, duration: float, ansatz_params: jax.Array) -> jax.Array:
+            del duration
+            a, omega, phi0 = ansatz_params
+            return a * jnp.cos(omega * t - phi0)
+
+    evered_phase = EveredPhase()
 
     lower = ro.pulses.PulseAnsatz(
-        detuning_ansatz=ro.pulses.const,
+        detuning_ansatz=ro.pulses.Const(),
         phase_ansatz=evered_phase,
-        rabi_ansatz=ro.pulses.const,
+        rabi_ansatz=ro.pulses.Const(),
     )
     upper = ro.pulses.PulseAnsatz(
-        detuning_ansatz=ro.pulses.const,
-        rabi_ansatz=ro.pulses.const,
+        detuning_ansatz=ro.pulses.Const(),
+        rabi_ansatz=ro.pulses.Const(),
     )
-    pulse = ro.pulses.TwoPhotonPulseAnsatz(
-        lower_transition=lower,
-        upper_transition=upper,
-        lower_param_counts=(1, 3, 1),
-        decay=0,
-    )
+    pulse = ro.pulses.TwoPhotonPulseAnsatz(lower_transition=lower, upper_transition=upper, decay=0)
 
     omega_l = 237
     omega_u = 303
@@ -57,7 +61,7 @@ def test_reproducing_evered() -> None:
     detuning_params = np.array(result.params[1])
     phase_params = np.array(result.params[2])
     detuning_at_beginning = (
-        -jax.grad(partial(evered_phase, _duration=0.0, ansatz_params=jnp.array(phase_params)))(0.0)
+        -jax.grad(partial(evered_phase, duration=0.0, ansatz_params=jnp.array(phase_params)))(0.0)
         + detuning_params[0]
         + detuning_params[1]
     )
@@ -84,7 +88,6 @@ def test_reproducing_evered() -> None:
     pulse = ro.pulses.TwoPhotonPulseAnsatz(
         lower_transition=lower,
         upper_transition=upper,
-        lower_param_counts=(1, 3, 1),
         decay=1 / 110e-9 / omega0,
     )
     final_state = ro.simulation.evolve(gate, pulse, result.params)

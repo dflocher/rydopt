@@ -30,8 +30,8 @@ import numpy as np
 # Want to perform a CZ gate on two atoms in the perfect blockade regime; no Rydberg state decay
 gate = ro.gates.TwoQubitGate(phi=None, theta=np.pi, Vnn=float("inf"), decay=0.0)
 
-# Pulse ansatz: constant detuning, sweep of the laser phase according to sin_crab ansatz
-pulse_ansatz = ro.pulses.PulseAnsatz(detuning_ansatz=ro.pulses.const, phase_ansatz=ro.pulses.sin_crab)
+# Pulse ansatz: constant detuning, sweep of the laser phase according to a sine CRAB ansatz
+pulse_ansatz = ro.pulses.PulseAnsatz(detuning_ansatz=ro.pulses.Const(), phase_ansatz=ro.pulses.SinCrab(2))
 
 # Initial pulse parameter guess
 initial_params = (7.0, [0.0], [0.0, 0.0], [])

@@ -1,21 +1,23 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 import jax
 import jax.numpy as jnp
 from numpy.typing import ArrayLike
 
-from rydopt.pulses.general_pulse_ansatz_functions import const
-from rydopt.types import PulseAnsatzFunction, PulseParams
+from rydopt.pulses.ansatz_functions import PulseAnsatzFunction
+from rydopt.types import PulseParams
 
 
-def _const_zero(t: jax.Array | float, _duration: float, _ansatz_params: jax.Array) -> jax.Array:
-    return const(t, _duration, jnp.array([0.0]))
+class _FixedConstant(PulseAnsatzFunction):
+    def __init__(self, value: float) -> None:
+        super().__init__(0)
+        self._value = value
 
-
-def _const_one(t: jax.Array | float, _duration: float, _ansatz_params: jax.Array) -> jax.Array:
-    return const(t, _duration, jnp.array([1.0]))
+    def __call__(self, t: jax.Array | float, duration: float, ansatz_params: jax.Array) -> jax.Array:
+        del duration, ansatz_params
+        return self._value + jnp.zeros_like(t)
 
 
 @dataclass
@@ -44,8 +46,8 @@ class PulseAnsatz:
     Example:
         >>> import rydopt as ro
         >>> pulse = ro.pulses.PulseAnsatz(
-        ...     detuning_ansatz=ro.pulses.const,
-        ...     phase_ansatz=ro.pulses.sin_crab,
+        ...     detuning_ansatz=ro.pulses.Const(),
+        ...     phase_ansatz=ro.pulses.SinCrab(2),
         ... )
 
     Attributes:
@@ -55,9 +57,13 @@ class PulseAnsatz:
 
     """
 
-    detuning_ansatz: PulseAnsatzFunction = _const_zero
-    phase_ansatz: PulseAnsatzFunction = _const_zero
-    rabi_ansatz: PulseAnsatzFunction = _const_one
+    detuning_ansatz: PulseAnsatzFunction = field(default_factory=lambda: _FixedConstant(0.0))
+    phase_ansatz: PulseAnsatzFunction = field(default_factory=lambda: _FixedConstant(0.0))
+    rabi_ansatz: PulseAnsatzFunction = field(default_factory=lambda: _FixedConstant(1.0))
+
+    @property
+    def param_counts(self) -> tuple[int, int, int]:
+        return self.detuning_ansatz.num_params, self.phase_ansatz.num_params, self.rabi_ansatz.num_params
 
     def evaluate_pulse_functions(
         self, t: jax.Array | float, params: PulseParams
@@ -147,37 +153,41 @@ class TwoPhotonPulseAnsatz:
     as :class:`PulseParams`, i.e., as a tuple ``(duration, detuning_params, phase_params, rabi_params)``.
     Each parameter array within the tuple is
     packed as ``[*lower_transition_params, *upper_transition_params]``. The split
-    positions are set by ``lower_param_counts=(n_detuning, n_phase, n_rabi)``.
+    positions are inferred from the ansatz parameter counts of ``lower_transition``.
 
     Example:
         >>> import rydopt as ro
         >>> lower = ro.pulses.PulseAnsatz(
-        ...     detuning_ansatz=ro.pulses.const,
-        ...     phase_ansatz=ro.pulses.sin_crab,
+        ...     detuning_ansatz=ro.pulses.Const(),
+        ...     phase_ansatz=ro.pulses.SinCrab(4),
         ... )
         >>> upper = ro.pulses.PulseAnsatz(
-        ...     detuning_ansatz=ro.pulses.const,
-        ...     rabi_ansatz=ro.pulses.const,
+        ...     detuning_ansatz=ro.pulses.Const(),
+        ...     rabi_ansatz=ro.pulses.Const(),
         ... )
         >>> pulse = ro.pulses.TwoPhotonPulseAnsatz(
         ...     lower_transition=lower,
         ...     upper_transition=upper,
-        ...     lower_param_counts=(1, 4, 0)
         ... )
 
     Attributes:
         lower_transition: Ansatz for the lower transition :math:`|1\rangle \leftrightarrow |e\rangle`.
         upper_transition: Ansatz for the upper transition :math:`|e\rangle \leftrightarrow |r\rangle`.
-        lower_param_counts: Tuple ``(n_detuning, n_phase, n_rabi)`` specifying how many
-            entries per parameter array belong to the lower transition.
         decay: Decay rate of the intermediate state, default is zero.
 
     """
 
     lower_transition: PulseAnsatz
     upper_transition: PulseAnsatz
-    lower_param_counts: tuple[int, int, int]
     decay: float = 0.0
+
+    @property
+    def lower_param_counts(self) -> tuple[int, int, int]:
+        return self.lower_transition.param_counts
+
+    @property
+    def upper_param_counts(self) -> tuple[int, int, int]:
+        return self.upper_transition.param_counts
 
     @staticmethod
     def _split_1d(packed_params: ArrayLike, lower_count: int) -> tuple[jax.Array, jax.Array]:

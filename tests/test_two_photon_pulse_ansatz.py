@@ -10,14 +10,14 @@ import rydopt as ro
 def test_effective_controls() -> None:
     duration = 7.0
     lower = ro.pulses.PulseAnsatz(
-        detuning_ansatz=ro.pulses.const_cos_crab,
-        phase_ansatz=ro.pulses.sin_crab,
-        rabi_ansatz=ro.pulses.const,
+        detuning_ansatz=ro.pulses.ConstCosCrab(3),
+        phase_ansatz=ro.pulses.SinCrab(2),
+        rabi_ansatz=ro.pulses.Const(),
     )
     upper = ro.pulses.PulseAnsatz(
-        detuning_ansatz=ro.pulses.const,
-        phase_ansatz=ro.pulses.const,
-        rabi_ansatz=ro.pulses.const_sin_crab,
+        detuning_ansatz=ro.pulses.Const(),
+        phase_ansatz=ro.pulses.Const(),
+        rabi_ansatz=ro.pulses.ConstSinCrab(3),
     )
 
     lower_params = (duration, [-1.6, 0.4, -0.2], [0.7, -0.3], [2.2])
@@ -29,11 +29,7 @@ def test_effective_controls() -> None:
         np.array([*lower_params[3], *upper_params[3]]),
     )
 
-    pulse = ro.pulses.TwoPhotonPulseAnsatz(
-        lower_transition=lower,
-        upper_transition=upper,
-        lower_param_counts=(len(lower_params[1]), len(lower_params[2]), len(lower_params[3])),
-    )
+    pulse = ro.pulses.TwoPhotonPulseAnsatz(lower_transition=lower, upper_transition=upper)
 
     times = jnp.linspace(0.0, duration, 13)
     detuning_1, detuning_r, phase, rabi = pulse.evaluate_pulse_functions(times, packed_params)
@@ -56,20 +52,15 @@ def test_two_photon_cz() -> None:
     gate = ro.gates.TwoQubitGate(phi=None, theta=np.pi, Vnn=float("inf"), decay=0)
 
     lower = ro.pulses.PulseAnsatz(
-        detuning_ansatz=ro.pulses.const,
-        phase_ansatz=ro.pulses.sin_crab,
-        rabi_ansatz=ro.pulses.const,
+        detuning_ansatz=ro.pulses.Const(),
+        phase_ansatz=ro.pulses.SinCrab(2),
+        rabi_ansatz=ro.pulses.Const(),
     )
     upper = ro.pulses.PulseAnsatz(
-        detuning_ansatz=ro.pulses.const,
-        rabi_ansatz=ro.pulses.const,
+        detuning_ansatz=ro.pulses.Const(),
+        rabi_ansatz=ro.pulses.Const(),
     )
-    pulse = ro.pulses.TwoPhotonPulseAnsatz(
-        lower_transition=lower,
-        upper_transition=upper,
-        lower_param_counts=(1, 2, 1),
-        decay=0,
-    )
+    pulse = ro.pulses.TwoPhotonPulseAnsatz(lower_transition=lower, upper_transition=upper, decay=0)
 
     initial_params = (7.6, [-50.0, 50.0], [1.8, -0.6], [10.0, 10.0])  # duration, detuning, phase, rabi
 
@@ -101,20 +92,15 @@ def test_average_gate_fidelity_qutip_comparison() -> None:
     # --- Rydopt average gate fidelity (adiabatic elimination) ---
     gate = ro.gates.TwoQubitGate(phi=None, theta=np.pi, Vnn=float("inf"), decay=0)
     lower = ro.pulses.PulseAnsatz(
-        detuning_ansatz=ro.pulses.const,
-        phase_ansatz=ro.pulses.sin_crab,
-        rabi_ansatz=ro.pulses.const,
+        detuning_ansatz=ro.pulses.Const(),
+        phase_ansatz=ro.pulses.SinCrab(2),
+        rabi_ansatz=ro.pulses.Const(),
     )
     upper = ro.pulses.PulseAnsatz(
-        detuning_ansatz=ro.pulses.const,
-        rabi_ansatz=ro.pulses.const,
+        detuning_ansatz=ro.pulses.Const(),
+        rabi_ansatz=ro.pulses.Const(),
     )
-    pulse = ro.pulses.TwoPhotonPulseAnsatz(
-        lower_transition=lower,
-        upper_transition=upper,
-        lower_param_counts=(1, 2, 1),
-        decay=0,
-    )
+    pulse = ro.pulses.TwoPhotonPulseAnsatz(lower_transition=lower, upper_transition=upper, decay=0)
     rydopt_fid = float(ro.simulation.average_gate_fidelity(gate, pulse, params))
 
     # --- QuTiP average gate fidelity with full 3-level atoms ---
@@ -127,7 +113,7 @@ def test_average_gate_fidelity_qutip_comparison() -> None:
 
         # Single-atom Hamiltonian
         t_grid = np.linspace(0, duration, 1000)
-        xi_vals = np.array(ro.pulses.sin_crab(jnp.array(t_grid), duration, phase_params_jnp))
+        xi_vals = np.array(ro.pulses.SinCrab(2)(jnp.array(t_grid), duration, phase_params_jnp))
         xi_func = interp1d(t_grid, xi_vals, kind="cubic", fill_value="extrapolate")
 
         def coeff_m(t: float, args: None = None) -> complex:

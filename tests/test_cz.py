@@ -10,7 +10,7 @@ def test_cz() -> None:
     gate = ro.gates.TwoQubitGate(phi=None, theta=np.pi, Vnn=float("inf"), decay=0)
 
     # Pulse
-    pulse = ro.pulses.PulseAnsatz(detuning_ansatz=ro.pulses.const, phase_ansatz=ro.pulses.sin_crab)
+    pulse = ro.pulses.PulseAnsatz(detuning_ansatz=ro.pulses.Const(), phase_ansatz=ro.pulses.SinCrab(2))
 
     # Initial parameters
     initial_params = (7.6, [0.1], [1.8, -0.6], [])

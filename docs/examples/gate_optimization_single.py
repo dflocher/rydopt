@@ -12,9 +12,9 @@ if __name__ == "__main__":
     )
 
     # Pulse ansatz: constant detuning, sweep of the laser phase according to
-    # sin_crab ansatz
+    # a sine CRAB ansatz
     pulse_ansatz = ro.pulses.PulseAnsatz(
-        detuning_ansatz=ro.pulses.const, phase_ansatz=ro.pulses.sin_crab
+        detuning_ansatz=ro.pulses.Const(), phase_ansatz=ro.pulses.SinCrab(2)
     )
 
     # Initial pulse parameter guess

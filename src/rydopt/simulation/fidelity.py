@@ -32,8 +32,8 @@ def process_fidelity(gate: GateSystem, pulse: PulseAnsatzLike, params: PulsePara
         ...     decay=0,
         ... )
         >>> pulse = ro.pulses.PulseAnsatz(
-        ...     detuning_ansatz=ro.pulses.const,
-        ...     phase_ansatz=ro.pulses.sin_crab,
+        ...     detuning_ansatz=ro.pulses.Const(),
+        ...     phase_ansatz=ro.pulses.SinCrab(2),
         ... )
         >>> params = (7.61140652, [0.07842706], [1.80300902, -0.61792703], [])
         >>> fidelity = ro.simulation.process_fidelity(gate, pulse, params)
@@ -73,8 +73,8 @@ def average_gate_fidelity(
         ...     decay=0,
         ... )
         >>> pulse = ro.pulses.PulseAnsatz(
-        ...     detuning_ansatz=ro.pulses.const,
-        ...     phase_ansatz=ro.pulses.sin_crab,
+        ...     detuning_ansatz=ro.pulses.Const(),
+        ...     phase_ansatz=ro.pulses.SinCrab(2),
         ... )
         >>> params = (7.61140652, [0.07842706], [1.80300902, -0.61792703], [])
         >>> fidelity = ro.simulation.average_gate_fidelity(gate, pulse, params)

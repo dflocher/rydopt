@@ -18,7 +18,7 @@ if __name__ == "__main__":
 
     # Pulse
     pulse = ro.pulses.PulseAnsatz(
-        detuning_ansatz=ro.pulses.const, phase_ansatz=ro.pulses.sin_crab
+        detuning_ansatz=ro.pulses.Const(), phase_ansatz=ro.pulses.SinCrab(6)
     )
 
     # Parameter bounds for choosing random initial parameters
