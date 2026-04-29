@@ -26,7 +26,7 @@ def _setup_hamiltonian(
     pulse: PulseAnsatzLike,
     params: PulseParams,
 ) -> tuple[Callable[[float], qt.Qobj], qt.Qobj, qt.Qobj]:
-    def pulse_functions(t: jax.Array | float) -> tuple[jax.Array, jax.Array, jax.Array, jax.Array]:
+    def pulse_functions(t: float | jax.Array) -> tuple[jax.Array, jax.Array, jax.Array, jax.Array]:
         return pulse.evaluate_pulse_functions(t, params)
 
     if isinstance(gate, TwoQubitGate):

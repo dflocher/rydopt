@@ -5,7 +5,7 @@ from typing import Protocol, runtime_checkable
 import jax
 from typing_extensions import Self
 
-from rydopt.types import HamiltonianFunction, PulseParams
+from rydopt.types import HamiltonianFunction, PulseParams, PulseParamsLike
 
 
 class Evolvable(Protocol):
@@ -132,7 +132,7 @@ class PulseAnsatzLike(Protocol):
     """Minimal interface for pulse ansatz objects used in simulation and optimization."""
 
     def evaluate_pulse_functions(
-        self, t: jax.Array | float, params: PulseParams
+        self, t: float | jax.Array, params: PulseParamsLike
     ) -> tuple[jax.Array, jax.Array, jax.Array, jax.Array]:
         """Evaluate detuning, phase, and Rabi pulse functions at time samples ``t``."""
         ...

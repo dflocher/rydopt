@@ -17,7 +17,7 @@ plus_state = (qt.basis(3, 0) + qt.basis(3, 1)).unit()
 
 
 def hamiltonian_TwoQubitGate(
-    pulse_functions: Callable[[jax.Array | float], tuple[jax.Array, jax.Array, jax.Array, jax.Array]],
+    pulse_functions: Callable[[float | jax.Array], tuple[jax.Array, jax.Array, jax.Array, jax.Array]],
     decay: float,
     Vnn: float,
 ) -> tuple[Callable[[float], qt.Qobj], qt.Qobj, qt.Qobj]:

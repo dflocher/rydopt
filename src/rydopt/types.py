@@ -9,9 +9,11 @@ from numpy.typing import ArrayLike
 FidelityType = Literal["process", "average_gate"]
 
 PulseParams = tuple[float, ArrayLike, ArrayLike, ArrayLike]
+PulseParamsLike = PulseParams | ArrayLike
 
 FixedPulseParams = tuple[bool, ArrayLike, ArrayLike, ArrayLike]
+FixedPulseParamsLike = FixedPulseParams | ArrayLike
 
-PulseFunction = Callable[[jax.Array | float], jax.Array]
+PulseFunction = Callable[[float | jax.Array], jax.Array]
 
-HamiltonianFunction = Callable[[jax.Array | float, jax.Array | float, jax.Array | float, jax.Array | float], jax.Array]
+HamiltonianFunction = Callable[[float | jax.Array, float | jax.Array, float | jax.Array, float | jax.Array], jax.Array]

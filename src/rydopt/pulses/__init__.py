@@ -20,8 +20,8 @@ from rydopt.pulses.ansatz_functions import (
     SoftBoxPlanck,
     SoftBoxSeventhOrderSmoothstep,
 )
-from rydopt.pulses.pulse_ansatz import PulseAnsatz, PulseParams, TwoPhotonPulseAnsatz
-from rydopt.types import FixedPulseParams
+from rydopt.pulses.pulse_ansatz import PulseAnsatz, TwoPhotonPulseAnsatz
+from rydopt.types import FixedPulseParams, PulseParams
 
 __all__ = [
     "PulseAnsatz",

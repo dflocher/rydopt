@@ -7,7 +7,16 @@ import jax.numpy as jnp
 from numpy.typing import ArrayLike
 
 from rydopt.pulses.ansatz_functions import PulseAnsatzFunction
-from rydopt.types import PulseParams
+from rydopt.types import PulseParamsLike
+
+
+def _flatten_params(params: PulseParamsLike) -> jax.Array:
+    if isinstance(params, tuple):
+        first, *rest = params
+        first_arr = jnp.asarray(first)
+        first_arr = first_arr[jnp.newaxis] if first_arr.ndim == 0 else first_arr[..., jnp.newaxis]
+        return jnp.concatenate([first_arr, *(jnp.asarray(part) for part in rest)], axis=-1)
+    return jnp.ravel(jnp.asarray(params))
 
 
 class _FixedConstant(PulseAnsatzFunction):
@@ -15,7 +24,7 @@ class _FixedConstant(PulseAnsatzFunction):
         super().__init__(0)
         self._value = value
 
-    def __call__(self, t: jax.Array | float, duration: float, ansatz_params: jax.Array) -> jax.Array:
+    def __call__(self, t: float | jax.Array, duration: float | jax.Array, ansatz_params: jax.Array) -> jax.Array:
         del duration, ansatz_params
         return self._value + jnp.zeros_like(t)
 
@@ -41,7 +50,7 @@ class PulseAnsatz:
     The function :func:`optimize <rydopt.optimization.optimize>` allows optimizing the
     parameters of the ansatz functions and duration of the laser pulse
     to maximize the gate fidelity. Initial parameters can be provided to the function
-    as :class:`PulseParams`, i.e., as a tuple ``(duration, detuning_params, phase_params, rabi_params)``.
+    as a tuple ``(duration, detuning_params, phase_params, rabi_params)``.
 
     Example:
         >>> import rydopt as ro
@@ -65,8 +74,23 @@ class PulseAnsatz:
     def param_counts(self) -> tuple[int, int, int]:
         return self.detuning_ansatz.num_params, self.phase_ansatz.num_params, self.rabi_ansatz.num_params
 
+    def _unpack_params(self, params: PulseParamsLike) -> tuple[jax.Array, jax.Array, jax.Array, jax.Array]:
+        flat_params = _flatten_params(params)
+        detuning_count, phase_count, rabi_count = self.param_counts
+
+        expected_size = 1 + detuning_count + phase_count + rabi_count
+        if int(flat_params.shape[-1]) != expected_size:
+            raise ValueError(f"PulseAnsatz expects {expected_size} packed parameters, got {int(flat_params.shape[-1])}")
+
+        return (
+            flat_params[..., 0],
+            flat_params[..., 1 : 1 + detuning_count],
+            flat_params[..., 1 + detuning_count : 1 + detuning_count + phase_count],
+            flat_params[..., 1 + detuning_count + phase_count :],
+        )
+
     def evaluate_pulse_functions(
-        self, t: jax.Array | float, params: PulseParams
+        self, t: float | jax.Array, params: PulseParamsLike
     ) -> tuple[jax.Array, jax.Array, jax.Array, jax.Array]:
         r"""Evaluate the detuning, phase, and the rabi sweeps for fixed
         parameters at the given times.
@@ -79,10 +103,7 @@ class PulseAnsatz:
             Tuple ``(detuning_1, detuning_r, phase, rabi)``
 
         """
-        duration, detuning_ansatz_params, phase_ansatz_params, rabi_ansatz_params = params
-        detuning_ansatz_params = jnp.asarray(detuning_ansatz_params)
-        phase_ansatz_params = jnp.asarray(phase_ansatz_params)
-        rabi_ansatz_params = jnp.asarray(rabi_ansatz_params)
+        duration, detuning_ansatz_params, phase_ansatz_params, rabi_ansatz_params = self._unpack_params(params)
 
         return (
             jnp.zeros_like(t),
@@ -150,7 +171,7 @@ class TwoPhotonPulseAnsatz:
     The function :func:`optimize <rydopt.optimization.optimize>` allows optimizing the
     parameters of the ansatz functions and duration of the laser pulse
     to maximize the gate fidelity. Initial parameters can be provided to the function
-    as :class:`PulseParams`, i.e., as a tuple ``(duration, detuning_params, phase_params, rabi_params)``.
+    as a tuple ``(duration, detuning_params, phase_params, rabi_params)``.
     Each parameter array within the tuple is
     packed as ``[*lower_transition_params, *upper_transition_params]``. The split
     positions are inferred from the ansatz parameter counts of ``lower_transition``.
@@ -189,13 +210,38 @@ class TwoPhotonPulseAnsatz:
     def upper_param_counts(self) -> tuple[int, int, int]:
         return self.upper_transition.param_counts
 
+    def _unpack_params(self, params: PulseParamsLike) -> tuple[jax.Array, jax.Array, jax.Array, jax.Array]:
+        flat_params = _flatten_params(params)
+        lower_detuning_count, lower_phase_count, lower_rabi_count = self.lower_param_counts
+        upper_detuning_count, upper_phase_count, upper_rabi_count = self.upper_param_counts
+        detuning_count = lower_detuning_count + upper_detuning_count
+        phase_count = lower_phase_count + upper_phase_count
+        rabi_count = lower_rabi_count + upper_rabi_count
+        expected_size = 1 + detuning_count + phase_count + rabi_count
+
+        if int(flat_params.shape[-1]) != expected_size:
+            raise ValueError(
+                f"TwoPhotonPulseAnsatz expects {expected_size} packed parameters, got {int(flat_params.shape[-1])}"
+            )
+
+        duration = flat_params[..., 0]
+        detuning_stop = 1 + detuning_count
+        phase_stop = detuning_stop + phase_count
+
+        return (
+            duration,
+            flat_params[..., 1:detuning_stop],
+            flat_params[..., detuning_stop:phase_stop],
+            flat_params[..., phase_stop:],
+        )
+
     @staticmethod
     def _split_1d(packed_params: ArrayLike, lower_count: int) -> tuple[jax.Array, jax.Array]:
         packed_params = jnp.asarray(packed_params)
-        return packed_params[:lower_count], packed_params[lower_count:]
+        return packed_params[..., :lower_count], packed_params[..., lower_count:]
 
-    def _unpack_transition_params(self, params: PulseParams) -> tuple[PulseParams, PulseParams]:
-        duration, detuning_params, phase_params, rabi_params = params
+    def _unpack_transition_params(self, params: PulseParamsLike) -> tuple[jax.Array, jax.Array]:
+        duration, detuning_params, phase_params, rabi_params = self._unpack_params(params)
 
         lower_detuning_count, lower_phase_count, lower_rabi_count = self.lower_param_counts
 
@@ -203,12 +249,12 @@ class TwoPhotonPulseAnsatz:
         lower_phase_params, upper_phase_params = self._split_1d(phase_params, lower_phase_count)
         lower_rabi_params, upper_rabi_params = self._split_1d(rabi_params, lower_rabi_count)
 
-        lower_params: PulseParams = (duration, lower_detuning_params, lower_phase_params, lower_rabi_params)
-        upper_params: PulseParams = (duration, upper_detuning_params, upper_phase_params, upper_rabi_params)
+        lower_params = _flatten_params((duration, lower_detuning_params, lower_phase_params, lower_rabi_params))
+        upper_params = _flatten_params((duration, upper_detuning_params, upper_phase_params, upper_rabi_params))
         return lower_params, upper_params
 
     def evaluate_pulse_functions(
-        self, t: jax.Array | float, params: PulseParams
+        self, t: float | jax.Array, params: PulseParamsLike
     ) -> tuple[jax.Array, jax.Array, jax.Array, jax.Array]:
         r"""Evaluate the effective two-photon detuning, phase, and the rabi sweeps for fixed
         parameters at the given times.

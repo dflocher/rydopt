@@ -59,7 +59,7 @@ def rydberg_time(gate: RydbergSystem, pulse: PulseAnsatzLike, params: PulseParam
     # Schrödinger equation for the basis states. The Hamiltonian is chosen via lax.switch
     # based on the index of the basis state, with padding to max_dim × max_dim.
     def apply_hamiltonian(
-        t: jax.Array | float,
+        t: float | jax.Array,
         params: PulseParams,
         y: tuple[jax.Array, jax.Array],
         hamiltonian: HamiltonianFunction,
@@ -86,7 +86,7 @@ def rydberg_time(gate: RydbergSystem, pulse: PulseAnsatzLike, params: PulseParam
     )
 
     def schroedinger_eq(
-        t: jax.Array | float,
+        t: float | jax.Array,
         y: tuple[jax.Array, jax.Array],
         args: tuple[PulseParams, int],
     ) -> tuple[jax.Array, jax.Array]:

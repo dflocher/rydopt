@@ -18,12 +18,10 @@ def test_reproducing_evered() -> None:
     gate = ro.gates.TwoQubitGate(phi=None, theta=np.pi, Vnn=450, decay=0)
 
     class EveredPhase(ro.pulses.PulseAnsatzFunction):
-        def __init__(self, num_params: int = 3) -> None:
-            if num_params != 3:
-                raise ValueError("EveredPhase requires exactly 3 parameters")
-            super().__init__(num_params=num_params)
+        def __init__(self) -> None:
+            super().__init__(num_params=3)
 
-        def __call__(self, t: jax.Array | float, duration: float, ansatz_params: jax.Array) -> jax.Array:
+        def __call__(self, t: float | jax.Array, duration: float | jax.Array, ansatz_params: jax.Array) -> jax.Array:
             del duration
             a, omega, phi0 = ansatz_params
             return a * jnp.cos(omega * t - phi0)

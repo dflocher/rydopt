@@ -64,7 +64,7 @@ def evolve(gate: Evolvable, pulse: PulseAnsatzLike, params: PulseParams, tol: fl
     # Schrödinger equation for the basis states. The Hamiltonian is chosen via lax.switch
     # based on the index of the basis state, with padding to max_dim × max_dim.
     def apply_hamiltonian(
-        t: jax.Array | float,
+        t: float | jax.Array,
         params: PulseParams,
         psi: jax.Array,
         hamiltonian: HamiltonianFunction,
@@ -79,7 +79,7 @@ def evolve(gate: Evolvable, pulse: PulseAnsatzLike, params: PulseParams, tol: fl
         for h, d in zip(gate.hamiltonian_functions_for_basis_states(), dims)
     )
 
-    def schroedinger_eq(t: jax.Array | float, psi: jax.Array, args: tuple[PulseParams, int]) -> jax.Array:
+    def schroedinger_eq(t: float | jax.Array, psi: jax.Array, args: tuple[PulseParams, int]) -> jax.Array:
         params, idx = args
         return jax.lax.switch(idx, branches, t, params, psi)
 
@@ -124,7 +124,7 @@ def _evolve_optimized_for_gpus(
     import diffrax
 
     def schroedinger_eq(
-        t: jax.Array | float,
+        t: float | jax.Array,
         psi_tuple: tuple[jax.Array, ...],
         _: object,
     ) -> tuple[jax.Array, ...]:
