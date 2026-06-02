@@ -1,11 +1,12 @@
 import jax
 import jax.numpy as jnp
+import numpy as np
 import pytest
 
 import rydopt as ro
 from rydopt.protocols import GateWithInterpolationParam, PulseAnsatzLike
-from rydopt.pulses import MappedPulseAnsatz
-from rydopt.types import GenericPulseParams, PulseParams
+from rydopt.pulses import PulseFamilyAnsatz
+from rydopt.types import ParamsFloatLike, PulseParams
 
 
 @pytest.fixture
@@ -21,19 +22,18 @@ def simple_gate_with_interpolation_param() -> GateWithInterpolationParam:
 
 
 @pytest.fixture
-def pulse() -> MappedPulseAnsatz:
+def pulse() -> PulseFamilyAnsatz:
     degrees = [1, 0, 2, 0]
-    num_params = [1, 1, 6, 1]
+    num_params = 6
 
     pulse_map = ro.pulses.PolynomialPulseMap(
         degrees=degrees,
-        num_params=num_params,
     )
 
-    return ro.pulses.MappedPulseAnsatz(
-        detuning_ansatz=ro.pulses.const,
-        phase_ansatz=ro.pulses.sin_crab,
-        rabi_ansatz=ro.pulses.const,
+    return ro.pulses.PulseFamilyAnsatz(
+        detuning_ansatz=ro.pulses.Const(),
+        phase_ansatz=ro.pulses.SinCrab(num_params),
+        rabi_ansatz=ro.pulses.Const(),
         pulse_map=pulse_map,
     )
 
@@ -51,8 +51,8 @@ def params() -> tuple[jax.Array, jax.Array, jax.Array, jax.Array]:
 
 def test_generate_pulse_params_real(
     simple_gate_with_interpolation_param: GateWithInterpolationParam,
-    pulse: MappedPulseAnsatz,
-    params: GenericPulseParams,
+    pulse: PulseFamilyAnsatz,
+    params: ParamsFloatLike,
 ) -> None:
     duration, detuning, phase, rabi = pulse.generate_pulse_params(simple_gate_with_interpolation_param, params)
 
@@ -69,8 +69,8 @@ def test_generate_pulse_params_real(
 
 def test_evaluate_pulse_functions_real(
     simple_gate_with_interpolation_param: GateWithInterpolationParam,
-    pulse: MappedPulseAnsatz,
-    params: GenericPulseParams,
+    pulse: PulseFamilyAnsatz,
+    params: PulseParams,
 ) -> None:
     t = jnp.linspace(0.0, 1.0, 10)
 
@@ -93,7 +93,7 @@ def test_evaluate_pulse_functions_real(
 def test_parametrized_gate_real(pulse: PulseAnsatzLike, params: PulseParams) -> None:
     phases = jnp.array([0.1, 0.15, 0.2]) * jnp.pi
 
-    gates = [
+    sampled_gates = [
         ro.gates.TwoQubitGate(
             phi=None,
             theta=4 * phase,
@@ -103,17 +103,66 @@ def test_parametrized_gate_real(pulse: PulseAnsatzLike, params: PulseParams) -> 
         for phase in phases
     ]
 
-    gate_family = ro.gates.ParametrizedGate(
-        gates=gates,
-        interpolation_params=phases,
-        reduction_operation="mean",
+    parametrized_gate = ro.gates.ParametrizedGate(
+        fixed_parameter_gates=sampled_gates,
+        parameter_values=phases,
+        reduction="mean",
     )
 
-    fid = gate_family.fidelity(
+    infid = parametrized_gate.cost(
         pulse,
         params,
         tol=1e-3,
     )
 
-    assert jnp.isfinite(fid)
-    assert 0.0 <= fid <= 1.0
+    assert jnp.isfinite(infid)
+    assert 0.0 <= infid <= 1.0
+
+
+@pytest.mark.optimization
+def test_cphase() -> None:
+    # target phases
+    phases = jnp.array([0.1, 0.2]) * jnp.pi
+
+    # parametrized gate
+    sampled_gates = [
+        ro.gates.TwoQubitGate(
+            phi=None,
+            theta=4 * phase,
+            Vnn=20.0,
+            decay=0.0,
+        )
+        for phase in phases
+    ]
+
+    parametrized_gate = ro.gates.ParametrizedGate(
+        fixed_parameter_gates=sampled_gates,
+        parameter_values=phases,
+        reduction="mean",
+    )
+
+    # Pulse
+    degrees = [0, 0, 1, 0]
+    n_params = 6
+    pulse_mal = ro.pulses.PolynomialPulseMap(degrees=degrees)
+    pulse_family = ro.pulses.PulseFamilyAnsatz(
+        detuning_ansatz=ro.pulses.Const(),
+        phase_ansatz=ro.pulses.SinCrab(n_params),
+        pulse_map=pulse_mal,
+    )
+
+    # Initial parameters
+    initial_params = ro.pulses.PulseParams(15.0, [0.1], np.zeros((n_params, degrees[2] + 1)), [])
+
+    # Run optimization
+    r = ro.optimization.optimize(parametrized_gate, pulse_family, initial_params, num_steps=100, tol=1e-6)
+    duration, detuning, phase, rabi = r.params
+    detuning = jnp.asarray(detuning)
+    phase = jnp.asarray(phase)
+    rabi = jnp.asarray(rabi)
+
+    assert phase.shape == (n_params, degrees[2] + 1)
+    assert detuning.shape == (1,)
+    assert rabi.shape == (0,)
+    assert isinstance(duration, jax.Array)
+    assert 0.0 <= r.infidelity <= 1e-2
