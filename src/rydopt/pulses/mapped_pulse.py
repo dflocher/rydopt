@@ -92,8 +92,8 @@ class PolynomialPulseMap(PulseParamMap):
 class MappedPulseAnsatz(PulseAnsatz):
     r"""Data class that stores ansatz functions for the laser pulse.
      The parameters of the ansatz functions and duration of the laser pulse will be optimized to
-     maximize the gate fidelity. Here, the parameters of one of the ansatze are treated as
-     fix-degree polynomials in the parametrized phase of the gate.
+     maximize the gate fidelity. Here, the parameters of interest are treated as fix-degree
+     polynomials in the parametrized phase of the gate.
 
     Example:
         >>> import rydopt as ro
