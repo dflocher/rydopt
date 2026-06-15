@@ -101,11 +101,12 @@ def rydberg_time(gate: RydbergSystem, pulse: PulseAnsatzLike, params: ParamsFloa
 
     def propagate(args: tuple[jax.Array, int]) -> jax.Array:
         psi_initial, idx = args
+        duration = pulse.generate_duration(params)
         sol = diffrax.diffeqsolve(
             term,
             solver,
             t0=0.0,
-            t1=params[0],
+            t1=duration,
             dt0=None,
             y0=(psi_initial, jnp.array(0.0, dtype=psi_initial.dtype)),
             args=(params, idx),

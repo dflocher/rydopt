@@ -80,6 +80,10 @@ class PulseAnsatz:
         )
         return duration[..., 0], detuning_params, phase_params, rabi_params
 
+    @staticmethod
+    def generate_duration(params: ParamsFloatLike) -> float | jax.Array:
+        return params[0]
+
     def evaluate_pulse_functions(
         self, t: float | jax.Array, params: ParamsFloatLike
     ) -> tuple[jax.Array, jax.Array, jax.Array, jax.Array]:
@@ -226,6 +230,10 @@ class TwoPhotonPulseAnsatz:
     def _split_1d(packed_params: ArrayLike, lower_count: int) -> tuple[jax.Array, jax.Array]:
         packed_params = jnp.asarray(packed_params)
         return packed_params[..., :lower_count], packed_params[..., lower_count:]
+
+    @staticmethod
+    def generate_duration(params: ParamsFloatLike) -> float | jax.Array:
+        return params[0]
 
     def evaluate_pulse_functions(
         self, t: float | jax.Array, params: ParamsFloatLike

@@ -1,0 +1,188 @@
+import jax
+import jax.numpy as jnp
+import numpy as np
+import pytest
+
+import rydopt as ro
+from rydopt.gates import GateFamily
+from rydopt.pulses import PulseFamilyAnsatz
+from rydopt.types import ParamsFloatLike, PulseParams
+
+
+@pytest.fixture
+def simple_gate_family() -> GateFamily:
+    phases = jnp.array([0.1, 0.15, 0.2]) * jnp.pi
+
+    sampled_gates = [
+        ro.gates.TwoQubitGate(
+            phi=None,
+            theta=4 * phase,
+            Vnn=20.0,
+            decay=0.0,
+        )
+        for phase in phases
+    ]
+
+    return ro.gates.GateFamily(
+        fixed_parameter_gates=sampled_gates,
+        parameter_values=phases,
+        reduction="mean",
+    )
+
+
+@pytest.fixture
+def pulse() -> PulseFamilyAnsatz:
+    degrees = [0, 0, 2, 0]
+    num_params = 6
+
+    pulse_map = ro.pulses.PolynomialPulseMap(
+        degrees=degrees,
+    )
+
+    return ro.pulses.PulseFamilyAnsatz(
+        detuning_ansatz=ro.pulses.Const(),
+        phase_ansatz=ro.pulses.SinCrab(num_params),
+        rabi_ansatz=ro.pulses.Const(),
+        pulse_map=pulse_map,
+    )
+
+
+@pytest.fixture
+def params() -> tuple[jax.Array, jax.Array, jax.Array, jax.Array]:
+    # consistent with degrees above
+    return (
+        jnp.array([2.0, 1.0]),
+        jnp.array([0.5]),
+        jnp.ones((6, 3)),
+        jnp.array([1.0]),
+    )
+
+
+def test_generate_pulse_params_real(
+    simple_gate_family: GateFamily,
+    pulse: PulseFamilyAnsatz,
+    params: ParamsFloatLike,
+) -> None:
+    gate_param = simple_gate_family.parameter_values[0]
+    duration, detuning, phase, rabi = pulse.generate_pulse_params(gate_param, params)
+
+    detuning = jnp.asarray(detuning)
+    phase = jnp.asarray(phase)
+    rabi = jnp.asarray(rabi)
+
+    assert jnp.isscalar(duration)
+    assert detuning.shape == (1,)
+    assert phase.shape == (6,)
+    assert rabi.shape == (1,)
+    assert jnp.asarray(duration) > 0
+
+
+def test_evaluate_pulse_functions_real(
+    simple_gate_family: GateFamily,
+    pulse: PulseFamilyAnsatz,
+    params: PulseParams,
+) -> None:
+    t = jnp.linspace(0.0, 1.0, 10)
+    for gate_param in simple_gate_family.parameter_values:
+        d0, detuning, phase, rabi = pulse.evaluate_pulse_functions_for_gate(t, params, gate_param)
+
+        detuning = jnp.asarray(detuning)
+        phase = jnp.asarray(phase)
+        rabi = jnp.asarray(rabi)
+
+        assert d0.shape == t.shape
+        assert detuning.shape == t.shape
+        assert phase.shape == t.shape
+        assert rabi.shape == t.shape
+
+        assert not jnp.isnan(detuning).any()
+        assert not jnp.isnan(phase).any()
+        assert not jnp.isnan(rabi).any()
+
+
+def test_gate_family_real(pulse: PulseFamilyAnsatz, params: PulseParams) -> None:
+    phases = jnp.array([0.1, 0.15, 0.2]) * jnp.pi
+
+    sampled_gates = [
+        ro.gates.TwoQubitGate(
+            phi=None,
+            theta=4 * phase,
+            Vnn=20.0,
+            decay=0.0,
+        )
+        for phase in phases
+    ]
+
+    gate_family = ro.gates.GateFamily(
+        fixed_parameter_gates=sampled_gates,
+        parameter_values=phases,
+        reduction="mean",
+    )
+
+    infid = gate_family.cost(
+        pulse,
+        params,
+        tol=1e-3,
+    )
+
+    assert jnp.isfinite(infid)
+    assert 0.0 <= infid <= 1.0
+
+
+@pytest.mark.optimization
+def test_cphase() -> None:
+    # target phases
+    phases = jnp.array([0.1, 0.25]) * jnp.pi
+
+    # gate family
+    sampled_gates = [
+        ro.gates.TwoQubitGate(
+            phi=None,
+            theta=4 * phase,
+            Vnn=20.0,
+            decay=0.0,
+        )
+        for phase in phases
+    ]
+
+    gate_family = ro.gates.GateFamily(
+        fixed_parameter_gates=sampled_gates,
+        parameter_values=phases,
+        reduction="mean",
+    )
+
+    # Pulse
+    degrees = [1, 0, 3, 0]
+    n_params = 4
+    pulse_mal = ro.pulses.PolynomialPulseMap(degrees=degrees)
+    pulse_family = ro.pulses.PulseFamilyAnsatz(
+        detuning_ansatz=ro.pulses.Const(),
+        phase_ansatz=ro.pulses.SinCrab(n_params),
+        pulse_map=pulse_mal,
+    )
+
+    # Initial parameters
+    initial_params = ro.pulses.PulseFamilyParams(
+        8.0 * np.ones(degrees[0] + 1), 0.1 * np.ones(degrees[1] + 1), np.zeros((n_params, degrees[2] + 1)), []
+    )
+
+    # Run optimization
+    r = ro.optimization.optimize(gate_family, pulse_family, initial_params, num_steps=100, tol=1e-6)
+    duration, detuning, phase, rabi = r.params
+
+    assert np.array(phase).shape == (n_params, degrees[2] + 1)
+    assert np.array(detuning).shape == (degrees[1] + 1,)
+    assert np.array(rabi).shape == (0,)
+    assert isinstance(duration, jax.Array)
+    assert 0.0 <= r.infidelity <= 1e-2
+
+    infidelities, infidelities_nodecay, ryd_times = ro.characterization.analyze_gate_family(
+        gate_family,
+        pulse_family,
+        r.params,
+        tol=1e-8,
+        print_results=False,
+    )
+    assert np.all(infidelities <= 1e-2)
+    assert np.all(infidelities_nodecay <= 1e-2)
+    assert np.all(ryd_times >= 0.0)

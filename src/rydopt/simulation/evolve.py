@@ -65,6 +65,7 @@ def evolve(
 
     # Schrödinger equation for the basis states. The Hamiltonian is chosen via lax.switch
     # based on the index of the basis state, with padding to max_dim × max_dim.
+
     def apply_hamiltonian(
         t: float | jax.Array,
         params: ParamsFloatLike,
@@ -93,11 +94,13 @@ def evolve(
 
     def propagate(args: tuple[jax.Array, int]) -> jax.Array:
         psi_initial, idx = args
+        duration = pulse.generate_duration(params)
+
         sol = diffrax.diffeqsolve(
             term,
             solver,
             t0=0.0,
-            t1=params[0],
+            t1=duration,
             dt0=None,
             y0=psi_initial,
             args=(params, idx),
@@ -140,11 +143,13 @@ def _evolve_optimized_for_gpus(
     saveat = diffrax.SaveAt(t1=True)
     term = diffrax.ODETerm(schroedinger_eq)  # type: ignore[arg-type]
 
+    duration = pulse.generate_duration(params)
+
     sol = diffrax.diffeqsolve(
         term,
         solver,
         t0=0.0,
-        t1=params[0],
+        t1=duration,
         dt0=None,
         y0=gate.initial_basis_states(),
         args=None,

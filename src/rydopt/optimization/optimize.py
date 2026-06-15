@@ -18,8 +18,11 @@ import numpy.typing as npt
 import optax
 from tqdm.auto import tqdm
 
-from rydopt.protocols import Optimizable, PulseAnsatzLike
-from rydopt.types import ParamsBoolLike, ParamsFloatLike
+from rydopt.gates import GateFamily
+from rydopt.protocols import Optimizable, PulseAnsatzLike, PulseFamilyAnsatzLike
+from rydopt.pulses import PulseFamilyAnsatz
+from rydopt.pulses.pulse_family_params import PulseFamilyParams
+from rydopt.types import DurationLike, ParamsBoolLike, ParamsFloatLike
 
 tqdm.monitor_interval = 0
 
@@ -47,7 +50,7 @@ class OptimizationResult(Generic[ParamsType, ValueType, HistoryType]):
 
     params: ParamsType
     infidelity: ValueType
-    duration: ValueType
+    duration: DurationLike
     infidelity_history: HistoryType
     duration_history: HistoryType
     grad_norm_history: HistoryType
@@ -184,11 +187,9 @@ class _ProgressBar:
 # -----------------------------------------------------------------------------
 # Utility functions
 # -----------------------------------------------------------------------------
-
-
 def _make_infidelity(
     gate: Optimizable,
-    pulse: PulseAnsatzLike,
+    pulse: PulseAnsatzLike | PulseFamilyAnsatzLike,
     params_full: npt.NDArray[np.float64],
     params_trainable_indices: npt.NDArray[np.intp],
     tol: float,
@@ -198,7 +199,9 @@ def _make_infidelity(
 
     def infidelity(params_trainable: jax.Array) -> jax.Array:
         params = full.at[trainable_indices].set(params_trainable)
-        return gate.cost(pulse, params, tol)
+        if isinstance(gate, GateFamily):
+            return gate.cost(cast(PulseFamilyAnsatzLike, pulse), params, tol)
+        return gate.cost(cast(PulseAnsatzLike, pulse), params, tol)
 
     return infidelity
 
@@ -209,8 +212,7 @@ def _print_gate(title: str, params: ParamsFloatLike, infidelity: float, tol: flo
         print("> infidelity <= tol")
     else:
         print(f"> infidelity = {infidelity:.6e}")
-    print(f"> parameters = ({', '.join(str(p) for p in params)})")
-    print(f"> duration = {params[0]}")
+    print(repr(params))
 
 
 def _print_summary(method_name: str, runtime: float, tol: float, num_converged: int) -> None:
@@ -342,7 +344,7 @@ _adam_scan: Callable[..., AdamScanReturn] = cast(
 
 def _adam_optimize(
     gate: Optimizable,
-    pulse: PulseAnsatzLike,
+    pulse: PulseAnsatzLike | PulseFamilyAnsatzLike,
     params_full: npt.NDArray[np.float64],
     params_trainable: npt.NDArray[np.float64],
     params_trainable_indices: npt.NDArray[np.intp],
@@ -422,7 +424,7 @@ def _adam_optimize(
 @overload
 def optimize(
     gate: Optimizable,
-    pulse: PulseAnsatzLike,
+    pulse: PulseAnsatzLike | PulseFamilyAnsatzLike,
     initial_params: ParamsFloatLike,
     fixed_initial_params: ParamsBoolLike | None = ...,
     *,
@@ -437,7 +439,7 @@ def optimize(
 @overload
 def optimize(
     gate: Optimizable,
-    pulse: PulseAnsatzLike,
+    pulse: PulseAnsatzLike | PulseFamilyAnsatzLike,
     initial_params: ParamsFloatLike,
     fixed_initial_params: ParamsBoolLike | None = ...,
     *,
@@ -451,7 +453,7 @@ def optimize(
 
 def optimize(
     gate: Optimizable,
-    pulse: PulseAnsatzLike,
+    pulse: PulseAnsatzLike | PulseFamilyAnsatzLike,
     initial_params: ParamsFloatLike,
     fixed_initial_params: ParamsBoolLike | None = None,
     *,
@@ -539,8 +541,16 @@ def optimize(
         )
     runtime = time.perf_counter() - t0
 
-    final_params = params_full.copy()
-    final_params[trainable_indices] = final_params_trainable
+    final_params_flat = params_full.copy()
+    final_params_flat[trainable_indices] = final_params_trainable
+
+    if isinstance(pulse, PulseFamilyAnsatz):
+        final_params = PulseFamilyParams.unflatten(
+            pulse.shapes,
+            final_params_flat,
+        )
+    else:
+        final_params = final_params_flat
 
     num_converged = 1 if final_infidelity <= tol else 0
 
@@ -552,7 +562,7 @@ def optimize(
     return OptimizationResult(
         params=final_params,
         infidelity=float(final_infidelity),
-        duration=float(final_params[0]),
+        duration=final_params[0],
         infidelity_history=infidelity_history,
         duration_history=duration_history,
         grad_norm_history=grad_norm_history,
@@ -565,7 +575,7 @@ def optimize(
 @overload
 def multi_start_optimize(
     gate: Optimizable,
-    pulse: PulseAnsatzLike,
+    pulse: PulseAnsatzLike | PulseFamilyAnsatzLike,
     min_initial_params: ParamsFloatLike,
     max_initial_params: ParamsFloatLike,
     fixed_initial_params: ParamsBoolLike | None = ...,
@@ -586,7 +596,7 @@ def multi_start_optimize(
 @overload
 def multi_start_optimize(
     gate: Optimizable,
-    pulse: PulseAnsatzLike,
+    pulse: PulseAnsatzLike | PulseFamilyAnsatzLike,
     min_initial_params: ParamsFloatLike,
     max_initial_params: ParamsFloatLike,
     fixed_initial_params: ParamsBoolLike | None = ...,
@@ -607,7 +617,7 @@ def multi_start_optimize(
 @overload
 def multi_start_optimize(
     gate: Optimizable,
-    pulse: PulseAnsatzLike,
+    pulse: PulseAnsatzLike | PulseFamilyAnsatzLike,
     min_initial_params: ParamsFloatLike,
     max_initial_params: ParamsFloatLike,
     fixed_initial_params: ParamsBoolLike | None = ...,
@@ -628,7 +638,7 @@ def multi_start_optimize(
 @overload
 def multi_start_optimize(
     gate: Optimizable,
-    pulse: PulseAnsatzLike,
+    pulse: PulseAnsatzLike | PulseFamilyAnsatzLike,
     min_initial_params: ParamsFloatLike,
     max_initial_params: ParamsFloatLike,
     fixed_initial_params: ParamsBoolLike | None = ...,
@@ -648,7 +658,7 @@ def multi_start_optimize(
 
 def multi_start_optimize(
     gate: Optimizable,
-    pulse: PulseAnsatzLike,
+    pulse: PulseAnsatzLike | PulseFamilyAnsatzLike,
     min_initial_params: ParamsFloatLike,
     max_initial_params: ParamsFloatLike,
     fixed_initial_params: ParamsBoolLike | None = None,
@@ -869,13 +879,26 @@ def multi_start_optimize(
 
     fastest_idx = converged[np.argmin(durations_converged)]
     fastest_infidelity = float(final_infidelities[fastest_idx])
-    fastest_params = final_full[fastest_idx]
+    fastest_params_flat = final_full[fastest_idx]
+
+    if isinstance(pulse, PulseFamilyAnsatz):
+        fastest_params = PulseFamilyParams.unflatten(
+            pulse.shapes,
+            fastest_params_flat,
+        )
+    else:
+        fastest_params = fastest_params_flat
 
     if num_converged > 1:
         # If multiple parameter sets converged, show slowest and fastest gate
         slowest_idx = converged[np.argmax(durations_converged)]
         slowest_infidelity = float(final_infidelities[slowest_idx])
-        slowest_params = final_full[slowest_idx]
+        slowest_params_flat = final_full[slowest_idx]
+
+        if isinstance(pulse, PulseFamilyAnsatz):
+            slowest_params = PulseFamilyParams.unflatten(pulse.shapes, slowest_params_flat)
+        else:
+            slowest_params = slowest_params_flat
 
         _print_gate("Slowest gate:", slowest_params, slowest_infidelity, tol)
         _print_gate("Fastest gate:", fastest_params, fastest_infidelity, tol)
@@ -892,14 +915,20 @@ def multi_start_optimize(
 
     if return_all:
         sorter = np.argsort(final_infidelities)
-        final_full_sorted = final_full[sorter]
+        final_full_sorted_flat = final_full[sorter]
+
+        if isinstance(pulse, PulseFamilyAnsatz):
+            final_full_sorted = [PulseFamilyParams.unflatten(pulse.shapes, p) for p in final_full_sorted_flat]
+        else:
+            final_full_sorted = final_full_sorted_flat
+
         infidelity_history_out = infidelity_history[:, sorter] if infidelity_history is not None else None
         duration_history_out = duration_history[:, sorter] if duration_history is not None else None
         grad_norm_history_out = grad_norm_history[:, sorter] if grad_norm_history is not None else None
         return OptimizationResult(
             params=final_full_sorted,
             infidelity=final_infidelities[sorter],
-            duration=final_full_sorted[:, 0],
+            duration=final_full_sorted_flat[:, 0],
             infidelity_history=infidelity_history_out,
             duration_history=duration_history_out,
             grad_norm_history=grad_norm_history_out,
@@ -914,7 +943,7 @@ def multi_start_optimize(
     return OptimizationResult(
         params=fastest_params,
         infidelity=fastest_infidelity,
-        duration=float(fastest_params[0]),
+        duration=fastest_params[0],
         infidelity_history=infidelity_history_out,
         duration_history=duration_history_out,
         grad_norm_history=grad_norm_history_out,

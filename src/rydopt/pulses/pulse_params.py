@@ -37,6 +37,15 @@ class PulseParams(Sequence[Any], Generic[ParamScalar]):
         """Return the number of parameter components."""
         return 4
 
+    @property
+    def _components(self) -> tuple[Any, Any, Any, Any]:
+        return (
+            self._duration,
+            self._detuning_params,
+            self._phase_params,
+            self._rabi_params,
+        )
+
     @overload
     def __getitem__(self, index: Literal[0]) -> ParamScalar: ...
 
@@ -53,12 +62,7 @@ class PulseParams(Sequence[Any], Generic[ParamScalar]):
         """Return one parameter component or a sliced tuple of parameter components."""
         if isinstance(index, int) and index == 0:
             return self._duration[0]
-        return (
-            self._duration,
-            self._detuning_params,
-            self._phase_params,
-            self._rabi_params,
-        )[index]
+        return self._components[index]
 
     def __array__(
         self,
@@ -67,33 +71,19 @@ class PulseParams(Sequence[Any], Generic[ParamScalar]):
     ) -> npt.NDArray[np.float64] | npt.NDArray[np.bool_]:
         """Return the flattened representation used by ``np.asarray``."""
         del dtype
-        array = np.concatenate(
-            (
-                self._duration,
-                self._detuning_params,
-                self._phase_params,
-                self._rabi_params,
-            )
-        )
+        array = np.concatenate(self._components)
         if copy:
             return array.copy()
+
         return array
 
     def __jax_array__(self) -> jax.Array:
         """Return the flattened representation used by ``jnp.asarray``."""
-        return jnp.concatenate(
-            [
-                self._duration,
-                self._detuning_params,
-                self._phase_params,
-                self._rabi_params,
-            ],
-            axis=-1,
-        )
+        return jnp.concatenate(self._components, axis=-1)
 
     def tree_flatten(self) -> tuple[tuple[Any, Any, Any, Any], None]:
         """Return a flattened representation for JAX tree utilities."""
-        return (self._duration, self._detuning_params, self._phase_params, self._rabi_params), None
+        return self._components, None
 
     @classmethod
     def tree_unflatten(cls, aux_data: None, children: tuple[Any, Any, Any, Any]) -> PulseParams[Any]:
@@ -102,3 +92,24 @@ class PulseParams(Sequence[Any], Generic[ParamScalar]):
         self = cast(PulseParams[Any], object.__new__(cls))
         self._duration, self._detuning_params, self._phase_params, self._rabi_params = children
         return self
+
+    def __repr__(self) -> str:
+        """Return a multi-line string representation of the pulse parameters."""
+
+        def fmt(name: str, arr: npt.NDArray[Any]) -> str:
+            prefix = f"  {name}="
+            return np.array2string(
+                arr,
+                separator=", ",
+                max_line_width=120,
+                prefix=prefix,
+            )
+
+        return (
+            "PulseParams(\n"
+            f"  duration={fmt('duration', self._duration)},\n"
+            f"  detuning_params={fmt('detuning_params', self._detuning_params)},\n"
+            f"  phase_params={fmt('phase_params', self._phase_params)},\n"
+            f"  rabi_params={fmt('rabi_params', self._rabi_params)}\n"
+            ")"
+        )

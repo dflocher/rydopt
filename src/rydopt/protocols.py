@@ -1,13 +1,12 @@
 from __future__ import annotations
 
-from typing import Generic, Protocol, TypeVar, runtime_checkable
+from typing import Protocol, TypeVar, runtime_checkable
 
 import jax
-import numpy as np
-import numpy.typing as npt
 from typing_extensions import Self
 
-from rydopt.types import HamiltonianFunction, ParamsFloatLike
+from rydopt.pulses.pulse_family_ansatz import BoundPulseAnsatz
+from rydopt.types import FidelityType, HamiltonianFunction, ParamsFloatLike
 
 
 class Evolvable(Protocol):
@@ -40,11 +39,12 @@ class Evolvable(Protocol):
         ...
 
 
-@runtime_checkable
-class Optimizable(Protocol):
-    """Minimal interface for a system that exposes a cost function."""
+PulseT = TypeVar("PulseT")
 
-    def cost(self, pulse: PulseAnsatzLike, params: ParamsFloatLike, tol: float) -> jax.Array:
+
+@runtime_checkable
+class Optimizable(Protocol[PulseT]):
+    def cost(self, pulse: PulseT, params: ParamsFloatLike, tol: float) -> jax.Array:
         """Evaluate the cost function for the given pulse and parameters."""
         ...
 
@@ -59,6 +59,9 @@ class GateSystem(Evolvable, Optimizable, Protocol):
     :func:`rydopt.optimization.optimize`, :func:`rydopt.characterization.analyze_gate`,
     and :func:`rydopt.characterization.analyze_gate_qutip`.
     """
+
+    def __init__(self) -> None:
+        self._fidelity_type: FidelityType = "process"
 
     def process_fidelity_helper(self, final_basis_states: tuple[jax.Array, ...]) -> jax.Array:
         r"""Given the basis states evolved under the pulse,
@@ -139,69 +142,14 @@ class PulseAnsatzLike(Protocol):
         """Evaluate detuning, phase, and Rabi pulse functions at time samples ``t``."""
         ...
 
-
-class ParamsLike(Protocol):
-    """Protocol defining a common interface for pulse parameter containers.
-
-    This interface abstracts over different parameter representations
-    (e.g., GenericPulseParams and PulseParams) so that optimization
-    routines can operate on them uniformly without needing to distinguish
-    between concrete types.
-
-    Implementations must support flattening to a 1D array, reconstructing
-    from that flattened representation, and providing structural
-    information about how parameters are partitioned.
-    """
-
-    def ravel(self) -> npt.NDArray[np.float64]: ...
-    def unravel(self, flat: npt.NDArray[np.float64]) -> ParamsLike: ...
-    def split_indices(self) -> tuple[int, ...]: ...
+    def generate_duration(self, params: ParamsFloatLike) -> float | jax.Array:
+        pass
 
 
-G = TypeVar("G", bound=Evolvable)
+class PulseFamilyAnsatzLike(Protocol):
+    """Minimal interface for pulse family ansatz objects used in simulation and optimization."""
 
-
-class GateWithInterpolationParam(Generic[G]):
-    #     """wrapper attaching an interpolation parameter to a gate.
-    #
-    #     This class delegates attribute access to the wrapped gate while storing
-    #     an additional `interpolation_param` used for pulse parametrization.
-    #
-    #     Args:
-    #         gate: Underlying gate instance.
-    #         interpolation_param: Scalar interpolation parameter.
-    #
-    #     """
-    __slots__ = ("_gate", "interpolation_param")
-
-    def __init__(self, gate: G, interpolation_param: float | jax.Array) -> None:
-        self._gate = gate
-        self.interpolation_param = jax.numpy.asarray(interpolation_param)
-
-    @property
-    def gate(self) -> G:
-        return self._gate
-
-    def dim(self) -> int:
-        return self._gate.dim()
-
-    def initial_basis_states(self) -> tuple[jax.Array, ...]:
-        return self._gate.initial_basis_states()
-
-    def process_fidelity(self, final_basis_states: tuple[jax.Array, ...]) -> jax.Array:
-        return self._gate.process_fidelity(final_basis_states)
-
-    def with_decay(self, decay: float) -> GateWithInterpolationParam[G]:
-        return GateWithInterpolationParam(
-            self._gate.with_decay(decay),
-            self.interpolation_param,
-        )
-
-    def hamiltonian_functions_for_basis_states(self) -> tuple[HamiltonianFunction, ...]:
-        return self._gate.hamiltonian_functions_for_basis_states()
-
-    def rydberg_population_operators_for_basis_states(self) -> tuple[jax.Array, ...]:
-        return self._gate.rydberg_population_operators_for_basis_states()
-
-    def rydberg_time(self, expectation_values_of_basis_states: tuple[jax.Array, ...]) -> jax.Array:
-        return self._gate.rydberg_time(expectation_values_of_basis_states)
+    def generate_pulse_ansatz(
+        self,
+        gate_param: float | jax.Array,
+    ) -> BoundPulseAnsatz: ...
