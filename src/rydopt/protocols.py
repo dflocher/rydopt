@@ -5,8 +5,7 @@ from typing import Protocol, TypeVar, runtime_checkable
 import jax
 from typing_extensions import Self
 
-from rydopt.pulses.pulse_family_ansatz import BoundPulseAnsatz
-from rydopt.types import FidelityType, HamiltonianFunction, ParamsFloatLike
+from rydopt.types import Arrays, FidelityType, HamiltonianFunction, ParamsFloatLike
 
 
 class Evolvable(Protocol):
@@ -136,20 +135,35 @@ class RydbergSystem(Evolvable, Protocol):
 class PulseAnsatzLike(Protocol):
     """Minimal interface for pulse ansatz objects used in simulation and optimization."""
 
-    def evaluate_pulse_functions(
-        self, t: float | jax.Array, params: ParamsFloatLike
-    ) -> tuple[jax.Array, jax.Array, jax.Array, jax.Array]:
+    def evaluate_pulse_functions(self, t: float | jax.Array, params: ParamsFloatLike) -> Arrays:
         """Evaluate detuning, phase, and Rabi pulse functions at time samples ``t``."""
         ...
 
-    def generate_duration(self, params: ParamsFloatLike) -> float | jax.Array:
-        pass
+    def generate_duration(self, params: ParamsFloatLike) -> float | jax.Array: ...
+
+    def unpack_params(
+        self,
+        flat_params: ParamsFloatLike,
+    ) -> Arrays: ...
 
 
 class PulseFamilyAnsatzLike(Protocol):
     """Minimal interface for pulse family ansatz objects used in simulation and optimization."""
 
-    def generate_pulse_ansatz(
+    def evaluate_pulse_functions(
         self,
         gate_param: float | jax.Array,
-    ) -> BoundPulseAnsatz: ...
+        t: jax.Array | float,
+        family_params: ParamsFloatLike,
+    ) -> Arrays:
+        """Evaluate detuning, phase, and Rabi pulse functions at time samples ``t``."""
+        ...
+
+    def generate_duration(self, gate_param: float | jax.Array, params: ParamsFloatLike) -> float | jax.Array: ...
+
+    def unpack_params(
+        self,
+        flat_params: ParamsFloatLike,
+    ) -> Arrays: ...
+
+    def generate_pulse_ansatz(self, gate_param: float | jax.Array) -> PulseAnsatzLike: ...

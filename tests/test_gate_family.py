@@ -84,7 +84,7 @@ def test_evaluate_pulse_functions_real(
 ) -> None:
     t = jnp.linspace(0.0, 1.0, 10)
     for gate_param in simple_gate_family.parameter_values:
-        d0, detuning, phase, rabi = pulse.evaluate_pulse_functions_for_gate(t, params, gate_param)
+        d0, detuning, phase, rabi = pulse.evaluate_pulse_functions(gate_param, t, params)
 
         detuning = jnp.asarray(detuning)
         phase = jnp.asarray(phase)
@@ -132,7 +132,7 @@ def test_gate_family_real(pulse: PulseFamilyAnsatz, params: PulseParams) -> None
 @pytest.mark.optimization
 def test_cphase() -> None:
     # target phases
-    phases = jnp.array([0.1, 0.25]) * jnp.pi
+    phases = jnp.array([0.2, 0.25]) * jnp.pi
 
     # gate family
     sampled_gates = [
@@ -152,8 +152,8 @@ def test_cphase() -> None:
     )
 
     # Pulse
-    degrees = [1, 0, 3, 0]
-    n_params = 4
+    degrees = [1, 0, 2, 0]
+    n_params = 10
     pulse_mal = ro.pulses.PolynomialPulseMap(degrees=degrees)
     pulse_family = ro.pulses.PulseFamilyAnsatz(
         detuning_ansatz=ro.pulses.Const(),
@@ -163,7 +163,7 @@ def test_cphase() -> None:
 
     # Initial parameters
     initial_params = ro.pulses.PulseFamilyParams(
-        8.0 * np.ones(degrees[0] + 1), 0.1 * np.ones(degrees[1] + 1), np.zeros((n_params, degrees[2] + 1)), []
+        8.0 * np.ones(degrees[0] + 1), 0.1 * np.ones(degrees[1] + 1), np.ones((n_params, degrees[2] + 1)), []
     )
 
     # Run optimization

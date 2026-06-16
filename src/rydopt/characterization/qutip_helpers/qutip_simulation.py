@@ -18,7 +18,7 @@ from rydopt.characterization.qutip_helpers.qutip_two_qubit_gate import (
 )
 from rydopt.gates import FourQubitGatePyramidal, ThreeQubitGateIsosceles, TwoQubitGate
 from rydopt.protocols import GateSystem, PulseAnsatzLike, RydbergSystem
-from rydopt.types import ParamsFloatLike
+from rydopt.types import Arrays, ParamsFloatLike
 
 
 def _setup_hamiltonian(
@@ -26,7 +26,7 @@ def _setup_hamiltonian(
     pulse: PulseAnsatzLike,
     params: ParamsFloatLike,
 ) -> tuple[Callable[[float], qt.Qobj], qt.Qobj, qt.Qobj]:
-    def pulse_functions(t: float | jax.Array) -> tuple[jax.Array, jax.Array, jax.Array, jax.Array]:
+    def pulse_functions(t: float | jax.Array) -> Arrays:
         return pulse.evaluate_pulse_functions(t, params)
 
     if isinstance(gate, TwoQubitGate):
