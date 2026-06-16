@@ -10,7 +10,8 @@ from rydopt.characterization.qutip_helpers.qutip_simulation import (
     rydberg_time_qutip,
 )
 from rydopt.gates import GateFamily
-from rydopt.protocols import GateSystem, PulseAnsatzLike, PulseFamilyAnsatzLike, RydbergSystem
+from rydopt.protocols import GateSystem, PulseAnsatzLike, RydbergSystem
+from rydopt.pulses import PulseFamilyAnsatz
 from rydopt.simulation.fidelity import process_fidelity
 from rydopt.simulation.rydberg_time import rydberg_time
 from rydopt.types import ParamsFloatLike
@@ -68,7 +69,7 @@ def analyze_gate(
 
 def analyze_gate_family(
     gate_family: GateFamily,
-    pulse_family: PulseFamilyAnsatzLike,
+    pulse_family: PulseFamilyAnsatz,
     family_params: ParamsFloatLike,
     tol: float = 1e-15,
     print_results: bool = True,

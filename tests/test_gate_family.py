@@ -64,7 +64,7 @@ def test_generate_pulse_params_real(
     params: ParamsFloatLike,
 ) -> None:
     gate_param = simple_gate_family.parameter_values[0]
-    duration, detuning, phase, rabi = pulse.generate_pulse_params(gate_param, params)
+    duration, detuning, phase, rabi = pulse.generate_pulse_params(params, gate_param)
 
     detuning = jnp.asarray(detuning)
     phase = jnp.asarray(phase)
@@ -84,7 +84,7 @@ def test_evaluate_pulse_functions_real(
 ) -> None:
     t = jnp.linspace(0.0, 1.0, 10)
     for gate_param in simple_gate_family.parameter_values:
-        d0, detuning, phase, rabi = pulse.evaluate_pulse_functions(gate_param, t, params)
+        d0, detuning, phase, rabi = pulse.evaluate_pulse_functions(t, params, gate_param)
 
         detuning = jnp.asarray(detuning)
         phase = jnp.asarray(phase)

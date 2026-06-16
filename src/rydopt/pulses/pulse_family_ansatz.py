@@ -9,6 +9,7 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 
+from rydopt.protocols import PulseAnsatzLike
 from rydopt.pulses import PulseAnsatzFunction
 from rydopt.pulses.pulse_ansatz import _FixedConstant
 from rydopt.types import Arrays, ParamsFloatLike
@@ -175,7 +176,9 @@ class PulseFamilyAnsatz:
         return self.pulse_map.map_shape(self.param_counts)
 
     @staticmethod
-    def target_phase(gate_param: float | jax.Array) -> float | jax.Array:
+    def target_phase(gate_param: float | jax.Array | None) -> float | jax.Array:
+        if gate_param is None:
+            raise TypeError("Expected gate_param to be a float or jax.Array, got None.")
         return gate_param / (2 * np.pi)
 
     def unpack_params(
@@ -214,27 +217,29 @@ class PulseFamilyAnsatz:
             return tuple(params)  # type: ignore[return-value]
         return self._unpack_params(params)
 
-    def generate_pulse_params(self, gate_param: float | jax.Array, params: ParamsFloatLike) -> Arrays:
+    def generate_pulse_params(self, params: ParamsFloatLike, gate_param: float | jax.Array | None = None) -> Arrays:
         unpacked = self._ensure_unpacked(params)
         return self.pulse_map.map_full(self.target_phase(gate_param), unpacked)
 
-    def generate_duration(self, gate_param: float | jax.Array, params: ParamsFloatLike) -> float | jax.Array:
+    def generate_duration(
+        self, params: ParamsFloatLike, gate_param: float | jax.Array | None = None
+    ) -> float | jax.Array:
         unpacked = self._ensure_unpacked(params)
         return self.pulse_map.map_duration(self.target_phase(gate_param), unpacked)
 
     def evaluate_pulse_functions(
         self,
-        gate_param: float | jax.Array,
         t: jax.Array | float,
-        family_params: ParamsFloatLike,
+        params: ParamsFloatLike,
+        gate_param: float | jax.Array | None = None,
     ) -> Arrays:
         r"""Evaluate the detuning, phase, and rabi sweeps at the given times for a
         gate family with a predefined target phase.
 
         Args:
-            gate_param: parameter value corresponding to a predefined gate instance.
             t: time samples at which the functions are evaluated.
-            family_params: family pulse parameters.
+            params: family pulse parameters.
+            gate_param: parameter value corresponding to a predefined gate instance.
 
         Returns:
             Tuple ``(detuning_1, detuning_r, phase, rabi)``.
@@ -245,7 +250,7 @@ class PulseFamilyAnsatz:
             detuning_ansatz_params,
             phase_ansatz_params,
             rabi_ansatz_params,
-        ) = self.generate_pulse_params(gate_param, family_params)
+        ) = self.generate_pulse_params(params, gate_param)
         return (
             jnp.zeros_like(t),
             self.detuning_ansatz(t, duration, detuning_ansatz_params),
@@ -253,7 +258,7 @@ class PulseFamilyAnsatz:
             self.rabi_ansatz(t, duration, rabi_ansatz_params),
         )
 
-    def generate_pulse_ansatz(self, gate_param: float | jax.Array) -> BoundPulseAnsatz:
+    def generate_pulse_ansatz(self, gate_param: float | jax.Array | None = None) -> PulseAnsatzLike:
         return BoundPulseAnsatz(self, gate_param=gate_param)
 
 
@@ -261,29 +266,40 @@ class PulseFamilyAnsatz:
 @dataclass
 class BoundPulseAnsatz:
     family: PulseFamilyAnsatz
-    gate_param: float | jax.Array
+    gate_param: float | jax.Array | None
 
-    def generate_pulse_params(self, params: ParamsFloatLike) -> Arrays:
-        return self.family.generate_pulse_params(self.gate_param, params)
+    def generate_pulse_params(self, params: ParamsFloatLike, gate_param: float | jax.Array | None = None) -> Arrays:
+        del gate_param
+        return self.family.generate_pulse_params(params, self.gate_param)
 
-    def generate_duration(self, params: ParamsFloatLike) -> float | jax.Array:
-        return self.family.generate_duration(self.gate_param, params)
+    def generate_duration(
+        self, params: ParamsFloatLike, gate_param: float | jax.Array | None = None
+    ) -> float | jax.Array:
+        del gate_param
+        return self.family.generate_duration(params, self.gate_param)
 
-    def evaluate_pulse_functions(self, t: float | jax.Array, params: ParamsFloatLike) -> Arrays:
-        return self.family.evaluate_pulse_functions(self.gate_param, t, params)
+    def evaluate_pulse_functions(
+        self, t: float | jax.Array, params: ParamsFloatLike, gate_param: float | jax.Array | None = None
+    ) -> Arrays:
+        del gate_param
+        return self.family.evaluate_pulse_functions(t, params, self.gate_param)
 
-    # --- pytree protocol ---
-    def tree_flatten(self) -> tuple[tuple[float | jax.Array], PulseFamilyAnsatz]:
-        # gate_param is a (traceable) leaf; family is static aux data.
-        return (self.gate_param,), self.family
-
-    @classmethod
-    def tree_unflatten(cls, aux_data: PulseFamilyAnsatz, children: tuple[float | jax.Array]) -> BoundPulseAnsatz:
-        (gate_param,) = children
-        return cls(family=aux_data, gate_param=gate_param)
+    def generate_pulse_ansatz(self, gate_param: float | jax.Array | None = None) -> PulseAnsatzLike:
+        del gate_param
+        return self
 
     def unpack_params(
         self,
         flat_params: ParamsFloatLike,
     ) -> Arrays:
         return self.family._unpack_params(flat_params)
+
+    # --- pytree protocol ---
+    def tree_flatten(self) -> tuple[tuple[float | jax.Array | None], PulseFamilyAnsatz]:
+        # gate_param is a (traceable) leaf; family is static aux data.
+        return (self.gate_param,), self.family
+
+    @classmethod
+    def tree_unflatten(cls, aux_data: PulseFamilyAnsatz, children: tuple[float | jax.Array | None]) -> PulseAnsatzLike:
+        (gate_param,) = children
+        return cls(family=aux_data, gate_param=gate_param)

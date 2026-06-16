@@ -4,7 +4,8 @@ from typing import Literal
 import jax
 import jax.numpy as jnp
 
-from rydopt.protocols import PulseFamilyAnsatzLike, RydbergSystem
+from rydopt.protocols import RydbergSystem
+from rydopt.pulses import PulseFamilyAnsatz
 from rydopt.types import ParamsFloatLike
 
 _REDUCTIONS = {"mean", "max"}
@@ -65,7 +66,7 @@ class GateFamily:
         else:
             raise ValueError("Invalid reduction, must be mean or max.")
 
-    def cost(self, pulse: PulseFamilyAnsatzLike, params: ParamsFloatLike, tol: float) -> jax.Array:
+    def cost(self, pulse: PulseFamilyAnsatz, params: ParamsFloatLike, tol: float) -> jax.Array:
         """Compute reduced infidelity over all fixed-target-phase gates defined within the
         gate family.
 
