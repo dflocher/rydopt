@@ -7,7 +7,7 @@ import jax.numpy as jnp
 from numpy.typing import ArrayLike
 
 from rydopt.pulses.ansatz_functions import PulseAnsatzFunction
-from rydopt.types import ParamsFloatLike
+from rydopt.types import Arrays, ParamsFloatLike
 
 
 class _FixedConstant(PulseAnsatzFunction):
@@ -65,7 +65,13 @@ class PulseAnsatz:
     def param_counts(self) -> tuple[int, int, int]:
         return self.detuning_ansatz.num_params, self.phase_ansatz.num_params, self.rabi_ansatz.num_params
 
-    def _unpack_params(self, params: ParamsFloatLike) -> tuple[jax.Array, jax.Array, jax.Array, jax.Array]:
+    def unpack_params(
+        self,
+        flat_params: ParamsFloatLike,
+    ) -> Arrays:
+        return self._unpack_params(flat_params)
+
+    def _unpack_params(self, params: ParamsFloatLike) -> Arrays:
         flat_params = jnp.asarray(params, dtype=jnp.float64)
         detuning_count, phase_count, rabi_count = self.param_counts
 
@@ -84,9 +90,7 @@ class PulseAnsatz:
     def generate_duration(params: ParamsFloatLike) -> float | jax.Array:
         return params[0]
 
-    def evaluate_pulse_functions(
-        self, t: float | jax.Array, params: ParamsFloatLike
-    ) -> tuple[jax.Array, jax.Array, jax.Array, jax.Array]:
+    def evaluate_pulse_functions(self, t: float | jax.Array, params: ParamsFloatLike) -> Arrays:
         r"""Evaluate the detuning, phase, and the rabi sweeps for fixed
         parameters at the given times.
 
@@ -205,7 +209,13 @@ class TwoPhotonPulseAnsatz:
     def upper_param_counts(self) -> tuple[int, int, int]:
         return self.upper_transition.param_counts
 
-    def _unpack_params(self, params: ParamsFloatLike) -> tuple[jax.Array, jax.Array, jax.Array, jax.Array]:
+    def unpack_params(
+        self,
+        flat_params: ParamsFloatLike,
+    ) -> Arrays:
+        return self._unpack_params(flat_params)
+
+    def _unpack_params(self, params: ParamsFloatLike) -> Arrays:
         flat_params = jnp.asarray(params, dtype=jnp.float64)
         lower_detuning_count, lower_phase_count, lower_rabi_count = self.lower_param_counts
         upper_detuning_count, upper_phase_count, upper_rabi_count = self.upper_param_counts
@@ -235,9 +245,7 @@ class TwoPhotonPulseAnsatz:
     def generate_duration(params: ParamsFloatLike) -> float | jax.Array:
         return params[0]
 
-    def evaluate_pulse_functions(
-        self, t: float | jax.Array, params: ParamsFloatLike
-    ) -> tuple[jax.Array, jax.Array, jax.Array, jax.Array]:
+    def evaluate_pulse_functions(self, t: float | jax.Array, params: ParamsFloatLike) -> Arrays:
         r"""Evaluate the effective two-photon detuning, phase, and the rabi sweeps for fixed
         parameters at the given times.
 

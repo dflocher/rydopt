@@ -4,6 +4,8 @@ import jax
 import numpy as np
 import qutip as qt
 
+from rydopt.types import Arrays
+
 IrxrI = qt.basis(3, 2).proj()
 I1x1I = qt.basis(3, 1).proj()
 I0x0I = qt.basis(3, 0).proj()
@@ -17,7 +19,7 @@ plus_state = (qt.basis(3, 0) + qt.basis(3, 1)).unit()
 
 
 def hamiltonian_FourQubitGatePyramidal(
-    pulse_functions: Callable[[float | jax.Array], tuple[jax.Array, jax.Array, jax.Array, jax.Array]],
+    pulse_functions: Callable[[float | jax.Array], Arrays],
     decay: float,
     Vnn: float,
     Vnnn: float,

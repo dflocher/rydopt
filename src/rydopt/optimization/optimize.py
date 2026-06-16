@@ -18,11 +18,8 @@ import numpy.typing as npt
 import optax
 from tqdm.auto import tqdm
 
-from rydopt.gates import GateFamily
 from rydopt.protocols import Optimizable, PulseAnsatzLike, PulseFamilyAnsatzLike
-from rydopt.pulses import PulseFamilyAnsatz
-from rydopt.pulses.pulse_family_params import PulseFamilyParams
-from rydopt.types import DurationLike, ParamsBoolLike, ParamsFloatLike
+from rydopt.types import Arrays, DurationLike, ParamsBoolLike, ParamsFloatLike
 
 tqdm.monitor_interval = 0
 
@@ -199,14 +196,12 @@ def _make_infidelity(
 
     def infidelity(params_trainable: jax.Array) -> jax.Array:
         params = full.at[trainable_indices].set(params_trainable)
-        if isinstance(gate, GateFamily):
-            return gate.cost(cast(PulseFamilyAnsatzLike, pulse), params, tol)
-        return gate.cost(cast(PulseAnsatzLike, pulse), params, tol)
+        return gate.cost(pulse, params, tol)
 
     return infidelity
 
 
-def _print_gate(title: str, params: ParamsFloatLike, infidelity: float, tol: float) -> None:
+def _print_gate(title: str, params: Arrays, infidelity: float, tol: float) -> None:
     print(f"\n{title}")
     if abs(float(infidelity)) < tol:
         print("> infidelity <= tol")
@@ -544,13 +539,7 @@ def optimize(
     final_params_flat = params_full.copy()
     final_params_flat[trainable_indices] = final_params_trainable
 
-    if isinstance(pulse, PulseFamilyAnsatz):
-        final_params = PulseFamilyParams.unflatten(
-            pulse.shapes,
-            final_params_flat,
-        )
-    else:
-        final_params = final_params_flat
+    final_params = pulse.unpack_params(final_params_flat)
 
     num_converged = 1 if final_infidelity <= tol else 0
 
@@ -881,13 +870,7 @@ def multi_start_optimize(
     fastest_infidelity = float(final_infidelities[fastest_idx])
     fastest_params_flat = final_full[fastest_idx]
 
-    if isinstance(pulse, PulseFamilyAnsatz):
-        fastest_params = PulseFamilyParams.unflatten(
-            pulse.shapes,
-            fastest_params_flat,
-        )
-    else:
-        fastest_params = fastest_params_flat
+    fastest_params = pulse.unpack_params(fastest_params_flat)
 
     if num_converged > 1:
         # If multiple parameter sets converged, show slowest and fastest gate
@@ -895,10 +878,7 @@ def multi_start_optimize(
         slowest_infidelity = float(final_infidelities[slowest_idx])
         slowest_params_flat = final_full[slowest_idx]
 
-        if isinstance(pulse, PulseFamilyAnsatz):
-            slowest_params = PulseFamilyParams.unflatten(pulse.shapes, slowest_params_flat)
-        else:
-            slowest_params = slowest_params_flat
+        slowest_params = pulse.unpack_params(slowest_params_flat)
 
         _print_gate("Slowest gate:", slowest_params, slowest_infidelity, tol)
         _print_gate("Fastest gate:", fastest_params, fastest_infidelity, tol)
@@ -917,10 +897,7 @@ def multi_start_optimize(
         sorter = np.argsort(final_infidelities)
         final_full_sorted_flat = final_full[sorter]
 
-        if isinstance(pulse, PulseFamilyAnsatz):
-            final_full_sorted = [PulseFamilyParams.unflatten(pulse.shapes, p) for p in final_full_sorted_flat]
-        else:
-            final_full_sorted = final_full_sorted_flat
+        final_full_sorted = [pulse.unpack_params(p) for p in final_full_sorted_flat]
 
         infidelity_history_out = infidelity_history[:, sorter] if infidelity_history is not None else None
         duration_history_out = duration_history[:, sorter] if duration_history is not None else None

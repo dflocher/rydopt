@@ -21,11 +21,13 @@ else:
 
 FidelityType = Literal["process", "average_gate"]
 
-ParamsFloatLike = PulseParams[float] | Sequence[float] | jax.Array | npt.NDArray[np.float64]
-
+Arrays = tuple[jax.Array, ...]
+ParamsFloatLike = PulseParams[float] | Sequence[float] | jax.Array | npt.NDArray[np.float64] | Arrays
 ParamsBoolLike = PulseParams[bool] | Sequence[bool] | jax.Array | npt.NDArray[np.bool_]
 
 
 PulseFunction = Callable[[float | jax.Array], jax.Array]
 
 HamiltonianFunction = Callable[[float | jax.Array, float | jax.Array, float | jax.Array, float | jax.Array], jax.Array]
+
+DurationLike = float | npt.NDArray[np.float64] | jax.Array

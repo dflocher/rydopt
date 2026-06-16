@@ -8,8 +8,6 @@ import jax.numpy as jnp
 import numpy as np
 import numpy.typing as npt
 
-from rydopt.types import ParamsFloatLike
-
 ParamScalar = TypeVar("ParamScalar", float, bool)
 
 
@@ -129,25 +127,6 @@ class PulseFamilyParams(Sequence[Any], Generic[ParamScalar]):
         ) = children
         self._shapes = aux_data
         return self
-
-    @staticmethod
-    def unflatten(
-        shapes: tuple[tuple[int, ...], ...],
-        flat: ParamsFloatLike,
-    ) -> tuple[Any, Any, Any, Any]:
-        """Split a single flat optimization vector back into the four components,
-        reshaped to their original shapes.
-        """
-        flat_arr = jnp.asarray(flat)
-        sizes = [int(np.prod(s)) for s in shapes]
-        splits = np.cumsum(sizes[:-1])
-        duration, detuning_flat, phase_flat, rabi_flat = jnp.split(flat_arr, splits, axis=-1)
-        return (
-            duration.reshape(shapes[0]),
-            detuning_flat.reshape(shapes[1]),
-            phase_flat.reshape(shapes[2]),
-            rabi_flat.reshape(shapes[3]),
-        )
 
     def __repr__(self) -> str:
         """Return a multi-line string representation of the pulse parameters."""

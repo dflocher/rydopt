@@ -11,7 +11,7 @@ import numpy as np
 
 from rydopt.pulses import PulseAnsatzFunction
 from rydopt.pulses.pulse_ansatz import _FixedConstant
-from rydopt.types import ParamsFloatLike
+from rydopt.types import Arrays, ParamsFloatLike
 
 
 @runtime_checkable
@@ -21,14 +21,14 @@ class PulseParamMap(Protocol):
     def map_duration(
         self,
         target_phase: float | jax.Array,
-        pulse_params: ParamsFloatLike | tuple[jax.Array, jax.Array, jax.Array, jax.Array],
+        pulse_params: ParamsFloatLike,
     ) -> float | jax.Array: ...
 
     def map_full(
         self,
         target_phase: float | jax.Array,
-        pulse_params: ParamsFloatLike | tuple[jax.Array, jax.Array, jax.Array, jax.Array],
-    ) -> tuple[jax.Array, jax.Array, jax.Array, jax.Array]: ...
+        pulse_params: ParamsFloatLike,
+    ) -> Arrays: ...
 
     def map_shape(
         self,
@@ -65,7 +65,7 @@ class PolynomialPulseMap:
     def map_duration(
         self,
         target_phase: float | jax.Array,
-        pulse_params: ParamsFloatLike | tuple[jax.Array, jax.Array, jax.Array, jax.Array],
+        pulse_params: ParamsFloatLike,
     ) -> jax.Array:
         target_phase = jnp.asarray(target_phase)
         params = jnp.ravel(jnp.asarray(pulse_params[0]))
@@ -79,8 +79,8 @@ class PolynomialPulseMap:
     def map_full(
         self,
         target_phase: float | jax.Array,
-        pulse_params: ParamsFloatLike | tuple[jax.Array, jax.Array, jax.Array, jax.Array],
-    ) -> tuple[jax.Array, jax.Array, jax.Array, jax.Array]:
+        pulse_params: ParamsFloatLike,
+    ) -> Arrays:
         target_phase = jnp.asarray(target_phase)
 
         # --- Duration ---
@@ -178,7 +178,13 @@ class PulseFamilyAnsatz:
     def target_phase(gate_param: float | jax.Array) -> float | jax.Array:
         return gate_param / (2 * np.pi)
 
-    def _unpack_params(self, params: ParamsFloatLike) -> tuple[jax.Array, jax.Array, jax.Array, jax.Array]:
+    def unpack_params(
+        self,
+        flat_params: ParamsFloatLike,
+    ) -> Arrays:
+        return self._unpack_params(flat_params)
+
+    def _unpack_params(self, params: ParamsFloatLike) -> Arrays:
         flat_params = jnp.asarray(params, dtype=jnp.float64)
         expected_shapes = self.shapes
         expected_sizes = [prod(t) for t in expected_shapes]
@@ -203,14 +209,12 @@ class PulseFamilyAnsatz:
         """already-unpacked params are a 4-tuple/list of components."""
         return isinstance(params, (tuple, list)) and len(params) == 4
 
-    def _ensure_unpacked(self, params: ParamsFloatLike) -> tuple[jax.Array, jax.Array, jax.Array, jax.Array]:
+    def _ensure_unpacked(self, params: ParamsFloatLike) -> Arrays:
         if self._is_unpacked(params):
             return tuple(params)  # type: ignore[return-value]
         return self._unpack_params(params)
 
-    def generate_pulse_params(
-        self, gate_param: float | jax.Array, params: ParamsFloatLike
-    ) -> tuple[jax.Array, jax.Array, jax.Array, jax.Array]:
+    def generate_pulse_params(self, gate_param: float | jax.Array, params: ParamsFloatLike) -> Arrays:
         unpacked = self._ensure_unpacked(params)
         return self.pulse_map.map_full(self.target_phase(gate_param), unpacked)
 
@@ -218,19 +222,19 @@ class PulseFamilyAnsatz:
         unpacked = self._ensure_unpacked(params)
         return self.pulse_map.map_duration(self.target_phase(gate_param), unpacked)
 
-    def evaluate_pulse_functions_for_gate(
+    def evaluate_pulse_functions(
         self,
+        gate_param: float | jax.Array,
         t: jax.Array | float,
         family_params: ParamsFloatLike,
-        gate_param: float | jax.Array,
-    ) -> tuple[jax.Array, jax.Array, jax.Array, jax.Array]:
+    ) -> Arrays:
         r"""Evaluate the detuning, phase, and rabi sweeps at the given times for a
         gate family with a predefined target phase.
 
         Args:
+            gate_param: parameter value corresponding to a predefined gate instance.
             t: time samples at which the functions are evaluated.
             family_params: family pulse parameters.
-            gate_param: parameter value corresponding to a predefined gate instance.
 
         Returns:
             Tuple ``(detuning_1, detuning_r, phase, rabi)``.
@@ -259,16 +263,14 @@ class BoundPulseAnsatz:
     family: PulseFamilyAnsatz
     gate_param: float | jax.Array
 
-    def generate_pulse_params(self, params: ParamsFloatLike) -> tuple[jax.Array, jax.Array, jax.Array, jax.Array]:
+    def generate_pulse_params(self, params: ParamsFloatLike) -> Arrays:
         return self.family.generate_pulse_params(self.gate_param, params)
 
     def generate_duration(self, params: ParamsFloatLike) -> float | jax.Array:
         return self.family.generate_duration(self.gate_param, params)
 
-    def evaluate_pulse_functions(
-        self, t: float | jax.Array, params: ParamsFloatLike
-    ) -> tuple[jax.Array, jax.Array, jax.Array, jax.Array]:
-        return self.family.evaluate_pulse_functions_for_gate(t, params, self.gate_param)
+    def evaluate_pulse_functions(self, t: float | jax.Array, params: ParamsFloatLike) -> Arrays:
+        return self.family.evaluate_pulse_functions(self.gate_param, t, params)
 
     # --- pytree protocol ---
     def tree_flatten(self) -> tuple[tuple[float | jax.Array], PulseFamilyAnsatz]:
@@ -279,3 +281,9 @@ class BoundPulseAnsatz:
     def tree_unflatten(cls, aux_data: PulseFamilyAnsatz, children: tuple[float | jax.Array]) -> BoundPulseAnsatz:
         (gate_param,) = children
         return cls(family=aux_data, gate_param=gate_param)
+
+    def unpack_params(
+        self,
+        flat_params: ParamsFloatLike,
+    ) -> Arrays:
+        return self.family._unpack_params(flat_params)
