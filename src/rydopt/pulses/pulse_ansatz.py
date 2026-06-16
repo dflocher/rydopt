@@ -6,6 +6,7 @@ import jax
 import jax.numpy as jnp
 from numpy.typing import ArrayLike
 
+from rydopt.protocols import PulseAnsatzLike
 from rydopt.pulses.ansatz_functions import PulseAnsatzFunction
 from rydopt.types import Arrays, ParamsFloatLike
 
@@ -87,21 +88,30 @@ class PulseAnsatz:
         return duration[..., 0], detuning_params, phase_params, rabi_params
 
     @staticmethod
-    def generate_duration(params: ParamsFloatLike) -> float | jax.Array:
+    def generate_duration(params: ParamsFloatLike, gate_param: float | jax.Array | None = None) -> float | jax.Array:
+        del gate_param
         return params[0]
 
-    def evaluate_pulse_functions(self, t: float | jax.Array, params: ParamsFloatLike) -> Arrays:
+    def generate_pulse_ansatz(self, gate_param: float | jax.Array | None = None) -> PulseAnsatzLike:
+        del gate_param
+        return self
+
+    def evaluate_pulse_functions(
+        self, t: float | jax.Array, params: ParamsFloatLike, gate_param: float | jax.Array | None = None
+    ) -> Arrays:
         r"""Evaluate the detuning, phase, and the rabi sweeps for fixed
         parameters at the given times.
 
         Args:
             t: Time samples at which the functions are evaluated
             params: Pulse parameters
+            gate_param: only useful for PulseFamilyAnsatz. Here is None.
 
         Returns:
             Tuple ``(detuning_1, detuning_r, phase, rabi)``
 
         """
+        del gate_param
         duration, detuning_ansatz_params, phase_ansatz_params, rabi_ansatz_params = self._unpack_params(params)
 
         return (
@@ -242,21 +252,30 @@ class TwoPhotonPulseAnsatz:
         return packed_params[..., :lower_count], packed_params[..., lower_count:]
 
     @staticmethod
-    def generate_duration(params: ParamsFloatLike) -> float | jax.Array:
+    def generate_duration(params: ParamsFloatLike, gate_param: float | jax.Array | None = None) -> float | jax.Array:
+        del gate_param
         return params[0]
 
-    def evaluate_pulse_functions(self, t: float | jax.Array, params: ParamsFloatLike) -> Arrays:
+    def generate_pulse_ansatz(self, gate_param: float | jax.Array | None = None) -> PulseAnsatzLike:
+        del gate_param
+        return self
+
+    def evaluate_pulse_functions(
+        self, t: float | jax.Array, params: ParamsFloatLike, gate_param: float | jax.Array | None = None
+    ) -> Arrays:
         r"""Evaluate the effective two-photon detuning, phase, and the rabi sweeps for fixed
         parameters at the given times.
 
         Args:
             t: Time samples at which the functions are evaluated
             params: Pulse parameters
+            gate_param: only useful for PulseFamilyAnsatz. Here is None.
 
         Returns:
             Tuple ``(detuning_1, detuning_r, phase, rabi)``
 
         """
+        del gate_param
         duration, detuning_params, phase_params, rabi_params = self._unpack_params(params)
 
         lower_detuning_count, lower_phase_count, lower_rabi_count = self.lower_param_counts

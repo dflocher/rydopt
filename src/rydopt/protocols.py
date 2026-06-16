@@ -135,35 +135,27 @@ class RydbergSystem(Evolvable, Protocol):
 class PulseAnsatzLike(Protocol):
     """Minimal interface for pulse ansatz objects used in simulation and optimization."""
 
-    def evaluate_pulse_functions(self, t: float | jax.Array, params: ParamsFloatLike) -> Arrays:
-        """Evaluate detuning, phase, and Rabi pulse functions at time samples ``t``."""
-        ...
-
-    def generate_duration(self, params: ParamsFloatLike) -> float | jax.Array: ...
-
-    def unpack_params(
-        self,
-        flat_params: ParamsFloatLike,
-    ) -> Arrays: ...
-
-
-class PulseFamilyAnsatzLike(Protocol):
-    """Minimal interface for pulse family ansatz objects used in simulation and optimization."""
-
     def evaluate_pulse_functions(
-        self,
-        gate_param: float | jax.Array,
-        t: jax.Array | float,
-        family_params: ParamsFloatLike,
+        self, t: float | jax.Array, params: ParamsFloatLike, gate_param: float | jax.Array | None = None
     ) -> Arrays:
         """Evaluate detuning, phase, and Rabi pulse functions at time samples ``t``."""
         ...
 
-    def generate_duration(self, gate_param: float | jax.Array, params: ParamsFloatLike) -> float | jax.Array: ...
+    def generate_duration(
+        self, params: ParamsFloatLike, gate_param: float | jax.Array | None = None
+    ) -> float | jax.Array:
+        """Evaluate pulse duration."""
+        ...
 
     def unpack_params(
         self,
         flat_params: ParamsFloatLike,
-    ) -> Arrays: ...
+    ) -> Arrays:
+        """Unpack pulse parameters and convert them back into their original shapes."""
+        ...
 
-    def generate_pulse_ansatz(self, gate_param: float | jax.Array) -> PulseAnsatzLike: ...
+    def generate_pulse_ansatz(self, gate_param: float | jax.Array | None = None) -> PulseAnsatzLike:
+        """Generate a pulse ansatz for a certain value of `gate_param`, useful for
+        PulseFamilyAnsatz instances where gate_param is not fixed.
+        """
+        ...

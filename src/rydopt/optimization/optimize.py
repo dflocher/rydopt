@@ -18,7 +18,7 @@ import numpy.typing as npt
 import optax
 from tqdm.auto import tqdm
 
-from rydopt.protocols import Optimizable, PulseAnsatzLike, PulseFamilyAnsatzLike
+from rydopt.protocols import Optimizable, PulseAnsatzLike
 from rydopt.types import Arrays, DurationLike, ParamsBoolLike, ParamsFloatLike
 
 tqdm.monitor_interval = 0
@@ -186,7 +186,7 @@ class _ProgressBar:
 # -----------------------------------------------------------------------------
 def _make_infidelity(
     gate: Optimizable,
-    pulse: PulseAnsatzLike | PulseFamilyAnsatzLike,
+    pulse: PulseAnsatzLike,
     params_full: npt.NDArray[np.float64],
     params_trainable_indices: npt.NDArray[np.intp],
     tol: float,
@@ -339,7 +339,7 @@ _adam_scan: Callable[..., AdamScanReturn] = cast(
 
 def _adam_optimize(
     gate: Optimizable,
-    pulse: PulseAnsatzLike | PulseFamilyAnsatzLike,
+    pulse: PulseAnsatzLike,
     params_full: npt.NDArray[np.float64],
     params_trainable: npt.NDArray[np.float64],
     params_trainable_indices: npt.NDArray[np.intp],
@@ -419,7 +419,7 @@ def _adam_optimize(
 @overload
 def optimize(
     gate: Optimizable,
-    pulse: PulseAnsatzLike | PulseFamilyAnsatzLike,
+    pulse: PulseAnsatzLike,
     initial_params: ParamsFloatLike,
     fixed_initial_params: ParamsBoolLike | None = ...,
     *,
@@ -434,7 +434,7 @@ def optimize(
 @overload
 def optimize(
     gate: Optimizable,
-    pulse: PulseAnsatzLike | PulseFamilyAnsatzLike,
+    pulse: PulseAnsatzLike,
     initial_params: ParamsFloatLike,
     fixed_initial_params: ParamsBoolLike | None = ...,
     *,
@@ -448,7 +448,7 @@ def optimize(
 
 def optimize(
     gate: Optimizable,
-    pulse: PulseAnsatzLike | PulseFamilyAnsatzLike,
+    pulse: PulseAnsatzLike,
     initial_params: ParamsFloatLike,
     fixed_initial_params: ParamsBoolLike | None = None,
     *,
@@ -564,7 +564,7 @@ def optimize(
 @overload
 def multi_start_optimize(
     gate: Optimizable,
-    pulse: PulseAnsatzLike | PulseFamilyAnsatzLike,
+    pulse: PulseAnsatzLike,
     min_initial_params: ParamsFloatLike,
     max_initial_params: ParamsFloatLike,
     fixed_initial_params: ParamsBoolLike | None = ...,
@@ -585,7 +585,7 @@ def multi_start_optimize(
 @overload
 def multi_start_optimize(
     gate: Optimizable,
-    pulse: PulseAnsatzLike | PulseFamilyAnsatzLike,
+    pulse: PulseAnsatzLike,
     min_initial_params: ParamsFloatLike,
     max_initial_params: ParamsFloatLike,
     fixed_initial_params: ParamsBoolLike | None = ...,
@@ -606,7 +606,7 @@ def multi_start_optimize(
 @overload
 def multi_start_optimize(
     gate: Optimizable,
-    pulse: PulseAnsatzLike | PulseFamilyAnsatzLike,
+    pulse: PulseAnsatzLike,
     min_initial_params: ParamsFloatLike,
     max_initial_params: ParamsFloatLike,
     fixed_initial_params: ParamsBoolLike | None = ...,
@@ -627,7 +627,7 @@ def multi_start_optimize(
 @overload
 def multi_start_optimize(
     gate: Optimizable,
-    pulse: PulseAnsatzLike | PulseFamilyAnsatzLike,
+    pulse: PulseAnsatzLike,
     min_initial_params: ParamsFloatLike,
     max_initial_params: ParamsFloatLike,
     fixed_initial_params: ParamsBoolLike | None = ...,
@@ -647,7 +647,7 @@ def multi_start_optimize(
 
 def multi_start_optimize(
     gate: Optimizable,
-    pulse: PulseAnsatzLike | PulseFamilyAnsatzLike,
+    pulse: PulseAnsatzLike,
     min_initial_params: ParamsFloatLike,
     max_initial_params: ParamsFloatLike,
     fixed_initial_params: ParamsBoolLike | None = None,
