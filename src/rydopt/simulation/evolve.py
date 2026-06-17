@@ -55,7 +55,7 @@ def evolve(
     if jax.devices()[0].platform == "gpu":
         return _evolve_optimized_for_gpus(gate, pulse, params, tol)
 
-    # Collect initial states and pad them to a common dimension so we can stack
+    # Collect initial states and pad them to a common dimension, so we can stack
     initial_states = gate.initial_basis_states()
 
     dims = tuple(len(psi) for psi in initial_states)
@@ -94,13 +94,12 @@ def evolve(
 
     def propagate(args: tuple[jax.Array, int]) -> jax.Array:
         psi_initial, idx = args
-        duration = pulse.generate_duration(params)
 
         sol = diffrax.diffeqsolve(
             term,
             solver,
             t0=0.0,
-            t1=duration,
+            t1=params[0],
             dt0=None,
             y0=psi_initial,
             args=(params, idx),
@@ -143,13 +142,11 @@ def _evolve_optimized_for_gpus(
     saveat = diffrax.SaveAt(t1=True)
     term = diffrax.ODETerm(schroedinger_eq)  # type: ignore[arg-type]
 
-    duration = pulse.generate_duration(params)
-
     sol = diffrax.diffeqsolve(
         term,
         solver,
         t0=0.0,
-        t1=duration,
+        t1=params[0],
         dt0=None,
         y0=gate.initial_basis_states(),
         args=None,

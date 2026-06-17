@@ -211,8 +211,8 @@ def test_optimize_accepts_flat_params_like() -> None:
         tol=1e-7,
     )
 
-    assert isinstance(result.params, np.ndarray)
-    assert result.params.shape == (4,)
+    assert isinstance(result.params, tuple)
+    assert len(result.params) == 4
     assert np.isclose(result.params[1], initial_params[1])
 
     fidelity = ro.simulation.process_fidelity(gate, pulse, result.params)
