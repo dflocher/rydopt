@@ -5,7 +5,7 @@ from typing import Protocol, TypeVar, runtime_checkable
 import jax
 from typing_extensions import Self
 
-from rydopt.types import Arrays, FidelityType, HamiltonianFunction, ParamsFloatLike
+from rydopt.types import HamiltonianFunction, ParamsFloatLike
 
 
 class Evolvable(Protocol):
@@ -58,9 +58,6 @@ class GateSystem(Evolvable, Optimizable, Protocol):
     :func:`rydopt.optimization.optimize`, :func:`rydopt.characterization.analyze_gate`,
     and :func:`rydopt.characterization.analyze_gate_qutip`.
     """
-
-    def __init__(self) -> None:
-        self._fidelity_type: FidelityType = "process"
 
     def process_fidelity_helper(self, final_basis_states: tuple[jax.Array, ...]) -> jax.Array:
         r"""Given the basis states evolved under the pulse,
@@ -136,26 +133,16 @@ class PulseAnsatzLike(Protocol):
     """Minimal interface for pulse ansatz objects used in simulation and optimization."""
 
     def evaluate_pulse_functions(
-        self, t: float | jax.Array, params: ParamsFloatLike, gate_param: float | jax.Array | None = None
-    ) -> Arrays:
+        self,
+        t: float | jax.Array,
+        params: ParamsFloatLike,
+    ) -> tuple[jax.Array, jax.Array, jax.Array, jax.Array]:
         """Evaluate detuning, phase, and Rabi pulse functions at time samples ``t``."""
-        ...
-
-    def generate_duration(
-        self, params: ParamsFloatLike, gate_param: float | jax.Array | None = None
-    ) -> float | jax.Array:
-        """Evaluate pulse duration."""
         ...
 
     def unpack_params(
         self,
-        flat_params: ParamsFloatLike,
-    ) -> Arrays:
+        trainable_params: ParamsFloatLike,
+    ) -> tuple[jax.Array, jax.Array, jax.Array, jax.Array]:
         """Unpack pulse parameters and convert them back into their original shapes."""
-        ...
-
-    def generate_pulse_ansatz(self, gate_param: float | jax.Array | None = None) -> PulseAnsatzLike:
-        """Generate a pulse ansatz for a certain value of `gate_param`, useful for
-        PulseFamilyAnsatz instances where gate_param is not fixed.
-        """
         ...

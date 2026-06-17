@@ -6,9 +6,8 @@ import jax
 import jax.numpy as jnp
 from numpy.typing import ArrayLike
 
-from rydopt.protocols import PulseAnsatzLike
 from rydopt.pulses.ansatz_functions import PulseAnsatzFunction
-from rydopt.types import Arrays, ParamsFloatLike
+from rydopt.types import ParamsFloatLike
 
 
 class _FixedConstant(PulseAnsatzFunction):
@@ -19,6 +18,17 @@ class _FixedConstant(PulseAnsatzFunction):
     def __call__(self, t: float | jax.Array, duration: float | jax.Array, ansatz_params: jax.Array) -> jax.Array:
         del duration, ansatz_params
         return self._value + jnp.zeros_like(t)
+
+
+def _is_unpacked(params: ParamsFloatLike) -> bool:
+    """already-unpacked params are a 4-tuple/list of components."""
+    return isinstance(params, (tuple, list)) and len(params) == 4
+
+
+def pack_params(unpacked_params: ParamsFloatLike) -> ParamsFloatLike:
+    if _is_unpacked(unpacked_params):
+        return jnp.ravel(jnp.concatenate([jnp.atleast_1d(param) for param in unpacked_params]))
+    return unpacked_params
 
 
 @dataclass
@@ -66,14 +76,10 @@ class PulseAnsatz:
     def param_counts(self) -> tuple[int, int, int]:
         return self.detuning_ansatz.num_params, self.phase_ansatz.num_params, self.rabi_ansatz.num_params
 
-    def unpack_params(
-        self,
-        flat_params: ParamsFloatLike,
-    ) -> Arrays:
-        return self._unpack_params(flat_params)
-
-    def _unpack_params(self, params: ParamsFloatLike) -> Arrays:
-        flat_params = jnp.asarray(params, dtype=jnp.float64)
+    def unpack_params(self, trainable_params: ParamsFloatLike) -> tuple[jax.Array, jax.Array, jax.Array, jax.Array]:
+        if _is_unpacked(trainable_params):
+            return tuple(trainable_params)  # type: ignore[return-value]
+        flat_params = jnp.asarray(trainable_params, dtype=jnp.float64)
         detuning_count, phase_count, rabi_count = self.param_counts
 
         expected_size = 1 + detuning_count + phase_count + rabi_count
@@ -87,18 +93,9 @@ class PulseAnsatz:
         )
         return duration[..., 0], detuning_params, phase_params, rabi_params
 
-    @staticmethod
-    def generate_duration(params: ParamsFloatLike, gate_param: float | jax.Array | None = None) -> float | jax.Array:
-        del gate_param
-        return params[0]
-
-    def generate_pulse_ansatz(self, gate_param: float | jax.Array | None = None) -> PulseAnsatzLike:
-        del gate_param
-        return self
-
     def evaluate_pulse_functions(
         self, t: float | jax.Array, params: ParamsFloatLike, gate_param: float | jax.Array | None = None
-    ) -> Arrays:
+    ) -> tuple[jax.Array, jax.Array, jax.Array, jax.Array]:
         r"""Evaluate the detuning, phase, and the rabi sweeps for fixed
         parameters at the given times.
 
@@ -112,7 +109,7 @@ class PulseAnsatz:
 
         """
         del gate_param
-        duration, detuning_ansatz_params, phase_ansatz_params, rabi_ansatz_params = self._unpack_params(params)
+        duration, detuning_ansatz_params, phase_ansatz_params, rabi_ansatz_params = self.unpack_params(params)
 
         return (
             jnp.zeros_like(t),
@@ -219,14 +216,8 @@ class TwoPhotonPulseAnsatz:
     def upper_param_counts(self) -> tuple[int, int, int]:
         return self.upper_transition.param_counts
 
-    def unpack_params(
-        self,
-        flat_params: ParamsFloatLike,
-    ) -> Arrays:
-        return self._unpack_params(flat_params)
-
-    def _unpack_params(self, params: ParamsFloatLike) -> Arrays:
-        flat_params = jnp.asarray(params, dtype=jnp.float64)
+    def unpack_params(self, trainable_params: ParamsFloatLike) -> tuple[jax.Array, jax.Array, jax.Array, jax.Array]:
+        flat_params = jnp.asarray(trainable_params, dtype=jnp.float64)
         lower_detuning_count, lower_phase_count, lower_rabi_count = self.lower_param_counts
         upper_detuning_count, upper_phase_count, upper_rabi_count = self.upper_param_counts
         detuning_count = lower_detuning_count + upper_detuning_count
@@ -251,18 +242,9 @@ class TwoPhotonPulseAnsatz:
         packed_params = jnp.asarray(packed_params)
         return packed_params[..., :lower_count], packed_params[..., lower_count:]
 
-    @staticmethod
-    def generate_duration(params: ParamsFloatLike, gate_param: float | jax.Array | None = None) -> float | jax.Array:
-        del gate_param
-        return params[0]
-
-    def generate_pulse_ansatz(self, gate_param: float | jax.Array | None = None) -> PulseAnsatzLike:
-        del gate_param
-        return self
-
     def evaluate_pulse_functions(
         self, t: float | jax.Array, params: ParamsFloatLike, gate_param: float | jax.Array | None = None
-    ) -> Arrays:
+    ) -> tuple[jax.Array, jax.Array, jax.Array, jax.Array]:
         r"""Evaluate the effective two-photon detuning, phase, and the rabi sweeps for fixed
         parameters at the given times.
 
@@ -276,7 +258,7 @@ class TwoPhotonPulseAnsatz:
 
         """
         del gate_param
-        duration, detuning_params, phase_params, rabi_params = self._unpack_params(params)
+        duration, detuning_params, phase_params, rabi_params = self.unpack_params(params)
 
         lower_detuning_count, lower_phase_count, lower_rabi_count = self.lower_param_counts
 

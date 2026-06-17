@@ -11,8 +11,8 @@ import numpy as np
 
 from rydopt.protocols import PulseAnsatzLike
 from rydopt.pulses import PulseAnsatzFunction
-from rydopt.pulses.pulse_ansatz import _FixedConstant
-from rydopt.types import Arrays, ParamsFloatLike
+from rydopt.pulses.pulse_ansatz import _FixedConstant, _is_unpacked
+from rydopt.types import ParamsFloatLike
 
 
 @runtime_checkable
@@ -22,14 +22,14 @@ class PulseParamMap(Protocol):
     def map_duration(
         self,
         target_phase: float | jax.Array,
-        pulse_params: ParamsFloatLike,
+        packed_params: ParamsFloatLike,
     ) -> float | jax.Array: ...
 
     def map_full(
         self,
         target_phase: float | jax.Array,
-        pulse_params: ParamsFloatLike,
-    ) -> Arrays: ...
+        packed_params: ParamsFloatLike,
+    ) -> tuple[jax.Array, jax.Array, jax.Array, jax.Array]: ...
 
     def map_shape(
         self,
@@ -66,10 +66,10 @@ class PolynomialPulseMap:
     def map_duration(
         self,
         target_phase: float | jax.Array,
-        pulse_params: ParamsFloatLike,
+        packed_params: ParamsFloatLike,
     ) -> jax.Array:
         target_phase = jnp.asarray(target_phase)
-        params = jnp.ravel(jnp.asarray(pulse_params[0]))
+        params = jnp.ravel(jnp.asarray(packed_params[0]))
         degree = self.degrees[0]
 
         if degree > 0:
@@ -80,19 +80,18 @@ class PolynomialPulseMap:
     def map_full(
         self,
         target_phase: float | jax.Array,
-        pulse_params: ParamsFloatLike,
-    ) -> Arrays:
+        packed_params: ParamsFloatLike,
+    ) -> tuple[jax.Array, jax.Array, jax.Array, jax.Array]:
         target_phase = jnp.asarray(target_phase)
 
         # --- Duration ---
-        duration = self.map_duration(target_phase, pulse_params)
+        duration = self.map_duration(target_phase, packed_params)
 
         # --- Remaining parameters (detuning, phase, rabi) ---
         outputs = []
         for i in range(1, 4):
             degree = self.degrees[i]
-            params = jnp.asarray(pulse_params[i])
-
+            params = jnp.asarray(packed_params[i])
             if degree == 0:
                 outputs.append(jnp.ravel(params))
                 continue
@@ -106,7 +105,7 @@ class PolynomialPulseMap:
         detuning, laser_phase, rabi = outputs
 
         return (
-            jnp.asarray(duration),
+            duration,
             jnp.asarray(detuning),
             jnp.asarray(laser_phase),
             jnp.asarray(rabi),
@@ -181,14 +180,10 @@ class PulseFamilyAnsatz:
             raise TypeError("Expected gate_param to be a float or jax.Array, got None.")
         return gate_param / (2 * np.pi)
 
-    def unpack_params(
-        self,
-        flat_params: ParamsFloatLike,
-    ) -> Arrays:
-        return self._unpack_params(flat_params)
-
-    def _unpack_params(self, params: ParamsFloatLike) -> Arrays:
-        flat_params = jnp.asarray(params, dtype=jnp.float64)
+    def unpack_params(self, trainable_params: ParamsFloatLike) -> tuple[jax.Array, jax.Array, jax.Array, jax.Array]:
+        if _is_unpacked(trainable_params):
+            return tuple(trainable_params)  # type: ignore[return-value]
+        flat_params = jnp.ravel(jnp.asarray(trainable_params, dtype=jnp.float64))
         expected_shapes = self.shapes
         expected_sizes = [prod(t) for t in expected_shapes]
         total_expected_size = sum(expected_sizes)
@@ -207,24 +202,16 @@ class PulseFamilyAnsatz:
             rabi_flat.reshape(expected_shapes[3]),
         )
 
-    @staticmethod
-    def _is_unpacked(params: ParamsFloatLike) -> bool:
-        """already-unpacked params are a 4-tuple/list of components."""
-        return isinstance(params, (tuple, list)) and len(params) == 4
-
-    def _ensure_unpacked(self, params: ParamsFloatLike) -> Arrays:
-        if self._is_unpacked(params):
-            return tuple(params)  # type: ignore[return-value]
-        return self._unpack_params(params)
-
-    def generate_pulse_params(self, params: ParamsFloatLike, gate_param: float | jax.Array | None = None) -> Arrays:
-        unpacked = self._ensure_unpacked(params)
+    def generate_pulse_params(
+        self, params: ParamsFloatLike, gate_param: float | jax.Array | None = None
+    ) -> tuple[jax.Array, jax.Array, jax.Array, jax.Array]:
+        unpacked = self.unpack_params(params)
         return self.pulse_map.map_full(self.target_phase(gate_param), unpacked)
 
     def generate_duration(
         self, params: ParamsFloatLike, gate_param: float | jax.Array | None = None
     ) -> float | jax.Array:
-        unpacked = self._ensure_unpacked(params)
+        unpacked = self.unpack_params(params)
         return self.pulse_map.map_duration(self.target_phase(gate_param), unpacked)
 
     def evaluate_pulse_functions(
@@ -232,7 +219,7 @@ class PulseFamilyAnsatz:
         t: jax.Array | float,
         params: ParamsFloatLike,
         gate_param: float | jax.Array | None = None,
-    ) -> Arrays:
+    ) -> tuple[jax.Array, jax.Array, jax.Array, jax.Array]:
         r"""Evaluate the detuning, phase, and rabi sweeps at the given times for a
         gate family with a predefined target phase.
 
@@ -268,31 +255,28 @@ class BoundPulseAnsatz:
     family: PulseFamilyAnsatz
     gate_param: float | jax.Array | None
 
-    def generate_pulse_params(self, params: ParamsFloatLike, gate_param: float | jax.Array | None = None) -> Arrays:
-        del gate_param
-        return self.family.generate_pulse_params(params, self.gate_param)
-
-    def generate_duration(
-        self, params: ParamsFloatLike, gate_param: float | jax.Array | None = None
-    ) -> float | jax.Array:
-        del gate_param
-        return self.family.generate_duration(params, self.gate_param)
-
     def evaluate_pulse_functions(
         self, t: float | jax.Array, params: ParamsFloatLike, gate_param: float | jax.Array | None = None
-    ) -> Arrays:
+    ) -> tuple[jax.Array, jax.Array, jax.Array, jax.Array]:
         del gate_param
-        return self.family.evaluate_pulse_functions(t, params, self.gate_param)
-
-    def generate_pulse_ansatz(self, gate_param: float | jax.Array | None = None) -> PulseAnsatzLike:
-        del gate_param
-        return self
+        (
+            duration,
+            detuning_ansatz_params,
+            phase_ansatz_params,
+            rabi_ansatz_params,
+        ) = params
+        return (
+            jnp.zeros_like(t),
+            self.family.detuning_ansatz(t, duration, jnp.asarray(detuning_ansatz_params)),
+            self.family.phase_ansatz(t, duration, jnp.asarray(phase_ansatz_params)),
+            self.family.rabi_ansatz(t, duration, jnp.asarray(rabi_ansatz_params)),
+        )
 
     def unpack_params(
         self,
-        flat_params: ParamsFloatLike,
-    ) -> Arrays:
-        return self.family._unpack_params(flat_params)
+        trainable_params: ParamsFloatLike,
+    ) -> tuple[jax.Array, jax.Array, jax.Array, jax.Array]:
+        return self.family.unpack_params(trainable_params)
 
     # --- pytree protocol ---
     def tree_flatten(self) -> tuple[tuple[float | jax.Array | None], PulseFamilyAnsatz]:

@@ -32,7 +32,7 @@ def simple_gate_family() -> GateFamily:
 
 @pytest.fixture
 def pulse() -> PulseFamilyAnsatz:
-    degrees = [0, 0, 2, 0]
+    degrees = [1, 0, 2, 0]
     num_params = 6
 
     pulse_map = ro.pulses.PolynomialPulseMap(
@@ -176,13 +176,18 @@ def test_cphase() -> None:
     assert isinstance(duration, jax.Array)
     assert 0.0 <= r.infidelity <= 1e-2
 
-    infidelities, infidelities_nodecay, ryd_times = ro.characterization.analyze_gate_family(
-        gate_family,
-        pulse_family,
-        r.params,
-        tol=1e-8,
-        print_results=False,
-    )
-    assert np.all(infidelities <= 1e-2)
-    assert np.all(infidelities_nodecay <= 1e-2)
-    assert np.all(ryd_times >= 0.0)
+    for gate, value in zip(gate_family.gates, gate_family.parameter_values):
+        pulse = pulse_family.generate_pulse_ansatz(value)
+        params = pulse_family.generate_pulse_params(r.params, value)
+        infidelity, infidelity_nodecay, ryd_time = ro.characterization.analyze_gate(
+            gate,
+            pulse,
+            params,
+            tol=1e-8,
+        )
+        assert isinstance(infidelity, float)
+        assert infidelity <= 1e-2
+        assert isinstance(infidelity_nodecay, float)
+        assert infidelity_nodecay <= 1e-2
+        assert isinstance(ryd_time, float)
+        assert ryd_time >= 0.0

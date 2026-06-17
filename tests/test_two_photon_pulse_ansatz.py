@@ -5,6 +5,7 @@ import qutip as qt
 from scipy.interpolate import interp1d
 
 import rydopt as ro
+from rydopt.pulses.pulse_ansatz import pack_params
 
 
 def test_effective_controls() -> None:
@@ -68,9 +69,9 @@ def test_two_photon_cz() -> None:
     fixed_initial_params = ro.pulses.PulseParams(False, [False, True], [False, False], [True, True])
 
     result = ro.optimization.optimize(gate, pulse, initial_params, fixed_initial_params, num_steps=200, tol=1e-7)
-
+    estimated = pack_params(result.params)
     ref = np.array([7.600019896010689, -49.92218101, 50.0, 1.75873066, -0.61830304, 10.0, 10.0])
-    assert np.allclose(np.asarray(result.params), ref, rtol=1e-3)
+    assert np.allclose(np.asarray(estimated), ref, rtol=1e-3)
 
 
 def test_average_gate_fidelity_qutip_comparison() -> None:

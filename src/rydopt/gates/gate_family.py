@@ -81,9 +81,8 @@ class GateFamily:
         """
         costs = jnp.stack(
             [
-                gate.cost(pulse.generate_pulse_ansatz(pv), params, tol)
+                gate.cost(pulse.generate_pulse_ansatz(pv), pulse.generate_pulse_params(params, pv), tol)
                 for gate, pv in zip(self.gates, self.parameter_values)
             ]
         )
-
         return _REDUCTION_FNS[self.reduction](costs)
