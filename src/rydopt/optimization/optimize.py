@@ -19,7 +19,8 @@ import optax
 from tqdm.auto import tqdm
 
 from rydopt.protocols import Optimizable, PulseAnsatzLike
-from rydopt.types import DurationLike, ParamsBoolLike, ParamsFloatLike, UnpackedParams
+from rydopt.pulses import PulseFamilyParams, PulseParams
+from rydopt.types import DurationLike, ParamsBoolLike, ParamsFloatLike
 
 tqdm.monitor_interval = 0
 
@@ -201,9 +202,7 @@ def _make_infidelity(
     return infidelity
 
 
-def _print_gate(
-    title: str, params: tuple[jax.Array, jax.Array, jax.Array, jax.Array], infidelity: float, tol: float
-) -> None:
+def _print_gate(title: str, params: ParamsFloatLike, infidelity: float, tol: float) -> None:
     print(f"\n{title}")
     if abs(float(infidelity)) < tol:
         print("> infidelity <= tol")
@@ -315,7 +314,7 @@ def _adam_scan_impl(
         jnp.arange(num_steps),
     )
 
-    return (final_params, final_infidelity, history)
+    return final_params, final_infidelity, history
 
 
 _adam_scan: Callable[..., AdamScanReturn] = cast(
@@ -430,7 +429,7 @@ def optimize(
     tol: float = ...,
     return_history: Literal[True],
     verbose: bool = ...,
-) -> OptimizationResult[UnpackedParams, float, npt.NDArray[np.float64]]: ...
+) -> OptimizationResult[PulseParams[float] | PulseFamilyParams[float], float, npt.NDArray[np.float64]]: ...
 
 
 @overload
@@ -445,7 +444,7 @@ def optimize(
     tol: float = ...,
     return_history: Literal[False] = False,
     verbose: bool = ...,
-) -> OptimizationResult[UnpackedParams, float, None]: ...
+) -> OptimizationResult[PulseParams[float] | PulseFamilyParams[float], float, None]: ...
 
 
 def optimize(
@@ -459,7 +458,7 @@ def optimize(
     tol: float = 1e-7,
     return_history: bool = False,
     verbose: bool = False,
-) -> OptimizationResult[UnpackedParams, float, npt.NDArray[np.float64] | None]:
+) -> OptimizationResult[PulseParams[float] | PulseFamilyParams[float], float, npt.NDArray[np.float64] | None]:
     r"""Function that optimizes an initial parameter guess in order to realize the desired gate.
 
     Example:
@@ -581,7 +580,9 @@ def multi_start_optimize(
     return_history: Literal[True],
     return_all: Literal[True],
     verbose: bool = ...,
-) -> OptimizationResult[list[UnpackedParams], npt.NDArray[np.float64], npt.NDArray[np.float64]]: ...
+) -> OptimizationResult[
+    list[PulseParams[float] | PulseFamilyParams[float]], npt.NDArray[np.float64], npt.NDArray[np.float64]
+]: ...
 
 
 @overload
@@ -602,7 +603,7 @@ def multi_start_optimize(
     return_history: Literal[False] = False,
     return_all: Literal[True],
     verbose: bool = ...,
-) -> OptimizationResult[list[UnpackedParams], npt.NDArray[np.float64], None]: ...
+) -> OptimizationResult[list[PulseParams[float] | PulseFamilyParams[float]], npt.NDArray[np.float64], None]: ...
 
 
 @overload
@@ -623,7 +624,7 @@ def multi_start_optimize(
     return_history: Literal[True],
     return_all: Literal[False] = False,
     verbose: bool = ...,
-) -> OptimizationResult[UnpackedParams, float, npt.NDArray[np.float64]]: ...
+) -> OptimizationResult[PulseParams[float] | PulseFamilyParams[float], float, npt.NDArray[np.float64]]: ...
 
 
 @overload
@@ -644,7 +645,7 @@ def multi_start_optimize(
     return_history: Literal[False] = False,
     return_all: Literal[False] = False,
     verbose: bool = ...,
-) -> OptimizationResult[UnpackedParams, float, None]: ...
+) -> OptimizationResult[PulseParams[float] | PulseFamilyParams[float], float, None]: ...
 
 
 def multi_start_optimize(
@@ -665,7 +666,9 @@ def multi_start_optimize(
     return_all: bool = False,
     verbose: bool = False,
 ) -> OptimizationResult[
-    ParamsFloatLike | list[UnpackedParams], float | npt.NDArray[np.float64], npt.NDArray[np.float64] | None
+    PulseParams[float] | PulseFamilyParams[float] | list[PulseParams[float] | PulseFamilyParams[float]],
+    float | npt.NDArray[np.float64],
+    npt.NDArray[np.float64] | None,
 ]:
     r"""Function that optimizes multiple random initial parameter guesses in order to realize the desired gate.
 

@@ -5,7 +5,7 @@ from typing import Protocol, TypeVar, runtime_checkable
 import jax
 from typing_extensions import Self
 
-from rydopt.types import HamiltonianFunction, ParamsFloatLike
+from rydopt.types import HamiltonianFunction, ParamsFloatLike, PulseFamilyParams, PulseParams
 
 
 class Evolvable(Protocol):
@@ -136,6 +136,7 @@ class PulseAnsatzLike(Protocol):
         self,
         t: float | jax.Array,
         params: ParamsFloatLike,
+        gate_param: float | jax.Array | None = None,
     ) -> tuple[jax.Array, jax.Array, jax.Array, jax.Array]:
         """Evaluate detuning, phase, and Rabi pulse functions at time samples ``t``."""
         ...
@@ -143,6 +144,6 @@ class PulseAnsatzLike(Protocol):
     def unpack_params(
         self,
         trainable_params: ParamsFloatLike,
-    ) -> tuple[jax.Array, jax.Array, jax.Array, jax.Array]:
+    ) -> PulseParams[float] | PulseFamilyParams[float]:
         """Unpack pulse parameters and convert them back into their original shapes."""
         ...

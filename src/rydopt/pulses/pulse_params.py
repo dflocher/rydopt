@@ -38,7 +38,14 @@ class PulseParams(Sequence[Any], Generic[ParamScalar]):
         return 4
 
     @property
-    def _components(self) -> tuple[Any, Any, Any, Any]:
+    def _components(
+        self,
+    ) -> tuple[
+        Any,
+        npt.NDArray[Any],
+        npt.NDArray[Any],
+        npt.NDArray[Any],
+    ]:
         return (
             self._duration,
             self._detuning_params,

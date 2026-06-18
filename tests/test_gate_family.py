@@ -64,7 +64,7 @@ def test_generate_pulse_params_real(
     params: ParamsFloatLike,
 ) -> None:
     gate_param = simple_gate_family.parameter_values[0]
-    duration, detuning, phase, rabi = pulse.generate_pulse_params(params, gate_param)
+    duration, detuning, phase, rabi = pulse._generate_pulse_params_arrays(params, gate_param)
 
     detuning = jnp.asarray(detuning)
     phase = jnp.asarray(phase)
@@ -170,10 +170,14 @@ def test_cphase() -> None:
     r = ro.optimization.optimize(gate_family, pulse_family, initial_params, num_steps=100, tol=1e-6)
     duration, detuning, phase, rabi = r.params
 
-    assert np.array(phase).shape == (n_params, degrees[2] + 1)
-    assert np.array(detuning).shape == (degrees[1] + 1,)
-    assert np.array(rabi).shape == (0,)
-    assert isinstance(duration, jax.Array)
+    assert isinstance(duration, np.ndarray)
+    assert duration.shape == (degrees[0] + 1,)
+    assert isinstance(phase, np.ndarray)
+    assert phase.shape == (n_params * (degrees[2] + 1),)
+    assert isinstance(detuning, np.ndarray)
+    assert detuning.shape == (degrees[1] + 1,)
+    assert isinstance(rabi, np.ndarray)
+    assert rabi.shape == (0,)
     assert 0.0 <= r.infidelity <= 1e-2
 
     for gate, value in zip(gate_family.gates, gate_family.parameter_values):

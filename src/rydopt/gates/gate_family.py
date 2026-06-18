@@ -81,7 +81,7 @@ class GateFamily:
         """
         costs = jnp.stack(
             [
-                gate.cost(pulse.generate_pulse_ansatz(pv), pulse.generate_pulse_params(params, pv), tol)
+                gate.cost(pulse.generate_pulse_ansatz(pv), pulse._generate_pulse_params_arrays(params, pv), tol)
                 for gate, pv in zip(self.gates, self.parameter_values)
             ]
         )
