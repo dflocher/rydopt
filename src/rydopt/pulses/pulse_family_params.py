@@ -22,7 +22,7 @@ class PulseFamilyParams(Sequence[Any], Generic[ParamScalar]):
     shapes so they can be restored via :meth:`unflatten`.
     """
 
-    __slots__ = ("_detuning_params", "_duration", "_phase_params", "_rabi_params", "_shapes")
+    __slots__ = ("_detuning_params", "_duration_params", "_phase_params", "_rabi_params", "_shapes")
 
     def __init__(
         self,
@@ -37,7 +37,7 @@ class PulseFamilyParams(Sequence[Any], Generic[ParamScalar]):
         rabi_arr = np.asarray(rabi_params)
 
         # Store flattened arrays internally.
-        self._duration = duration_arr.reshape(-1)
+        self._duration_params = duration_arr.reshape(-1)
         self._detuning_params = detuning_arr.reshape(-1)
         self._phase_params = phase_arr.reshape(-1)
         self._rabi_params = rabi_arr.reshape(-1)
@@ -55,9 +55,16 @@ class PulseFamilyParams(Sequence[Any], Generic[ParamScalar]):
         return 4
 
     @property
-    def _components(self) -> tuple[Any, Any, Any, Any]:
+    def _components(
+        self,
+    ) -> tuple[
+        npt.NDArray[Any],
+        npt.NDArray[Any],
+        npt.NDArray[Any],
+        npt.NDArray[Any],
+    ]:
         return (
-            self._duration,
+            self._duration_params,
             self._detuning_params,
             self._phase_params,
             self._rabi_params,
@@ -67,15 +74,16 @@ class PulseFamilyParams(Sequence[Any], Generic[ParamScalar]):
     def __getitem__(self, index: Literal[0, 1, 2, 3]) -> npt.NDArray[Any]: ...
 
     @overload
-    def __getitem__(self, index: int) -> ParamScalar | npt.NDArray[Any]: ...
+    def __getitem__(self, index: int) -> npt.NDArray[Any]: ...
 
     @overload
     def __getitem__(self, index: slice) -> tuple[npt.NDArray[Any], ...]: ...
 
-    def __getitem__(self, index: int | slice) -> ParamScalar | npt.NDArray[Any] | tuple[npt.NDArray[Any], ...]:
+    def __getitem__(
+        self,
+        index: int | slice,
+    ) -> npt.NDArray[Any] | tuple[npt.NDArray[Any], ...]:
         """Return one parameter component or a sliced tuple of parameter components."""
-        if isinstance(index, int) and index == 0:
-            return self._duration[0]
         return self._components[index]
 
     def __array__(
@@ -120,7 +128,7 @@ class PulseFamilyParams(Sequence[Any], Generic[ParamScalar]):
         """
         self = object.__new__(cls)
         (
-            self._duration,
+            self._duration_params,
             self._detuning_params,
             self._phase_params,
             self._rabi_params,
@@ -143,7 +151,7 @@ class PulseFamilyParams(Sequence[Any], Generic[ParamScalar]):
 
         return (
             "PulseFamilyParams(\n"
-            f"  duration={fmt('duration', self._duration, self._shapes[0])},\n"
+            f"  duration={fmt('duration', self._duration_params, self._shapes[0])},\n"
             f"  detuning_params={fmt('detuning_params', self._detuning_params, self._shapes[1])},\n"
             f"  phase_params={fmt('phase_params', self._phase_params, self._shapes[2])},\n"
             f"  rabi_params={fmt('rabi_params', self._rabi_params, self._shapes[3])}\n"

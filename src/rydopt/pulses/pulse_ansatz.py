@@ -7,6 +7,7 @@ import jax.numpy as jnp
 from numpy.typing import ArrayLike
 
 from rydopt.pulses.ansatz_functions import PulseAnsatzFunction
+from rydopt.pulses.pulse_params import PulseParams
 from rydopt.types import ParamsFloatLike
 
 
@@ -76,7 +77,9 @@ class PulseAnsatz:
     def param_counts(self) -> tuple[int, int, int]:
         return self.detuning_ansatz.num_params, self.phase_ansatz.num_params, self.rabi_ansatz.num_params
 
-    def unpack_params(self, trainable_params: ParamsFloatLike) -> tuple[jax.Array, jax.Array, jax.Array, jax.Array]:
+    def _unpack_params_arrays(
+        self, trainable_params: ParamsFloatLike
+    ) -> tuple[jax.Array, jax.Array, jax.Array, jax.Array]:
         if _is_unpacked(trainable_params):
             return tuple(trainable_params)  # type: ignore[return-value]
         flat_params = jnp.asarray(trainable_params, dtype=jnp.float64)
@@ -92,6 +95,10 @@ class PulseAnsatz:
             axis=-1,
         )
         return duration[..., 0], detuning_params, phase_params, rabi_params
+
+    def unpack_params(self, trainable_params: ParamsFloatLike) -> PulseParams[float]:
+        duration, detuning_params, phase_params, rabi_params = self._unpack_params_arrays(trainable_params)
+        return PulseParams(float(duration), detuning_params, phase_params, rabi_params)
 
     def evaluate_pulse_functions(
         self, t: float | jax.Array, params: ParamsFloatLike, gate_param: float | jax.Array | None = None
@@ -109,7 +116,7 @@ class PulseAnsatz:
 
         """
         del gate_param
-        duration, detuning_ansatz_params, phase_ansatz_params, rabi_ansatz_params = self.unpack_params(params)
+        duration, detuning_ansatz_params, phase_ansatz_params, rabi_ansatz_params = self._unpack_params_arrays(params)
 
         return (
             jnp.zeros_like(t),
@@ -216,7 +223,9 @@ class TwoPhotonPulseAnsatz:
     def upper_param_counts(self) -> tuple[int, int, int]:
         return self.upper_transition.param_counts
 
-    def unpack_params(self, trainable_params: ParamsFloatLike) -> tuple[jax.Array, jax.Array, jax.Array, jax.Array]:
+    def _unpack_params_arrays(
+        self, trainable_params: ParamsFloatLike
+    ) -> tuple[jax.Array, jax.Array, jax.Array, jax.Array]:
         flat_params = jnp.asarray(trainable_params, dtype=jnp.float64)
         lower_detuning_count, lower_phase_count, lower_rabi_count = self.lower_param_counts
         upper_detuning_count, upper_phase_count, upper_rabi_count = self.upper_param_counts
@@ -236,6 +245,10 @@ class TwoPhotonPulseAnsatz:
             axis=-1,
         )
         return duration[..., 0], detuning_params, phase_params, rabi_params
+
+    def unpack_params(self, trainable_params: ParamsFloatLike) -> PulseParams[float]:
+        duration, detuning_params, phase_params, rabi_params = self._unpack_params_arrays(trainable_params)
+        return PulseParams(float(duration), detuning_params, phase_params, rabi_params)
 
     @staticmethod
     def _split_1d(packed_params: ArrayLike, lower_count: int) -> tuple[jax.Array, jax.Array]:
@@ -258,7 +271,7 @@ class TwoPhotonPulseAnsatz:
 
         """
         del gate_param
-        duration, detuning_params, phase_params, rabi_params = self.unpack_params(params)
+        duration, detuning_params, phase_params, rabi_params = self._unpack_params_arrays(params)
 
         lower_detuning_count, lower_phase_count, lower_rabi_count = self.lower_param_counts
 

@@ -2,6 +2,7 @@ import numpy as np
 import pytest
 
 import rydopt as ro
+from rydopt.pulses import PulseParams
 
 
 @pytest.mark.optimization
@@ -211,7 +212,7 @@ def test_optimize_accepts_flat_params_like() -> None:
         tol=1e-7,
     )
 
-    assert isinstance(result.params, tuple)
+    assert isinstance(result.params, PulseParams)
     assert len(result.params) == 4
     assert np.isclose(result.params[1], initial_params[1])
 
