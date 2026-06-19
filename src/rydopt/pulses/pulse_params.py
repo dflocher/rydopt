@@ -38,6 +38,22 @@ class PulseParams(Sequence[Any], Generic[ParamScalar]):
         return 4
 
     @property
+    def duration(self) -> npt.NDArray[Any]:
+        return np.asarray(self._duration)
+
+    @property
+    def detuning_params(self) -> npt.NDArray[Any]:
+        return np.asarray(self._detuning_params)
+
+    @property
+    def phase_params(self) -> npt.NDArray[Any]:
+        return np.asarray(self._phase_params)
+
+    @property
+    def rabi_params(self) -> npt.NDArray[Any]:
+        return np.asarray(self._rabi_params)
+
+    @property
     def _components(
         self,
     ) -> tuple[
@@ -102,21 +118,26 @@ class PulseParams(Sequence[Any], Generic[ParamScalar]):
 
     def __repr__(self) -> str:
         """Return a multi-line string representation of the pulse parameters."""
+        string_length = 17
 
         def fmt(name: str, arr: npt.NDArray[Any]) -> str:
-            prefix = f"  {name}="
-            return np.array2string(
+            label = f"  {name:<{string_length}} "
+            return label + np.array2string(
                 arr,
                 separator=", ",
                 max_line_width=120,
-                prefix=prefix,
+                prefix=" " * len(label),
             )
 
         return (
             "PulseParams(\n"
-            f"  duration={fmt('duration', self._duration)},\n"
-            f"  detuning_params={fmt('detuning_params', self._detuning_params)},\n"
-            f"  phase_params={fmt('phase_params', self._phase_params)},\n"
-            f"  rabi_params={fmt('rabi_params', self._rabi_params)}\n"
-            ")"
+            + fmt("duration =", self.duration)
+            + ",\n"
+            + fmt("detuning_params =", self.detuning_params)
+            + ",\n"
+            + fmt("phase_params =", self.phase_params)
+            + ",\n"
+            + fmt("rabi_params =", self.rabi_params)
+            + "\n"
+            + ")"
         )
