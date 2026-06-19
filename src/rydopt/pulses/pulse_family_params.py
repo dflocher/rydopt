@@ -55,6 +55,22 @@ class PulseFamilyParams(Sequence[Any], Generic[ParamScalar]):
         return 4
 
     @property
+    def duration_params(self) -> npt.NDArray[Any]:
+        return np.asarray(self._duration_params).reshape(self._shapes[0])
+
+    @property
+    def detuning_params(self) -> npt.NDArray[Any]:
+        return np.asarray(self._detuning_params).reshape(self._shapes[1])
+
+    @property
+    def phase_params(self) -> npt.NDArray[Any]:
+        return np.asarray(self._phase_params).reshape(self._shapes[2])
+
+    @property
+    def rabi_params(self) -> npt.NDArray[Any]:
+        return np.asarray(self._rabi_params).reshape(self._shapes[3])
+
+    @property
     def _components(
         self,
     ) -> tuple[
@@ -137,23 +153,27 @@ class PulseFamilyParams(Sequence[Any], Generic[ParamScalar]):
         return self
 
     def __repr__(self) -> str:
-        """Return a multi-line string representation of the pulse parameters."""
+        """Return a multi-line string representation of the pulse family parameters."""
+        string_length = 17
 
-        def fmt(name: str, flat_arr: npt.NDArray[Any], shape: tuple[int, ...]) -> str:
-            prefix = f"  {name}="
-            arr = np.asarray(flat_arr).reshape(shape)
-            return np.array2string(
+        def fmt(name: str, arr: npt.NDArray[Any]) -> str:
+            label = f"  {name:<{string_length}} "
+            return label + np.array2string(
                 arr,
                 separator=", ",
                 max_line_width=120,
-                prefix=prefix,
+                prefix=" " * len(label),
             )
 
         return (
             "PulseFamilyParams(\n"
-            f"  duration={fmt('duration', self._duration_params, self._shapes[0])},\n"
-            f"  detuning_params={fmt('detuning_params', self._detuning_params, self._shapes[1])},\n"
-            f"  phase_params={fmt('phase_params', self._phase_params, self._shapes[2])},\n"
-            f"  rabi_params={fmt('rabi_params', self._rabi_params, self._shapes[3])}\n"
-            ")"
+            + fmt("duration_params =", self.duration_params)
+            + ",\n"
+            + fmt("detuning_params =", self.detuning_params)
+            + ",\n"
+            + fmt("phase_params =", self.phase_params)
+            + ",\n"
+            + fmt("rabi_params =", self.rabi_params)
+            + "\n"
+            + ")"
         )
