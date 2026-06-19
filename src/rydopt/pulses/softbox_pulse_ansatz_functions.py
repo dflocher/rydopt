@@ -1,10 +1,11 @@
 import jax
 import jax.nn as jnn
 import jax.numpy as jnp
+import numpy as np
 
 
 def softbox_hann(
-    t: float | jax.Array,
+    t: int | float | jax.Array | np.ndarray,
     duration: float | jax.Array,
     ansatz_params: jax.Array,
 ) -> jax.Array:
@@ -88,7 +89,7 @@ def softbox_hann(
 
 
 def softbox_blackman(
-    t: float | jax.Array,
+    t: int | float | jax.Array | np.ndarray,
     duration: float | jax.Array,
     ansatz_params: jax.Array,
 ) -> jax.Array:
@@ -173,7 +174,7 @@ def softbox_blackman(
 
 
 def softbox_nuttall(
-    t: float | jax.Array,
+    t: int | float | jax.Array | np.ndarray,
     duration: float | jax.Array,
     ansatz_params: jax.Array,
 ) -> jax.Array:
@@ -257,7 +258,7 @@ def softbox_nuttall(
 
 
 def softbox_planck(
-    t: float | jax.Array,
+    t: int | float | jax.Array | np.ndarray,
     duration: float | jax.Array,
     ansatz_params: jax.Array,
 ) -> jax.Array:
@@ -348,7 +349,7 @@ def softbox_planck(
 
 
 def softbox_fifth_order_smoothstep(
-    t: float | jax.Array,
+    t: int | float | jax.Array | np.ndarray,
     duration: float | jax.Array,
     ansatz_params: jax.Array,
 ) -> jax.Array:
@@ -432,7 +433,7 @@ def softbox_fifth_order_smoothstep(
 
 
 def softbox_seventh_order_smoothstep(
-    t: float | jax.Array,
+    t: int | float | jax.Array | np.ndarray,
     duration: float | jax.Array,
     ansatz_params: jax.Array,
 ) -> jax.Array:

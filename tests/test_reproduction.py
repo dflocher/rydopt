@@ -22,7 +22,12 @@ def test_reproducing_evered() -> None:
         def __init__(self) -> None:
             super().__init__(num_params=3)
 
-        def __call__(self, t: float | jax.Array, duration: float | jax.Array, ansatz_params: jax.Array) -> jax.Array:
+        def __call__(
+            self,
+            t: int | float | jax.Array | np.ndarray,
+            duration: float | jax.Array,
+            ansatz_params: jax.Array,
+        ) -> jax.Array:
             del duration
             a, omega, phi0 = ansatz_params
             return a * jnp.cos(omega * t - phi0)

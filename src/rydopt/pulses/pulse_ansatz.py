@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 
 import jax
 import jax.numpy as jnp
+import numpy as np
 from numpy.typing import ArrayLike
 
 from rydopt.pulses.ansatz_functions import PulseAnsatzFunction
@@ -16,7 +17,12 @@ class _FixedConstant(PulseAnsatzFunction):
         super().__init__(0)
         self._value = value
 
-    def __call__(self, t: float | jax.Array, duration: float | jax.Array, ansatz_params: jax.Array) -> jax.Array:
+    def __call__(
+        self,
+        t: int | float | jax.Array | np.ndarray,
+        duration: float | jax.Array,
+        ansatz_params: jax.Array,
+    ) -> jax.Array:
         del duration, ansatz_params
         return self._value + jnp.zeros_like(t)
 
@@ -81,7 +87,13 @@ class PulseAnsatz:
         self, trainable_params: ParamsFloatLike
     ) -> tuple[jax.Array, jax.Array, jax.Array, jax.Array]:
         if _is_unpacked(trainable_params):
-            return tuple(trainable_params)  # type: ignore[return-value]
+            duration, detuning, phase, rabi = trainable_params
+            return (
+                jnp.asarray(duration),
+                jnp.asarray(detuning),
+                jnp.asarray(phase),
+                jnp.asarray(rabi),
+            )
         flat_params = jnp.asarray(trainable_params, dtype=jnp.float64)
         detuning_count, phase_count, rabi_count = self.param_counts
 
@@ -101,7 +113,10 @@ class PulseAnsatz:
         return PulseParams(float(duration), detuning_params, phase_params, rabi_params)
 
     def evaluate_pulse_functions(
-        self, t: float | jax.Array, params: ParamsFloatLike, gate_param: float | jax.Array | None = None
+        self,
+        t: int | float | jax.Array | np.ndarray,
+        params: ParamsFloatLike,
+        gate_param: float | jax.Array | None = None,
     ) -> tuple[jax.Array, jax.Array, jax.Array, jax.Array]:
         r"""Evaluate the detuning, phase, and the rabi sweeps for fixed
         parameters at the given times.
@@ -256,7 +271,10 @@ class TwoPhotonPulseAnsatz:
         return packed_params[..., :lower_count], packed_params[..., lower_count:]
 
     def evaluate_pulse_functions(
-        self, t: float | jax.Array, params: ParamsFloatLike, gate_param: float | jax.Array | None = None
+        self,
+        t: int | float | jax.Array | np.ndarray,
+        params: ParamsFloatLike,
+        gate_param: float | jax.Array | None = None,
     ) -> tuple[jax.Array, jax.Array, jax.Array, jax.Array]:
         r"""Evaluate the effective two-photon detuning, phase, and the rabi sweeps for fixed
         parameters at the given times.

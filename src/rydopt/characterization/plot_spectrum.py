@@ -81,7 +81,7 @@ def plot_spectrum(
     win = tukey(len(times), alpha=(pad_factor - 1) / pad_factor) if tapered else 1.0
 
     # Calculate spectra
-    freqs = np.fft.rfftfreq(len(times), d=times[1] - times[0])
+    freqs = np.fft.rfftfreq(len(times), d=float(times[1] - times[0]))
     spectra = [np.abs(np.fft.rfft(v * win)) for v in values]
 
     # Convert spectra to Decibel

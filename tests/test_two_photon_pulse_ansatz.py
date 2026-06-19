@@ -137,9 +137,9 @@ def test_average_gate_fidelity_qutip_comparison() -> None:
 
         P = qt.tensor(I3, I3) - qt.tensor(ketr, ketr) @ qt.tensor(ketr, ketr).dag()
         ix = list(range(8))
-        H0_8 = qt.Qobj((P * H0_2 * P).full()[np.ix_(ix, ix)])
-        Hm_8 = qt.Qobj((P * Hm_2 * P).full()[np.ix_(ix, ix)])
-        Hp_8 = qt.Qobj((P * Hp_2 * P).full()[np.ix_(ix, ix)])
+        H0_8 = qt.Qobj((P @ H0_2 @ P).full()[np.ix_(ix, ix)])
+        Hm_8 = qt.Qobj((P @ Hm_2 @ P).full()[np.ix_(ix, ix)])
+        Hp_8 = qt.Qobj((P @ Hp_2 @ P).full()[np.ix_(ix, ix)])
 
         # Two-atom evolution (|11> block) with V_nn = inf
         res_2 = qt.sesolve(
@@ -174,9 +174,9 @@ def test_average_gate_fidelity_qutip_comparison() -> None:
     Delta_u_orig = params[1][1]
     Omega_orig = params[3][0]
 
-    Delta_l_sc = alpha * Delta_l_orig
+    Delta_l_sc = float(alpha * Delta_l_orig)
     Delta_eff = Delta_l_orig + Delta_u_orig  # no ac-Stark shift because omega_l=omega_u
-    Delta_u_sc = Delta_eff - Delta_l_sc
+    Delta_u_sc = float(Delta_eff - Delta_l_sc)
     Omega_sc = np.sqrt(alpha) * Omega_orig
 
     # Rydopt fidelity is unchanged (same effective Hamiltonian)

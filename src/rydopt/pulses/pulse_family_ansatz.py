@@ -185,7 +185,13 @@ class PulseFamilyAnsatz:
         self, trainable_params: ParamsFloatLike
     ) -> tuple[jax.Array, jax.Array, jax.Array, jax.Array]:
         if _is_unpacked(trainable_params):
-            return tuple(trainable_params)  # type: ignore[return-value]
+            duration, detuning, phase, rabi = trainable_params
+            return (
+                jnp.asarray(duration),
+                jnp.asarray(detuning),
+                jnp.asarray(phase),
+                jnp.asarray(rabi),
+            )
         flat_params = jnp.ravel(jnp.asarray(trainable_params, dtype=jnp.float64))
         expected_shapes = self.shapes
         expected_sizes = [prod(t) for t in expected_shapes]
@@ -231,7 +237,7 @@ class PulseFamilyAnsatz:
 
     def evaluate_pulse_functions(
         self,
-        t: jax.Array | float,
+        t: int | float | jax.Array | np.ndarray,
         params: ParamsFloatLike,
         gate_param: float | jax.Array | None = None,
     ) -> tuple[jax.Array, jax.Array, jax.Array, jax.Array]:
@@ -271,7 +277,10 @@ class BoundPulseAnsatz:
     gate_param: float | jax.Array | None
 
     def evaluate_pulse_functions(
-        self, t: float | jax.Array, params: ParamsFloatLike, gate_param: float | jax.Array | None = None
+        self,
+        t: int | float | jax.Array | np.ndarray,
+        params: ParamsFloatLike,
+        gate_param: float | jax.Array | None = None,
     ) -> tuple[jax.Array, jax.Array, jax.Array, jax.Array]:
         del gate_param
         (

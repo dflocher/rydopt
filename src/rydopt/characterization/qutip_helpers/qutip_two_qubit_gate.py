@@ -28,6 +28,11 @@ def hamiltonian_TwoQubitGate(
 
     def H(t: float) -> qt.Qobj:
         detuning_1, detuning_r, phase, rabi = pulse_functions(t)
+        detuning_1 = float(detuning_1)
+        detuning_r = float(detuning_r)
+        phase = float(phase)
+        rabi = float(rabi)
+
         return (
             proj
             * (

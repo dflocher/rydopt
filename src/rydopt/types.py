@@ -29,7 +29,9 @@ else:
 
 FidelityType = Literal["process", "average_gate"]
 
-ParamsFloatLike = PulseParams[float] | PulseFamilyParams[float] | Sequence[float] | jax.Array | npt.NDArray[np.float64]
+ParamsFloatLike = (
+    PulseParams[float] | PulseFamilyParams[float] | Sequence[float] | jax.Array | npt.NDArray[np.float64]
+) | tuple[jax.Array, jax.Array, jax.Array, jax.Array]
 ParamsBoolLike = PulseParams[bool] | PulseFamilyParams[bool] | Sequence[bool] | jax.Array | npt.NDArray[np.bool_]
 
 

@@ -4,7 +4,7 @@ from typing import Literal
 import jax
 import jax.numpy as jnp
 
-from rydopt.protocols import RydbergSystem
+from rydopt.protocols import GateSystem
 from rydopt.pulses import PulseFamilyAnsatz
 from rydopt.types import ParamsFloatLike
 
@@ -51,7 +51,7 @@ class GateFamily:
 
     def __init__(
         self,
-        fixed_parameter_gates: Sequence[RydbergSystem],
+        fixed_parameter_gates: Sequence[GateSystem],
         parameter_values: Sequence[float] | jax.Array,
         reduction: Literal["mean", "max"] = "mean",
     ) -> None:

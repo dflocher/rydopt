@@ -3,7 +3,12 @@ import jax.numpy as jnp
 
 
 def H_k_atoms_perfect_blockade(
-    Delta_1: float, Delta_r: float, Xi: float, Omega: float, decay: float, k: int
+    Delta_1: float | jax.Array,
+    Delta_r: float | jax.Array,
+    Xi: float | jax.Array,
+    Omega: float | jax.Array,
+    decay: float,
+    k: int,
 ) -> jax.Array:
     r""":math:`k` atoms, infinite Rydberg interaction between all atoms:
 
@@ -35,7 +40,14 @@ def H_k_atoms_perfect_blockade(
     )
 
 
-def H_2_atoms(Delta_1: float, Delta_r: float, Xi: float, Omega: float, decay: float, V: float) -> jax.Array:
+def H_2_atoms(
+    Delta_1: float | jax.Array,
+    Delta_r: float | jax.Array,
+    Xi: float | jax.Array,
+    Omega: float | jax.Array,
+    decay: float,
+    V: float,
+) -> jax.Array:
     r"""Two atoms, Rydberg interaction :math:`V` between atoms:
 
     .. image:: ../_static/2_atoms.png
@@ -72,7 +84,14 @@ def H_2_atoms(Delta_1: float, Delta_r: float, Xi: float, Omega: float, decay: fl
     )
 
 
-def H_3_atoms_inf_V(Delta_1: float, Delta_r: float, Xi: float, Omega: float, decay: float, V: float) -> jax.Array:
+def H_3_atoms_inf_V(
+    Delta_1: float | jax.Array,
+    Delta_r: float | jax.Array,
+    Xi: float | jax.Array,
+    Omega: float | jax.Array,
+    decay: float,
+    V: float,
+) -> jax.Array:
     r"""Three atoms arranged in an isosceles triangle,
     infinite Rydberg interaction between nearest neighbours, Rydberg interaction :math:`V` between next-nearest
     neighbours:
@@ -119,7 +138,14 @@ def H_3_atoms_inf_V(Delta_1: float, Delta_r: float, Xi: float, Omega: float, dec
     )
 
 
-def H_3_atoms_symmetric(Delta_1: float, Delta_r: float, Xi: float, Omega: float, decay: float, V: float) -> jax.Array:
+def H_3_atoms_symmetric(
+    Delta_1: float | jax.Array,
+    Delta_r: float | jax.Array,
+    Xi: float | jax.Array,
+    Omega: float | jax.Array,
+    decay: float,
+    V: float,
+) -> jax.Array:
     r"""Three atoms arranged in an equilateral triangle,
     Rydberg interaction :math:`V` between atoms:
 
@@ -166,7 +192,13 @@ def H_3_atoms_symmetric(Delta_1: float, Delta_r: float, Xi: float, Omega: float,
 
 
 def H_3_atoms(
-    Delta_1: float, Delta_r: float, Xi: float, Omega: float, decay: float, Vnn: float, Vnnn: float
+    Delta_1: float | jax.Array,
+    Delta_r: float | jax.Array,
+    Xi: float | jax.Array,
+    Omega: float | jax.Array,
+    decay: float,
+    Vnn: float,
+    Vnnn: float,
 ) -> jax.Array:
     r"""Three atoms arranged in an isosceles triangle,
     Rydberg interaction :math:`V_{\mathrm{nn}}` between nearest neighbours, Rydberg interaction
@@ -244,7 +276,14 @@ def H_3_atoms(
     )
 
 
-def H_4_atoms_inf_V(Delta_1: float, Delta_r: float, Xi: float, Omega: float, decay: float, V: float) -> jax.Array:
+def H_4_atoms_inf_V(
+    Delta_1: float | jax.Array,
+    Delta_r: float | jax.Array,
+    Xi: float | jax.Array,
+    Omega: float | jax.Array,
+    decay: float,
+    V: float,
+) -> jax.Array:
     r"""Four atoms arranged in a pyramid,
     infinite Rydberg interaction between nearest neighbours, Rydberg interaction :math:`V` between
     next-nearest neighbours:
@@ -301,7 +340,14 @@ def H_4_atoms_inf_V(Delta_1: float, Delta_r: float, Xi: float, Omega: float, dec
     )
 
 
-def H_4_atoms_symmetric(Delta_1: float, Delta_r: float, Xi: float, Omega: float, decay: float, V: float) -> jax.Array:
+def H_4_atoms_symmetric(
+    Delta_1: float | jax.Array,
+    Delta_r: float | jax.Array,
+    Xi: float | jax.Array,
+    Omega: float | jax.Array,
+    decay: float,
+    V: float,
+) -> jax.Array:
     r"""Four atoms arranged in a tetrahedron,
     Rydberg interaction :math:`V` between atoms:
 
@@ -358,7 +404,13 @@ def H_4_atoms_symmetric(Delta_1: float, Delta_r: float, Xi: float, Omega: float,
 
 
 def H_4_atoms(
-    Delta_1: float, Delta_r: float, Xi: float, Omega: float, decay: float, Vnn: float, Vnnn: float
+    Delta_1: float | jax.Array,
+    Delta_r: float | jax.Array,
+    Xi: float | jax.Array,
+    Omega: float | jax.Array,
+    decay: float,
+    Vnn: float,
+    Vnnn: float,
 ) -> jax.Array:
     r"""Four atoms arranged in a pyramid,
     Rydberg interaction :math:`V_{\mathrm{nn}}` between nearest neighbours, Rydberg interaction

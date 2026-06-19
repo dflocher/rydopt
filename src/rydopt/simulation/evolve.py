@@ -4,6 +4,7 @@ from functools import partial
 
 import jax
 import jax.numpy as jnp
+import numpy as np
 
 from rydopt.protocols import Evolvable, PulseAnsatzLike
 from rydopt.types import HamiltonianFunction, ParamsFloatLike
@@ -82,7 +83,9 @@ def evolve(
         for h, d in zip(gate.hamiltonian_functions_for_basis_states(), dims)
     )
 
-    def schroedinger_eq(t: float | jax.Array, psi: jax.Array, args: tuple[ParamsFloatLike, int]) -> jax.Array:
+    def schroedinger_eq(
+        t: int | float | jax.Array | np.ndarray, psi: jax.Array, args: tuple[ParamsFloatLike, int]
+    ) -> jax.Array:
         params, idx = args
         return jax.lax.switch(idx, branches, t, params, psi)
 
@@ -128,7 +131,7 @@ def _evolve_optimized_for_gpus(
     import diffrax
 
     def schroedinger_eq(
-        t: float | jax.Array,
+        t: int | float | jax.Array | np.ndarray,
         psi_tuple: tuple[jax.Array, ...],
         _: object,
     ) -> tuple[jax.Array, ...]:

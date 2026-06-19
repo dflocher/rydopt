@@ -3,10 +3,10 @@ import jax.numpy as jnp
 
 
 def H_1_atom_general(
-    Delta_1: float,
-    Delta_r: float,
-    Xi: float,
-    Omega: float,
+    Delta_1: float | jax.Array,
+    Delta_r: float | jax.Array,
+    Xi: float | jax.Array,
+    Omega: float | jax.Array,
     decay: float,
     s1: float = 1.0,
 ) -> jax.Array:
@@ -40,10 +40,10 @@ def H_1_atom_general(
 
 
 def H_2_atoms_general(
-    Delta_1: float,
-    Delta_r: float,
-    Xi: float,
-    Omega: float,
+    Delta_1: float | jax.Array,
+    Delta_r: float | jax.Array,
+    Xi: float | jax.Array,
+    Omega: float | jax.Array,
     decay: float,
     V12: float,
     s1: float = 1.0,
@@ -105,10 +105,10 @@ def H_2_atoms_general(
 
 
 def H_3_atoms_general(
-    Delta_1: float,
-    Delta_r: float,
-    Xi: float,
-    Omega: float,
+    Delta_1: float | jax.Array,
+    Delta_r: float | jax.Array,
+    Xi: float | jax.Array,
+    Omega: float | jax.Array,
     decay: float,
     V12: float,
     V13: float,
@@ -237,10 +237,10 @@ def H_3_atoms_general(
 
 
 def H_4_atoms_general(
-    Delta_1: float,
-    Delta_r: float,
-    Xi: float,
-    Omega: float,
+    Delta_1: float | jax.Array,
+    Delta_r: float | jax.Array,
+    Xi: float | jax.Array,
+    Omega: float | jax.Array,
     decay: float,
     V12: float,
     V13: float,

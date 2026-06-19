@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Protocol, TypeVar, runtime_checkable
 
 import jax
+import numpy as np
 from typing_extensions import Self
 
 from rydopt.types import HamiltonianFunction, ParamsFloatLike, PulseFamilyParams, PulseParams
@@ -134,7 +135,7 @@ class PulseAnsatzLike(Protocol):
 
     def evaluate_pulse_functions(
         self,
-        t: float | jax.Array,
+        t: int | float | jax.Array | np.typing.NDArray[np.float64],
         params: ParamsFloatLike,
         gate_param: float | jax.Array | None = None,
     ) -> tuple[jax.Array, jax.Array, jax.Array, jax.Array]:
