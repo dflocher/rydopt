@@ -70,6 +70,7 @@ def test_generate_pulse_params_real(
     phase = jnp.asarray(phase)
     rabi = jnp.asarray(rabi)
 
+    assert jnp.ndim(duration) == 0
     assert jnp.isscalar(duration)
     assert detuning.shape == (1,)
     assert phase.shape == (6,)
