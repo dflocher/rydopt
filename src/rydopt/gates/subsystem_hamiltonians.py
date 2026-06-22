@@ -15,8 +15,8 @@ def H_k_atoms_perfect_blockade(
     .. image:: ../_static/k_atoms_perfect_blockade.png
 
     Args:
-        Delta_1: Laser detuning of the qubit state |1>.
-        Delta_r: Laser detuning of the Rydberg state |r>.
+        Delta_1: Laser detuning of the qubit state :math:`|1\rangle`.
+        Delta_r: Laser detuning of the Rydberg state :math:`|r\rangle`.
         Xi: Laser phase.
         Omega: Rabi frequency amplitude.
         decay: Rydberg-decay rate.
@@ -53,8 +53,8 @@ def H_2_atoms(
     .. image:: ../_static/2_atoms.png
 
     Args:
-        Delta_1: Laser detuning of the qubit state |1>.
-        Delta_r: Laser detuning of the Rydberg state |r>.
+        Delta_1: Laser detuning of the qubit state :math:`|1\rangle`.
+        Delta_r: Laser detuning of the Rydberg state :math:`|r\rangle`.
         Xi: Laser phase.
         Omega: Rabi frequency amplitude.
         decay: Rydberg-decay rate.
@@ -99,8 +99,8 @@ def H_3_atoms_inf_V(
     .. image:: ../_static/3_atoms_inf_V.png
 
     Args:
-        Delta_1: Laser detuning of the qubit state |1>.
-        Delta_r: Laser detuning of the Rydberg state |r>.
+        Delta_1: Laser detuning of the qubit state :math:`|1\rangle`.
+        Delta_r: Laser detuning of the Rydberg state :math:`|r\rangle`.
         Xi: Laser phase.
         Omega: Rabi frequency amplitude.
         decay: Rydberg-decay rate.
@@ -152,8 +152,8 @@ def H_3_atoms_symmetric(
     .. image:: ../_static/3_atoms_symmetric.png
 
     Args:
-        Delta_1: Laser detuning of the qubit state |1>.
-        Delta_r: Laser detuning of the Rydberg state |r>.
+        Delta_1: Laser detuning of the qubit state :math:`|1\rangle`.
+        Delta_r: Laser detuning of the Rydberg state :math:`|r\rangle`.
         Xi: Laser phase.
         Omega: Rabi frequency amplitude.
         decay: Rydberg-decay rate.
@@ -207,8 +207,8 @@ def H_3_atoms(
     .. image:: ../_static/3_atoms.png
 
     Args:
-        Delta_1: Laser detuning of the qubit state |1>.
-        Delta_r: Laser detuning of the Rydberg state |r>.
+        Delta_1: Laser detuning of the qubit state :math:`|1\rangle`.
+        Delta_r: Laser detuning of the Rydberg state :math:`|r\rangle`.
         Xi: Laser phase.
         Omega: Rabi frequency amplitude.
         decay: Rydberg-decay rate.
@@ -291,8 +291,8 @@ def H_4_atoms_inf_V(
     .. image:: ../_static/4_atoms_inf_V.png
 
     Args:
-        Delta_1: Laser detuning of the qubit state |1>.
-        Delta_r: Laser detuning of the Rydberg state |r>.
+        Delta_1: Laser detuning of the qubit state :math:`|1\rangle`.
+        Delta_r: Laser detuning of the Rydberg state :math:`|r\rangle`.
         Xi: Laser phase.
         Omega: Rabi frequency amplitude.
         decay: Rydberg-decay rate.
@@ -354,8 +354,8 @@ def H_4_atoms_symmetric(
     .. image:: ../_static/4_atoms_symmetric.png
 
     Args:
-        Delta_1: Laser detuning of the qubit state |1>.
-        Delta_r: Laser detuning of the Rydberg state |r>.
+        Delta_1: Laser detuning of the qubit state :math:`|1\rangle`.
+        Delta_r: Laser detuning of the Rydberg state :math:`|r\rangle`.
         Xi: Laser phase.
         Omega: Rabi frequency amplitude.
         decay: Rydberg-decay rate.
@@ -419,8 +419,8 @@ def H_4_atoms(
     .. image:: ../_static/4_atoms.png
 
     Args:
-        Delta_1: Laser detuning of the qubit state |1>.
-        Delta_r: Laser detuning of the Rydberg state |r>.
+        Delta_1: Laser detuning of the qubit state :math:`|1\rangle`.
+        Delta_r: Laser detuning of the Rydberg state :math:`|r\rangle`.
         Xi: Laser phase.
         Omega: Rabi frequency amplitude.
         decay: Rydberg-decay rate.

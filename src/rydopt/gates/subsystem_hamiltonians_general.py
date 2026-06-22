@@ -15,8 +15,8 @@ def H_1_atom_general(
     Basis ordering: :math:`|0\rangle, |1\rangle`.
 
     Args:
-        Delta_1: Laser detuning of the qubit state |1>.
-        Delta_r: Laser detuning of the Rydberg state |r>.
+        Delta_1: Laser detuning of the qubit state :math:`|1\rangle`.
+        Delta_r: Laser detuning of the Rydberg state :math:`|r\rangle`.
         Xi: Laser phase.
         Omega: Rabi frequency amplitude.
         decay: Rydberg-decay rate.
@@ -54,8 +54,8 @@ def H_2_atoms_general(
     Basis ordering: :math:`|00\rangle, |01\rangle, |10\rangle, |11\rangle`.
 
     Args:
-        Delta_1: Laser detuning of the qubit state |1>.
-        Delta_r: Laser detuning of the Rydberg state |r>.
+        Delta_1: Laser detuning of the qubit state :math:`|1\rangle`.
+        Delta_r: Laser detuning of the Rydberg state :math:`|r\rangle`.
         Xi: Laser phase.
         Omega: Rabi frequency amplitude.
         decay: Rydberg-decay rate.
@@ -123,8 +123,8 @@ def H_3_atoms_general(
     |100\rangle, |101\rangle, |110\rangle, |111\rangle`.
 
     Args:
-        Delta_1: Laser detuning of the qubit state |1>.
-        Delta_r: Laser detuning of the Rydberg state |r>.
+        Delta_1: Laser detuning of the qubit state :math:`|1\rangle`.
+        Delta_r: Laser detuning of the Rydberg state :math:`|r\rangle`.
         Xi: Laser phase.
         Omega: Rabi frequency amplitude.
         decay: Rydberg-decay rate.
@@ -258,8 +258,8 @@ def H_4_atoms_general(
     Basis ordering: :math:`|0000\rangle, |0001\rangle, |0010\rangle, |0011\rangle, |0100\rangle, \ldots, |1111\rangle`.
 
     Args:
-        Delta_1: Laser detuning of the qubit state |1>.
-        Delta_r: Laser detuning of the Rydberg state |r>.
+        Delta_1: Laser detuning of the qubit state :math:`|1\rangle`.
+        Delta_r: Laser detuning of the Rydberg state :math:`|r\rangle`.
         Xi: Laser phase.
         Omega: Rabi frequency amplitude.
         decay: Rydberg-decay rate.
