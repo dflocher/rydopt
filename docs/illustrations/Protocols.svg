@@ -26,9 +26,9 @@
      inkscape:pagecheckerboard="0"
      inkscape:deskcolor="#d1d1d1"
      inkscape:document-units="mm"
-     inkscape:zoom="1.5880798"
-     inkscape:cx="220.39195"
-     inkscape:cy="49.11592"
+     inkscape:zoom="2.245884"
+     inkscape:cx="218.62216"
+     inkscape:cy="71.686695"
      inkscape:window-width="1920"
      inkscape:window-height="993"
      inkscape:window-x="0"
@@ -65,7 +65,7 @@
      id="layer1">
     <g
        id="g15"
-       transform="translate(3.151948)">
+       transform="translate(13.283445)">
       <text
          xml:space="preserve"
          style="font-size:3.5278px;line-height:1.25;font-family:Helvetica;-inkscape-font-specification:'Helvetica, Normal';stroke-width:0.264583"
@@ -87,7 +87,7 @@
     </g>
     <g
        id="g18"
-       transform="translate(3.151948)">
+       transform="translate(13.283445)">
       <text
          xml:space="preserve"
          style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3.5278px;line-height:1.25;font-family:Helvetica;-inkscape-font-specification:'Helvetica, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;stroke-width:0.264583"
@@ -108,7 +108,7 @@
     </g>
     <g
        id="g17"
-       transform="translate(2.6521305)">
+       transform="translate(12.783627)">
       <text
          xml:space="preserve"
          style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3.5278px;line-height:1.25;font-family:Helvetica;-inkscape-font-specification:'Helvetica, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;stroke-width:0.264583"
@@ -129,11 +129,32 @@
     </g>
     <path
        style="fill:none;fill-opacity:1;stroke:#000000;stroke-width:0.301237;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#ColoredTriangle)"
-       d="m 46.723985,19.916345 4.074456,-9.400771"
+       d="m 56.855482,19.916345 4.074456,-9.400771"
        id="path10" />
     <path
        style="fill:none;fill-opacity:1;stroke:#000000;stroke-width:0.301237;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#ColoredTriangle)"
-       d="M 72.891922,19.916345 68.817465,10.515574"
+       d="M 83.023419,19.916345 78.948962,10.515574"
        id="path13" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3.5278px;line-height:1.25;font-family:Helvetica;-inkscape-font-specification:'Helvetica, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;stroke-width:0.264583"
+       x="27.50507"
+       y="7.5543842"
+       id="text2"><tspan
+         sodipodi:role="line"
+         id="tspan2"
+         x="27.50507"
+         y="7.5543842">Optimizable</tspan></text>
+    <rect
+       style="fill:none;stroke:#000000;stroke-width:0.206284;stroke-linecap:round;stroke-linejoin:round;stroke-opacity:1"
+       id="rect2"
+       width="28.763935"
+       height="5.7083135"
+       x="22.428366"
+       y="3.4040022" />
+    <path
+       style="fill:none;fill-opacity:1;stroke:#000000;stroke-width:0.301237;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#ColoredTriangle)"
+       d="M 49.889687,19.916345 45.81523,10.515574"
+       id="path2" />
   </g>
 </svg>
