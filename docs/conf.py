@@ -55,7 +55,7 @@ copybutton_prompt_is_regexp = True
 
 # -- Options for jupyter notebooks -------------------------------------------
 nbsphinx_prolog = """
-{% set docname = env.doc2path(env.docname, base=None).split("/")[-1] %}
+{% set docname = env.docname.rsplit("/", 1)[-1] ~ ".ipynb" %}
 
 .. raw:: html
 
