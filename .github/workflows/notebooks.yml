@@ -13,6 +13,9 @@ jobs:
           - id: quick_start
             path: docs/examples/quick_start.ipynb
             timeout: 300
+          - id: gate_family_quick_start
+            path: docs/examples/gate_family_quick_start.ipynb
+            timeout: 300
           - id: smooth
             path: docs/examples/smooth.ipynb
             timeout: 300
