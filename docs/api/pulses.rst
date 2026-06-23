@@ -12,6 +12,12 @@ rydopt.pulses
 .. autoclass:: PulseFamilyAnsatz
    :members:
 
+.. autoclass:: PolynomialPulseMap
+   :members:
+
+.. autoclass:: PolynomialPulseMapWithPade
+   :members:
+
 .. autoclass:: PulseParams
 
 .. autoclass:: PulseFamilyParams

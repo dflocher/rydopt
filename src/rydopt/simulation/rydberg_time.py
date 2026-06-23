@@ -113,7 +113,7 @@ def rydberg_time(
             args=(params, idx),
             stepsize_controller=stepsize_controller,
             saveat=saveat,
-            max_steps=200_000,
+            max_steps=1_000_000,
         )
         return jnp.real(sol.ys[1])
 
