@@ -21,7 +21,7 @@ from rydopt.pulses.ansatz_functions import (
     SoftBoxSeventhOrderSmoothstep,
 )
 from rydopt.pulses.pulse_ansatz import PulseAnsatz, TwoPhotonPulseAnsatz
-from rydopt.pulses.pulse_family_ansatz import PolynomialPulseMap, PulseFamilyAnsatz
+from rydopt.pulses.pulse_family_ansatz import PolynomialPulseMap, PolynomialPulseMapWithPade, PulseFamilyAnsatz
 from rydopt.pulses.pulse_family_params import PulseFamilyParams
 from rydopt.pulses.pulse_params import PulseParams
 from rydopt.types import ParamsBoolLike, ParamsFloatLike
@@ -55,4 +55,5 @@ __all__ = [
     "SoftBoxSeventhOrderSmoothstep",
     "PulseFamilyAnsatz",
     "PolynomialPulseMap",
+    "PolynomialPulseMapWithPade",
 ]

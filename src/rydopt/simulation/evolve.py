@@ -103,7 +103,7 @@ def evolve(
             args=(params, idx),
             stepsize_controller=stepsize_controller,
             saveat=saveat,
-            max_steps=200_000,
+            max_steps=1_000_000,
         )
         return sol.ys[0]
 
@@ -150,7 +150,7 @@ def _evolve_optimized_for_gpus(
         args=None,
         stepsize_controller=stepsize_controller,
         saveat=saveat,
-        max_steps=200_000,
+        max_steps=1_000_000,
     )
 
     return tuple(psi_t1[0] for psi_t1 in sol.ys)

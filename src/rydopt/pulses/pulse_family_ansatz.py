@@ -130,6 +130,56 @@ class PolynomialPulseMap:
 
 
 @dataclass
+class PolynomialPulseMapWithPade(PolynomialPulseMap):
+    r"""Polynomial map of ansatz parameters with a Padé expression for the duration.
+
+    The duration parameters are ``(piduration, prefactor, exponent)``. The
+    Padé expression is used for the pulse duration, while detuning, laser
+    phase, and Rabi parameters use the polynomial mapping from
+    :class:`PolynomialPulseMap`.
+
+    Args:
+        degrees: polynomial degree for
+            ``(duration, detuning, phase, rabi)``. The duration degree is
+            ignored because the duration uses the Padé expression.
+
+    """
+
+    def map_duration(
+        self,
+        target_phase: float | jax.Array,
+        packed_params: tuple[jax.Array, jax.Array, jax.Array, jax.Array],
+    ) -> jax.Array:
+        normalized_phase = jnp.asarray(target_phase)
+        params = jnp.ravel(jnp.asarray(packed_params[0]))
+
+        if params.size != 3:
+            raise ValueError(
+                "PolynomialPulseMapWithPade expects three duration parameters: (piduration, prefactor, exponent)"
+            )
+
+        piduration, prefactor, exponent = params
+        phase = 2.0 * jnp.pi * normalized_phase
+        r = piduration / (prefactor * 0.5**exponent)
+        b = (1.0 - r) / (exponent * r) - 1.0
+        a = r * (1.0 + b) - 1.0
+        return (
+            prefactor * (phase / (2.0 * jnp.pi)) ** exponent * (1.0 + a * phase / jnp.pi) / (1.0 + b * phase / jnp.pi)
+        )
+
+    def map_shape(
+        self,
+        params_count: tuple[int, ...],
+    ) -> tuple[tuple[int, ...], tuple[int, ...], tuple[int, ...], tuple[int, ...]]:
+        return (
+            (3,),
+            self.shape(params_count[0], self.degrees[1]),
+            self.shape(params_count[1], self.degrees[2]),
+            self.shape(params_count[2], self.degrees[3]),
+        )
+
+
+@dataclass
 class PulseFamilyAnsatz:
     r"""Data class that stores ansatz functions for a family of laser pulses.
 
