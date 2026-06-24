@@ -5,7 +5,6 @@ from functools import wraps
 
 import jax
 import jax.numpy as jnp
-import numpy as np
 
 from rydopt.pulses.general_pulse_ansatz_functions import (
     const as _const,
@@ -45,7 +44,7 @@ class PulseAnsatzFunction(ABC):
         @wraps(call)
         def validated_call(
             self: PulseAnsatzFunction,
-            t: int | float | jax.Array | np.ndarray,
+            t: float | jax.Array,
             duration: float | jax.Array,
             ansatz_params: jax.Array,
         ) -> jax.Array:
@@ -67,12 +66,7 @@ class PulseAnsatzFunction(ABC):
         return self._num_params
 
     @abstractmethod
-    def __call__(
-        self,
-        t: int | float | jax.Array | np.ndarray,
-        duration: float | jax.Array,
-        ansatz_params: jax.Array,
-    ) -> jax.Array:
+    def __call__(self, t: float | jax.Array, duration: float | jax.Array, ansatz_params: jax.Array) -> jax.Array:
         """Evaluate the ansatz function."""
 
 
@@ -82,12 +76,7 @@ class Const(PulseAnsatzFunction):
             raise ValueError("Const requires exactly 1 parameter")
         super().__init__(num_params)
 
-    def __call__(
-        self,
-        t: int | float | jax.Array | np.ndarray,
-        duration: float | jax.Array,
-        ansatz_params: jax.Array,
-    ) -> jax.Array:
+    def __call__(self, t: float | jax.Array, duration: float | jax.Array, ansatz_params: jax.Array) -> jax.Array:
         return _const(t, duration, ansatz_params)
 
 
@@ -97,12 +86,7 @@ class SinCrab(PulseAnsatzFunction):
             raise ValueError("SinCrab requires an even number of parameters >= 2")
         super().__init__(num_params)
 
-    def __call__(
-        self,
-        t: int | float | jax.Array | np.ndarray,
-        duration: float | jax.Array,
-        ansatz_params: jax.Array,
-    ) -> jax.Array:
+    def __call__(self, t: float | jax.Array, duration: float | jax.Array, ansatz_params: jax.Array) -> jax.Array:
         return _sin_crab(t, duration, ansatz_params)
 
 
@@ -112,12 +96,7 @@ class CosCrab(PulseAnsatzFunction):
             raise ValueError("CosCrab requires an even number of parameters >= 2")
         super().__init__(num_params)
 
-    def __call__(
-        self,
-        t: int | float | jax.Array | np.ndarray,
-        duration: float | jax.Array,
-        ansatz_params: jax.Array,
-    ) -> jax.Array:
+    def __call__(self, t: float | jax.Array, duration: float | jax.Array, ansatz_params: jax.Array) -> jax.Array:
         return _cos_crab(t, duration, ansatz_params)
 
 
@@ -127,12 +106,7 @@ class SinCosCrab(PulseAnsatzFunction):
             raise ValueError("SinCosCrab requires a parameter count divisible by 4 and >= 4")
         super().__init__(num_params)
 
-    def __call__(
-        self,
-        t: int | float | jax.Array | np.ndarray,
-        duration: float | jax.Array,
-        ansatz_params: jax.Array,
-    ) -> jax.Array:
+    def __call__(self, t: float | jax.Array, duration: float | jax.Array, ansatz_params: jax.Array) -> jax.Array:
         return _sin_cos_crab(t, duration, ansatz_params)
 
 
@@ -142,12 +116,7 @@ class CosSinCrab(PulseAnsatzFunction):
             raise ValueError("CosSinCrab requires a parameter count divisible by 4 and >= 4")
         super().__init__(num_params)
 
-    def __call__(
-        self,
-        t: int | float | jax.Array | np.ndarray,
-        duration: float | jax.Array,
-        ansatz_params: jax.Array,
-    ) -> jax.Array:
+    def __call__(self, t: float | jax.Array, duration: float | jax.Array, ansatz_params: jax.Array) -> jax.Array:
         return _cos_sin_crab(t, duration, ansatz_params)
 
 
@@ -157,12 +126,7 @@ class ConstSinCrab(PulseAnsatzFunction):
             raise ValueError("ConstSinCrab requires an odd number of parameters >= 3")
         super().__init__(num_params)
 
-    def __call__(
-        self,
-        t: int | float | jax.Array | np.ndarray,
-        duration: float | jax.Array,
-        ansatz_params: jax.Array,
-    ) -> jax.Array:
+    def __call__(self, t: float | jax.Array, duration: float | jax.Array, ansatz_params: jax.Array) -> jax.Array:
         return _const_sin_crab(t, duration, ansatz_params)
 
 
@@ -172,12 +136,7 @@ class ConstCosCrab(PulseAnsatzFunction):
             raise ValueError("ConstCosCrab requires an odd number of parameters >= 3")
         super().__init__(num_params)
 
-    def __call__(
-        self,
-        t: int | float | jax.Array | np.ndarray,
-        duration: float | jax.Array,
-        ansatz_params: jax.Array,
-    ) -> jax.Array:
+    def __call__(self, t: float | jax.Array, duration: float | jax.Array, ansatz_params: jax.Array) -> jax.Array:
         return _const_cos_crab(t, duration, ansatz_params)
 
 
@@ -187,12 +146,7 @@ class ConstSinCosCrab(PulseAnsatzFunction):
             raise ValueError("ConstSinCosCrab requires a parameter count of 4n+1 with n >= 1")
         super().__init__(num_params)
 
-    def __call__(
-        self,
-        t: int | float | jax.Array | np.ndarray,
-        duration: float | jax.Array,
-        ansatz_params: jax.Array,
-    ) -> jax.Array:
+    def __call__(self, t: float | jax.Array, duration: float | jax.Array, ansatz_params: jax.Array) -> jax.Array:
         return _const_sin_cos_crab(t, duration, ansatz_params)
 
 
@@ -202,12 +156,7 @@ class ConstCosSinCrab(PulseAnsatzFunction):
             raise ValueError("ConstCosSinCrab requires a parameter count of 4n+1 with n >= 1")
         super().__init__(num_params)
 
-    def __call__(
-        self,
-        t: int | float | jax.Array | np.ndarray,
-        duration: float | jax.Array,
-        ansatz_params: jax.Array,
-    ) -> jax.Array:
+    def __call__(self, t: float | jax.Array, duration: float | jax.Array, ansatz_params: jax.Array) -> jax.Array:
         return _const_cos_sin_crab(t, duration, ansatz_params)
 
 
@@ -217,12 +166,7 @@ class LinSinCrab(PulseAnsatzFunction):
             raise ValueError("LinSinCrab requires an odd number of parameters >= 3")
         super().__init__(num_params)
 
-    def __call__(
-        self,
-        t: int | float | jax.Array | np.ndarray,
-        duration: float | jax.Array,
-        ansatz_params: jax.Array,
-    ) -> jax.Array:
+    def __call__(self, t: float | jax.Array, duration: float | jax.Array, ansatz_params: jax.Array) -> jax.Array:
         return _lin_sin_crab(t, duration, ansatz_params)
 
 
@@ -232,12 +176,7 @@ class LinCosCrab(PulseAnsatzFunction):
             raise ValueError("LinCosCrab requires an odd number of parameters >= 3")
         super().__init__(num_params)
 
-    def __call__(
-        self,
-        t: int | float | jax.Array | np.ndarray,
-        duration: float | jax.Array,
-        ansatz_params: jax.Array,
-    ) -> jax.Array:
+    def __call__(self, t: float | jax.Array, duration: float | jax.Array, ansatz_params: jax.Array) -> jax.Array:
         return _lin_cos_crab(t, duration, ansatz_params)
 
 
@@ -247,12 +186,7 @@ class LinSinCosCrab(PulseAnsatzFunction):
             raise ValueError("LinSinCosCrab requires a parameter count of 4n+1 with n >= 1")
         super().__init__(num_params)
 
-    def __call__(
-        self,
-        t: int | float | jax.Array | np.ndarray,
-        duration: float | jax.Array,
-        ansatz_params: jax.Array,
-    ) -> jax.Array:
+    def __call__(self, t: float | jax.Array, duration: float | jax.Array, ansatz_params: jax.Array) -> jax.Array:
         return _lin_sin_cos_crab(t, duration, ansatz_params)
 
 
@@ -262,12 +196,7 @@ class LinCosSinCrab(PulseAnsatzFunction):
             raise ValueError("LinCosSinCrab requires a parameter count of 4n+1 with n >= 1")
         super().__init__(num_params)
 
-    def __call__(
-        self,
-        t: int | float | jax.Array | np.ndarray,
-        duration: float | jax.Array,
-        ansatz_params: jax.Array,
-    ) -> jax.Array:
+    def __call__(self, t: float | jax.Array, duration: float | jax.Array, ansatz_params: jax.Array) -> jax.Array:
         return _lin_cos_sin_crab(t, duration, ansatz_params)
 
 
@@ -277,12 +206,7 @@ class SoftBoxHann(PulseAnsatzFunction):
             raise ValueError("SoftBoxHann requires exactly 2 parameters")
         super().__init__(num_params)
 
-    def __call__(
-        self,
-        t: int | float | jax.Array | np.ndarray,
-        duration: float | jax.Array,
-        ansatz_params: jax.Array,
-    ) -> jax.Array:
+    def __call__(self, t: float | jax.Array, duration: float | jax.Array, ansatz_params: jax.Array) -> jax.Array:
         return _softbox_hann(t, duration, ansatz_params)
 
 
@@ -292,12 +216,7 @@ class SoftBoxBlackman(PulseAnsatzFunction):
             raise ValueError("SoftBoxBlackman requires exactly 2 parameters")
         super().__init__(num_params)
 
-    def __call__(
-        self,
-        t: int | float | jax.Array | np.ndarray,
-        duration: float | jax.Array,
-        ansatz_params: jax.Array,
-    ) -> jax.Array:
+    def __call__(self, t: float | jax.Array, duration: float | jax.Array, ansatz_params: jax.Array) -> jax.Array:
         return _softbox_blackman(t, duration, ansatz_params)
 
 
@@ -307,12 +226,7 @@ class SoftBoxNuttall(PulseAnsatzFunction):
             raise ValueError("SoftBoxNuttall requires exactly 2 parameters")
         super().__init__(num_params)
 
-    def __call__(
-        self,
-        t: int | float | jax.Array | np.ndarray,
-        duration: float | jax.Array,
-        ansatz_params: jax.Array,
-    ) -> jax.Array:
+    def __call__(self, t: float | jax.Array, duration: float | jax.Array, ansatz_params: jax.Array) -> jax.Array:
         return _softbox_nuttall(t, duration, ansatz_params)
 
 
@@ -322,12 +236,7 @@ class SoftBoxPlanck(PulseAnsatzFunction):
             raise ValueError("SoftBoxPlanck requires exactly 2 parameters")
         super().__init__(num_params)
 
-    def __call__(
-        self,
-        t: int | float | jax.Array | np.ndarray,
-        duration: float | jax.Array,
-        ansatz_params: jax.Array,
-    ) -> jax.Array:
+    def __call__(self, t: float | jax.Array, duration: float | jax.Array, ansatz_params: jax.Array) -> jax.Array:
         return _softbox_planck(t, duration, ansatz_params)
 
 
@@ -337,12 +246,7 @@ class SoftBoxFifthOrderSmoothstep(PulseAnsatzFunction):
             raise ValueError("SoftBoxFifthOrderSmoothstep requires exactly 2 parameters")
         super().__init__(num_params)
 
-    def __call__(
-        self,
-        t: int | float | jax.Array | np.ndarray,
-        duration: float | jax.Array,
-        ansatz_params: jax.Array,
-    ) -> jax.Array:
+    def __call__(self, t: float | jax.Array, duration: float | jax.Array, ansatz_params: jax.Array) -> jax.Array:
         return _softbox_fifth_order_smoothstep(t, duration, ansatz_params)
 
 
@@ -352,10 +256,5 @@ class SoftBoxSeventhOrderSmoothstep(PulseAnsatzFunction):
             raise ValueError("SoftBoxSeventhOrderSmoothstep requires exactly 2 parameters")
         super().__init__(num_params)
 
-    def __call__(
-        self,
-        t: int | float | jax.Array | np.ndarray,
-        duration: float | jax.Array,
-        ansatz_params: jax.Array,
-    ) -> jax.Array:
+    def __call__(self, t: float | jax.Array, duration: float | jax.Array, ansatz_params: jax.Array) -> jax.Array:
         return _softbox_seventh_order_smoothstep(t, duration, ansatz_params)

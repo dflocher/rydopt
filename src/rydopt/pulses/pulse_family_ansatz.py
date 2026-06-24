@@ -9,8 +9,7 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 
-from rydopt.protocols import PulseAnsatzLike
-from rydopt.pulses.pulse_ansatz import PulseAnsatzFunction, _FixedConstant, _is_unpacked
+from rydopt.pulses.pulse_ansatz import PulseAnsatz, PulseAnsatzFunction, _FixedConstant, _is_unpacked
 from rydopt.pulses.pulse_family_params import PulseFamilyParams
 from rydopt.pulses.pulse_params import PulseParams
 from rydopt.types import ParamsFloatLike
@@ -184,6 +183,13 @@ class PulseFamilyAnsatz:
     pulse_map: PulseParamMap = field(default_factory=PolynomialPulseMap)
 
     @property
+    def pulse_ansatz(self) -> PulseAnsatz:
+        r"""Generate the pulse ansatz corresponding to a given gate parameter."""
+        return PulseAnsatz(
+            detuning_ansatz=self.detuning_ansatz, phase_ansatz=self.phase_ansatz, rabi_ansatz=self.rabi_ansatz
+        )
+
+    @property
     def param_counts(self) -> tuple[int, int, int]:
         return (
             self.detuning_ansatz.num_params,
@@ -209,26 +215,24 @@ class PulseFamilyAnsatz:
     def _unpack_params_arrays(
         self, trainable_params: ParamsFloatLike
     ) -> tuple[jax.Array, jax.Array, jax.Array, jax.Array]:
-        if _is_unpacked(trainable_params):
-            duration, detuning, phase, rabi = trainable_params
-            return (
-                jnp.asarray(duration),
-                jnp.asarray(detuning),
-                jnp.asarray(phase),
-                jnp.asarray(rabi),
-            )
-        flat_params = jnp.ravel(jnp.asarray(trainable_params, dtype=jnp.float64))
         expected_shapes = self.shapes
-        expected_sizes = [prod(t) for t in expected_shapes]
-        total_expected_size = sum(expected_sizes)
+        if _is_unpacked(trainable_params):
+            duration = jnp.asarray(trainable_params[0])
+            detuning_flat = jnp.asarray(trainable_params[1])
+            phase_flat = jnp.asarray(trainable_params[2])
+            rabi_flat = jnp.asarray(trainable_params[3])
+        else:
+            flat_params = jnp.ravel(jnp.asarray(trainable_params, dtype=jnp.float64))
+            expected_sizes = [prod(t) for t in expected_shapes]
+            total_expected_size = sum(expected_sizes)
 
-        if int(flat_params.shape[-1]) != total_expected_size:
-            raise ValueError(
-                f"PulseAnsatz expects {total_expected_size} packed parameters, got {int(flat_params.shape[-1])}"
-            )
+            if int(flat_params.shape[-1]) != total_expected_size:
+                raise ValueError(
+                    f"PulseAnsatz expects {total_expected_size} packed parameters, got {int(flat_params.shape[-1])}"
+                )
 
-        splits = np.cumsum(expected_sizes[:-1])
-        duration, detuning_flat, phase_flat, rabi_flat = jnp.split(flat_params, splits, axis=-1)
+            splits = np.cumsum(expected_sizes[:-1])
+            duration, detuning_flat, phase_flat, rabi_flat = jnp.split(flat_params, splits, axis=-1)
         return (
             duration,
             detuning_flat.reshape(expected_shapes[1]),
@@ -274,7 +278,7 @@ class PulseFamilyAnsatz:
 
     def evaluate_pulse_functions(
         self,
-        t: int | float | jax.Array | np.ndarray,
+        t: float | jax.Array,
         params: ParamsFloatLike,
         gate_param: float | jax.Array | None = None,
     ) -> tuple[jax.Array, jax.Array, jax.Array, jax.Array]:
@@ -302,47 +306,3 @@ class PulseFamilyAnsatz:
             self.phase_ansatz(t, duration, phase_ansatz_params),
             self.rabi_ansatz(t, duration, rabi_ansatz_params),
         )
-
-    def generate_pulse_ansatz(self, gate_param: float | jax.Array | None = None) -> PulseAnsatzLike:
-        r"""Generate the pulse ansatz corresponding to a given gate parameter."""
-        return BoundPulseAnsatz(self, gate_param=gate_param)
-
-
-@jax.tree_util.register_pytree_node_class
-@dataclass
-class BoundPulseAnsatz:
-    family: PulseFamilyAnsatz
-    gate_param: float | jax.Array | None
-
-    def evaluate_pulse_functions(
-        self,
-        t: int | float | jax.Array | np.ndarray,
-        params: ParamsFloatLike,
-        gate_param: float | jax.Array | None = None,
-    ) -> tuple[jax.Array, jax.Array, jax.Array, jax.Array]:
-        del gate_param
-        (
-            duration,
-            detuning_ansatz_params,
-            phase_ansatz_params,
-            rabi_ansatz_params,
-        ) = params
-        return (
-            jnp.zeros_like(t),
-            self.family.detuning_ansatz(t, duration, jnp.asarray(detuning_ansatz_params)),
-            self.family.phase_ansatz(t, duration, jnp.asarray(phase_ansatz_params)),
-            self.family.rabi_ansatz(t, duration, jnp.asarray(rabi_ansatz_params)),
-        )
-
-    def unpack_params(self, trainable_params: ParamsFloatLike) -> PulseParams[float]:
-        return self.family.generate_pulse_params(trainable_params, self.gate_param)
-
-    # --- pytree protocol ---
-    def tree_flatten(self) -> tuple[tuple[float | jax.Array | None], PulseFamilyAnsatz]:
-        # gate_param is a (traceable) leaf; family is static aux data.
-        return (self.gate_param,), self.family
-
-    @classmethod
-    def tree_unflatten(cls, aux_data: PulseFamilyAnsatz, children: tuple[float | jax.Array | None]) -> PulseAnsatzLike:
-        (gate_param,) = children
-        return cls(family=aux_data, gate_param=gate_param)

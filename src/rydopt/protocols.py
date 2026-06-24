@@ -3,10 +3,9 @@ from __future__ import annotations
 from typing import Protocol, TypeVar, runtime_checkable
 
 import jax
-import numpy as np
 from typing_extensions import Self
 
-from rydopt.types import HamiltonianFunction, ParamsFloatLike, PulseFamilyParams, PulseParams
+from rydopt.types import HamiltonianFunction, ParamsFloatLike
 
 
 class Evolvable(Protocol):
@@ -39,12 +38,12 @@ class Evolvable(Protocol):
         ...
 
 
-PulseT = TypeVar("PulseT")
+PulseAnsatzT = TypeVar("PulseAnsatzT")
 
 
 @runtime_checkable
-class Optimizable(Protocol[PulseT]):
-    def cost(self, pulse: PulseT, params: ParamsFloatLike, tol: float) -> jax.Array:
+class Optimizable(Protocol[PulseAnsatzT]):
+    def cost(self, pulse: PulseAnsatzT, params: ParamsFloatLike, tol: float) -> jax.Array:
         """Evaluate the cost function for a pulse ansatz and parameters.
 
         Args:
@@ -140,7 +139,10 @@ class RydbergSystem(Evolvable, Protocol):
         ...
 
 
-class PulseAnsatzLike(Protocol):
+PulseParamsT = TypeVar("PulseParamsT")
+
+
+class PulseAnsatzLike(Protocol[PulseParamsT]):
     r"""Common interface for pulse ansatz and pulse-family ansatz objects.
 
     Objects implementing this protocol can generate pulse controls from a set of trainable
@@ -149,7 +151,7 @@ class PulseAnsatzLike(Protocol):
 
     def evaluate_pulse_functions(
         self,
-        t: int | float | jax.Array | np.typing.NDArray[np.float64],
+        t: float | jax.Array,
         params: ParamsFloatLike,
         gate_param: float | jax.Array | None = None,
     ) -> tuple[jax.Array, jax.Array, jax.Array, jax.Array]:
@@ -169,7 +171,7 @@ class PulseAnsatzLike(Protocol):
     def unpack_params(
         self,
         trainable_params: ParamsFloatLike,
-    ) -> PulseParams[float] | PulseFamilyParams[float]:
+    ) -> PulseParamsT:
         r"""Convert trainable parameters to a structured parameter container.
 
         Args:

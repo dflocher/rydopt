@@ -2,7 +2,6 @@ import numpy as np
 import pytest
 
 import rydopt as ro
-from rydopt.pulses.pulse_ansatz import pack_params
 
 
 @pytest.mark.optimization
@@ -21,6 +20,4 @@ def test_cz() -> None:
 
     # Compare result to reference
     ref = np.array([7.61141034, 0.07884777, 1.83253308, -0.61765787])
-    estimated = pack_params(r.params)
-
-    assert np.allclose(estimated, ref, rtol=1e-3)
+    assert np.allclose(np.asarray(r.params), ref, rtol=1e-3)

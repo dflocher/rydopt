@@ -4,7 +4,6 @@ from functools import partial
 
 import jax
 import jax.numpy as jnp
-import numpy as np
 
 from rydopt.protocols import PulseAnsatzLike, RydbergSystem
 from rydopt.types import HamiltonianFunction, ParamsFloatLike
@@ -87,7 +86,7 @@ def rydberg_time(gate: RydbergSystem, pulse: PulseAnsatzLike, params: ParamsFloa
     )
 
     def schroedinger_eq(
-        t: int | float | jax.Array | np.ndarray,
+        t: float | jax.Array,
         y: tuple[jax.Array, jax.Array],
         args: tuple[ParamsFloatLike, int],
     ) -> tuple[jax.Array, jax.Array]:
@@ -95,7 +94,7 @@ def rydberg_time(gate: RydbergSystem, pulse: PulseAnsatzLike, params: ParamsFloa
         return jax.lax.switch(idx, branches, t, params, y)
 
     # Propagator
-    term = diffrax.ODETerm(schroedinger_eq)
+    term = diffrax.ODETerm(schroedinger_eq)  # ty: ignore[invalid-argument-type]
     solver = diffrax.Tsit5()
     stepsize_controller = diffrax.PIDController(rtol=0.1 * tol, atol=0.1 * tol)
     saveat = diffrax.SaveAt(t1=True)

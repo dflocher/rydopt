@@ -66,10 +66,6 @@ def test_generate_pulse_params_real(
     gate_param = simple_gate_family.parameter_values[0]
     duration, detuning, phase, rabi = pulse._generate_pulse_params_arrays(params, gate_param)
 
-    detuning = jnp.asarray(detuning)
-    phase = jnp.asarray(phase)
-    rabi = jnp.asarray(rabi)
-
     assert jnp.ndim(duration) == 0
     assert detuning.shape == (1,)
     assert phase.shape == (6,)
@@ -85,10 +81,6 @@ def test_evaluate_pulse_functions_real(
     t = jnp.linspace(0.0, 1.0, 10)
     for gate_param in simple_gate_family.parameter_values:
         d0, detuning, phase, rabi = pulse.evaluate_pulse_functions(t, params, gate_param)
-
-        detuning = jnp.asarray(detuning)
-        phase = jnp.asarray(phase)
-        rabi = jnp.asarray(rabi)
 
         assert d0.shape == t.shape
         assert detuning.shape == t.shape
@@ -132,7 +124,7 @@ def test_gate_family_real(pulse: PulseFamilyAnsatz, params: PulseParams) -> None
 @pytest.mark.optimization
 def test_cphase() -> None:
     # target phases
-    phases = jnp.array([0.2, 0.25]) * jnp.pi
+    phases = jnp.array([0.1, 0.25]) * jnp.pi
 
     # gate family
     sampled_gates = [
@@ -140,7 +132,7 @@ def test_cphase() -> None:
             phi=None,
             theta=4 * phase,
             Vnn=20.0,
-            decay=0.0,
+            decay=0.0001,
         )
         for phase in phases
     ]
@@ -167,7 +159,7 @@ def test_cphase() -> None:
     )
 
     # Run optimization
-    r = ro.optimization.optimize(gate_family, pulse_family, initial_params, num_steps=100, tol=1e-6)
+    r = ro.optimization.optimize(gate_family, pulse_family, initial_params, num_steps=200, tol=1e-6)
     duration, detuning, phase, rabi = r.params
 
     assert isinstance(duration, np.ndarray)
@@ -178,10 +170,10 @@ def test_cphase() -> None:
     assert detuning.shape == (degrees[1] + 1,)
     assert isinstance(rabi, np.ndarray)
     assert rabi.shape == (0,)
-    assert 0.0 <= r.infidelity <= 1e-2
+    assert 0.0 <= r.infidelity <= 1e-3
 
+    pulse = pulse_family.pulse_ansatz
     for gate, value in zip(gate_family.gates, gate_family.parameter_values):
-        pulse = pulse_family.generate_pulse_ansatz(value)
         params = pulse_family.generate_pulse_params(r.params, value)
         infidelity, infidelity_nodecay, ryd_time = ro.characterization.analyze_gate(
             gate,
@@ -189,9 +181,10 @@ def test_cphase() -> None:
             params,
             tol=1e-8,
         )
+
         assert isinstance(infidelity, float)
-        assert infidelity <= 1e-2
+        assert infidelity <= 1e-3
         assert isinstance(infidelity_nodecay, float)
-        assert infidelity_nodecay <= 1e-2
+        assert infidelity_nodecay <= infidelity
         assert isinstance(ryd_time, float)
-        assert ryd_time >= 0.0
+        assert 0.0 <= ryd_time <= params.duration

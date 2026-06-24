@@ -79,9 +79,10 @@ class GateFamily:
             Reduced infidelity value according to `self.reduction`.
 
         """
+        pulse_ansatz = pulse.pulse_ansatz
         costs = jnp.stack(
             [
-                gate.cost(pulse.generate_pulse_ansatz(pv), pulse._generate_pulse_params_arrays(params, pv), tol)
+                gate.cost(pulse_ansatz, pulse._generate_pulse_params_arrays(params, pv), tol)
                 for gate, pv in zip(self.gates, self.parameter_values)
             ]
         )

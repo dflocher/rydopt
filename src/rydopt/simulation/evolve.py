@@ -4,7 +4,6 @@ from functools import partial
 
 import jax
 import jax.numpy as jnp
-import numpy as np
 
 from rydopt.protocols import Evolvable, PulseAnsatzLike
 from rydopt.types import HamiltonianFunction, ParamsFloatLike
@@ -66,7 +65,6 @@ def evolve(
 
     # Schrödinger equation for the basis states. The Hamiltonian is chosen via lax.switch
     # based on the index of the basis state, with padding to max_dim × max_dim.
-
     def apply_hamiltonian(
         t: float | jax.Array,
         params: ParamsFloatLike,
@@ -83,21 +81,18 @@ def evolve(
         for h, d in zip(gate.hamiltonian_functions_for_basis_states(), dims)
     )
 
-    def schroedinger_eq(
-        t: int | float | jax.Array | np.ndarray, psi: jax.Array, args: tuple[ParamsFloatLike, int]
-    ) -> jax.Array:
+    def schroedinger_eq(t: float | jax.Array, psi: jax.Array, args: tuple[ParamsFloatLike, int]) -> jax.Array:
         params, idx = args
         return jax.lax.switch(idx, branches, t, params, psi)
 
     # Propagator
-    term = diffrax.ODETerm(schroedinger_eq)  # type: ignore[arg-type]
+    term = diffrax.ODETerm(schroedinger_eq)  # ty: ignore[invalid-argument-type]
     solver = diffrax.Tsit5()
     stepsize_controller = diffrax.PIDController(rtol=0.1 * tol, atol=0.1 * tol)
     saveat = diffrax.SaveAt(t1=True)
 
     def propagate(args: tuple[jax.Array, int]) -> jax.Array:
         psi_initial, idx = args
-
         sol = diffrax.diffeqsolve(
             term,
             solver,
@@ -131,7 +126,7 @@ def _evolve_optimized_for_gpus(
     import diffrax
 
     def schroedinger_eq(
-        t: int | float | jax.Array | np.ndarray,
+        t: float | jax.Array,
         psi_tuple: tuple[jax.Array, ...],
         _: object,
     ) -> tuple[jax.Array, ...]:
@@ -143,7 +138,7 @@ def _evolve_optimized_for_gpus(
     solver = diffrax.Dopri8()
     stepsize_controller = diffrax.PIDController(rtol=0.1 * tol, atol=0.1 * tol)
     saveat = diffrax.SaveAt(t1=True)
-    term = diffrax.ODETerm(schroedinger_eq)  # type: ignore[arg-type]
+    term = diffrax.ODETerm(schroedinger_eq)  # ty: ignore[invalid-argument-type]
 
     sol = diffrax.diffeqsolve(
         term,

@@ -208,7 +208,7 @@ def _print_gate(title: str, params: ParamsFloatLike, infidelity: float, tol: flo
         print("> infidelity <= tol")
     else:
         print(f"> infidelity = {infidelity:.6e}")
-    print(repr(params))
+    print(params)
 
 
 def _print_summary(method_name: str, runtime: float, tol: float, num_converged: int) -> None:

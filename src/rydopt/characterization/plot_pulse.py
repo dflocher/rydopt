@@ -167,8 +167,8 @@ def plot_pulse_family(
     linestyles = ["-", "--", ":"]
     ylabel = ""
 
+    pulse = pulse_family.pulse_ansatz
     for i, gate_param in enumerate(gate_family.parameter_values):
-        pulse = pulse_family.generate_pulse_ansatz(gate_param)
         params = pulse_family.generate_pulse_params(family_params, gate_param)
 
         duration = params[0]

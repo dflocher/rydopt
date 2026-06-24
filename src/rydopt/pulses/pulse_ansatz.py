@@ -4,7 +4,6 @@ from dataclasses import dataclass, field
 
 import jax
 import jax.numpy as jnp
-import numpy as np
 from numpy.typing import ArrayLike
 
 from rydopt.pulses.ansatz_functions import PulseAnsatzFunction
@@ -17,12 +16,7 @@ class _FixedConstant(PulseAnsatzFunction):
         super().__init__(0)
         self._value = value
 
-    def __call__(
-        self,
-        t: int | float | jax.Array | np.ndarray,
-        duration: float | jax.Array,
-        ansatz_params: jax.Array,
-    ) -> jax.Array:
+    def __call__(self, t: float | jax.Array, duration: float | jax.Array, ansatz_params: jax.Array) -> jax.Array:
         del duration, ansatz_params
         return self._value + jnp.zeros_like(t)
 
@@ -30,12 +24,6 @@ class _FixedConstant(PulseAnsatzFunction):
 def _is_unpacked(params: ParamsFloatLike) -> bool:
     """already-unpacked params are a 4-tuple/list of components."""
     return isinstance(params, (tuple, list)) and len(params) == 4
-
-
-def pack_params(unpacked_params: ParamsFloatLike) -> ParamsFloatLike:
-    if _is_unpacked(unpacked_params):
-        return jnp.ravel(jnp.concatenate([jnp.atleast_1d(param) for param in unpacked_params]))
-    return unpacked_params
 
 
 @dataclass
@@ -134,7 +122,7 @@ class PulseAnsatz:
 
     def evaluate_pulse_functions(
         self,
-        t: int | float | jax.Array | np.ndarray,
+        t: float | jax.Array,
         params: ParamsFloatLike,
         gate_param: float | jax.Array | None = None,
     ) -> tuple[jax.Array, jax.Array, jax.Array, jax.Array]:
@@ -303,7 +291,7 @@ class TwoPhotonPulseAnsatz:
 
     def evaluate_pulse_functions(
         self,
-        t: int | float | jax.Array | np.ndarray,
+        t: float | jax.Array,
         params: ParamsFloatLike,
         gate_param: float | jax.Array | None = None,
     ) -> tuple[jax.Array, jax.Array, jax.Array, jax.Array]:
