@@ -130,18 +130,44 @@ class PolynomialPulseMap:
 
 
 @dataclass
-class PolynomialPulseMapWithPade(PolynomialPulseMap):
-    r"""Polynomial map of ansatz parameters with a Padé expression for the duration.
+class PolynomialPulseMapWithEmpirical(PolynomialPulseMap):
+    r"""Polynomial map of ansatz parameters with an empirical expression for the duration.
 
     The duration parameters are ``(piduration, prefactor, exponent)``. The
-    Padé expression is used for the pulse duration, while detuning, laser
+    empirical expression is used for the pulse duration, while detuning, laser
     phase, and Rabi parameters use the polynomial mapping from
     :class:`PolynomialPulseMap`.
+
+    The empirical expression is based on fitting the functional form to CP-gate durations
+    for a range of target phases. The durations were extracted from Extended Data Fig. 5b
+    of `Evered et al., Nature 622, 268-272 (2023) <https://doi.org/10.1038/s41586-023-06481-y>`_.
+    The empirical expression is given by
+
+    .. math::
+
+         T(\theta) = T_\pi
+         \left[
+         x\left(d^{-2} + (1 - d^{-2})x^2\right)^{-1/2}
+         \right]^p,
+
+    where
+
+    .. math::
+
+         x = 2\min\left(\frac{\theta}{2\pi}, 1 - \frac{\theta}{2\pi}\right),
+         \qquad
+         d = \frac{1}{2}\left(\frac{A}{T_\pi}\right)^{1/p}.
+
+    Here :math:`\theta` is the target phase in radians, :math:`T_\pi`
+    is ``piduration``, :math:`A` is ``prefactor``, and :math:`p` is
+    ``exponent``. The expression is symmetric under
+    :math:`\theta \mapsto 2\pi - \theta` and satisfies
+    :math:`T(\pi) = T_\pi`.
 
     Args:
         degrees: polynomial degree for
             ``(duration, detuning, phase, rabi)``. The duration degree is
-            ignored because the duration uses the Padé expression.
+            ignored because the duration uses the empirical expression.
 
     """
 
@@ -150,22 +176,20 @@ class PolynomialPulseMapWithPade(PolynomialPulseMap):
         target_phase: float | jax.Array,
         packed_params: tuple[jax.Array, jax.Array, jax.Array, jax.Array],
     ) -> jax.Array:
-        normalized_phase = jnp.asarray(target_phase)
+        phase = jnp.asarray(target_phase)
         params = jnp.ravel(jnp.asarray(packed_params[0]))
 
         if params.size != 3:
             raise ValueError(
-                "PolynomialPulseMapWithPade expects three duration parameters: (piduration, prefactor, exponent)"
+                "PolynomialPulseMapWithEmpirical expects three duration parameters: (piduration, prefactor, exponent)"
             )
 
         piduration, prefactor, exponent = params
-        phase = 2.0 * jnp.pi * normalized_phase
-        r = piduration / (prefactor * 0.5**exponent)
-        b = (1.0 - r) / (exponent * r) - 1.0
-        a = r * (1.0 + b) - 1.0
-        return (
-            prefactor * (phase / (2.0 * jnp.pi)) ** exponent * (1.0 + a * phase / jnp.pi) / (1.0 + b * phase / jnp.pi)
-        )
+
+        x = 2 * jnp.minimum(phase / (2.0 * jnp.pi), 1.0 - phase / (2.0 * jnp.pi))
+        d = 0.5 * (prefactor / piduration) ** (1.0 / exponent)
+        shape = x * (d**-2 + (1.0 - d**-2) * x**2) ** -0.5
+        return piduration * shape**exponent
 
     def map_shape(
         self,
