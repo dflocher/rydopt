@@ -124,7 +124,6 @@ class PulseAnsatz:
         self,
         t: float | jax.Array,
         params: ParamsFloatLike,
-        gate_param: float | jax.Array | None = None,
     ) -> tuple[jax.Array, jax.Array, jax.Array, jax.Array]:
         r"""Evaluate the detuning, phase, and the rabi sweeps for fixed
         parameters at the given times.
@@ -132,13 +131,11 @@ class PulseAnsatz:
         Args:
             t: Time samples at which the functions are evaluated
             params: Pulse parameters
-            gate_param: only useful for PulseFamilyAnsatz. Here is None.
 
         Returns:
             Tuple ``(detuning_1, detuning_r, phase, rabi)``
 
         """
-        del gate_param
         duration, detuning_ansatz_params, phase_ansatz_params, rabi_ansatz_params = self._unpack_params_arrays(params)
 
         return (
@@ -293,7 +290,6 @@ class TwoPhotonPulseAnsatz:
         self,
         t: float | jax.Array,
         params: ParamsFloatLike,
-        gate_param: float | jax.Array | None = None,
     ) -> tuple[jax.Array, jax.Array, jax.Array, jax.Array]:
         r"""Evaluate the effective two-photon detuning, phase, and the rabi sweeps for fixed
         parameters at the given times.
@@ -301,13 +297,11 @@ class TwoPhotonPulseAnsatz:
         Args:
             t: Time samples at which the functions are evaluated
             params: Pulse parameters
-            gate_param: only useful for PulseFamilyAnsatz. Here is None.
 
         Returns:
             Tuple ``(detuning_1, detuning_r, phase, rabi)``
 
         """
-        del gate_param
         duration, detuning_params, phase_params, rabi_params = self._unpack_params_arrays(params)
 
         lower_detuning_count, lower_phase_count, lower_rabi_count = self.lower_param_counts

@@ -5,12 +5,12 @@ from functools import partial
 import jax
 import jax.numpy as jnp
 
-from rydopt.protocols import Evolvable, PulseAnsatzLike
+from rydopt.protocols import EvaluatablePulseAnsatz, Evolvable
 from rydopt.types import HamiltonianFunction, ParamsFloatLike, TimeLike
 
 
 def evolve(
-    gate: Evolvable, pulse: PulseAnsatzLike, params: ParamsFloatLike, tol: float = 1e-7
+    gate: Evolvable, pulse: EvaluatablePulseAnsatz, params: ParamsFloatLike, tol: float = 1e-7
 ) -> tuple[jax.Array, ...]:
     r"""The function performs the time evolution of all initial states :math:`|\psi_i(0)\rangle` (specified in the gate
     object), under the pulse Hamiltonian :math:`H`.
@@ -118,7 +118,7 @@ def evolve(
 
 
 def _evolve_optimized_for_gpus(
-    gate: Evolvable, pulse: PulseAnsatzLike, params: ParamsFloatLike, tol: float = 1e-7
+    gate: Evolvable, pulse: EvaluatablePulseAnsatz, params: ParamsFloatLike, tol: float = 1e-7
 ) -> tuple[jax.Array, ...]:
     # When we import diffrax, at least one jnp array is allocated (see optimistix/_misc.py, line 138). Thus,
     # if we change the default device after we have imported diffrax, some memory is allocated on the

@@ -5,11 +5,13 @@ from functools import partial
 import jax
 import jax.numpy as jnp
 
-from rydopt.protocols import PulseAnsatzLike, RydbergSystem
+from rydopt.protocols import EvaluatablePulseAnsatz, RydbergSystem
 from rydopt.types import HamiltonianFunction, ParamsFloatLike, TimeLike
 
 
-def rydberg_time(gate: RydbergSystem, pulse: PulseAnsatzLike, params: ParamsFloatLike, tol: float = 1e-7) -> jax.Array:
+def rydberg_time(
+    gate: RydbergSystem, pulse: EvaluatablePulseAnsatz, params: ParamsFloatLike, tol: float = 1e-7
+) -> jax.Array:
     r"""The function determines the total time spent in Rydberg states during a gate pulse:
 
     .. math::

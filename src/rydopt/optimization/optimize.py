@@ -9,7 +9,7 @@ from contextlib import nullcontext
 from dataclasses import dataclass
 from queue import SimpleQueue
 from types import TracebackType
-from typing import Generic, Literal, Protocol, TypeVar, cast, overload
+from typing import Generic, Literal, Protocol, TypeAlias, TypeVar, cast, overload
 
 import jax
 import jax.numpy as jnp
@@ -18,7 +18,7 @@ import numpy.typing as npt
 import optax
 from tqdm.auto import tqdm
 
-from rydopt.protocols import Optimizable, PulseAnsatzLike
+from rydopt.protocols import Optimizable, UnpackingPulseAnsatz
 from rydopt.pulses import PulseFamilyParams, PulseParams
 from rydopt.types import ParamsBoolLike, ParamsFloatLike, TimeLike
 
@@ -27,6 +27,8 @@ tqdm.monitor_interval = 0
 ParamsType = TypeVar("ParamsType", covariant=True)
 ValueType = TypeVar("ValueType", covariant=True)
 HistoryType = TypeVar("HistoryType", covariant=True)
+OptimizedParams: TypeAlias = PulseParams[float] | PulseFamilyParams[float]
+OptimizablePulseAnsatz: TypeAlias = UnpackingPulseAnsatz[OptimizedParams]
 
 
 @dataclass
@@ -187,7 +189,7 @@ class _ProgressBar:
 # -----------------------------------------------------------------------------
 def _make_infidelity(
     gate: Optimizable,
-    pulse: PulseAnsatzLike,
+    pulse: OptimizablePulseAnsatz,
     params_full: npt.NDArray[np.float64],
     params_trainable_indices: npt.NDArray[np.intp],
     tol: float,
@@ -340,7 +342,7 @@ _adam_scan: Callable[..., AdamScanReturn] = cast(
 
 def _adam_optimize(
     gate: Optimizable,
-    pulse: PulseAnsatzLike,
+    pulse: OptimizablePulseAnsatz,
     params_full: npt.NDArray[np.float64],
     params_trainable: npt.NDArray[np.float64],
     params_trainable_indices: npt.NDArray[np.intp],
@@ -420,7 +422,7 @@ def _adam_optimize(
 @overload
 def optimize(
     gate: Optimizable,
-    pulse: PulseAnsatzLike,
+    pulse: OptimizablePulseAnsatz,
     initial_params: ParamsFloatLike,
     fixed_initial_params: ParamsBoolLike | None = ...,
     *,
@@ -429,13 +431,13 @@ def optimize(
     tol: float = ...,
     return_history: Literal[True],
     verbose: bool = ...,
-) -> OptimizationResult[PulseParams[float] | PulseFamilyParams[float], float, npt.NDArray[np.float64]]: ...
+) -> OptimizationResult[OptimizedParams, float, npt.NDArray[np.float64]]: ...
 
 
 @overload
 def optimize(
     gate: Optimizable,
-    pulse: PulseAnsatzLike,
+    pulse: OptimizablePulseAnsatz,
     initial_params: ParamsFloatLike,
     fixed_initial_params: ParamsBoolLike | None = ...,
     *,
@@ -444,12 +446,12 @@ def optimize(
     tol: float = ...,
     return_history: Literal[False] = False,
     verbose: bool = ...,
-) -> OptimizationResult[PulseParams[float] | PulseFamilyParams[float], float, None]: ...
+) -> OptimizationResult[OptimizedParams, float, None]: ...
 
 
 def optimize(
     gate: Optimizable,
-    pulse: PulseAnsatzLike,
+    pulse: OptimizablePulseAnsatz,
     initial_params: ParamsFloatLike,
     fixed_initial_params: ParamsBoolLike | None = None,
     *,
@@ -458,7 +460,7 @@ def optimize(
     tol: float = 1e-7,
     return_history: bool = False,
     verbose: bool = False,
-) -> OptimizationResult[PulseParams[float] | PulseFamilyParams[float], float, npt.NDArray[np.float64] | None]:
+) -> OptimizationResult[OptimizedParams, float, npt.NDArray[np.float64] | None]:
     r"""Function that optimizes an initial parameter guess in order to realize the desired gate.
 
     Example:
@@ -565,7 +567,7 @@ def optimize(
 @overload
 def multi_start_optimize(
     gate: Optimizable,
-    pulse: PulseAnsatzLike,
+    pulse: OptimizablePulseAnsatz,
     min_initial_params: ParamsFloatLike,
     max_initial_params: ParamsFloatLike,
     fixed_initial_params: ParamsBoolLike | None = ...,
@@ -580,15 +582,13 @@ def multi_start_optimize(
     return_history: Literal[True],
     return_all: Literal[True],
     verbose: bool = ...,
-) -> OptimizationResult[
-    list[PulseParams[float] | PulseFamilyParams[float]], npt.NDArray[np.float64], npt.NDArray[np.float64]
-]: ...
+) -> OptimizationResult[list[OptimizedParams], npt.NDArray[np.float64], npt.NDArray[np.float64]]: ...
 
 
 @overload
 def multi_start_optimize(
     gate: Optimizable,
-    pulse: PulseAnsatzLike,
+    pulse: OptimizablePulseAnsatz,
     min_initial_params: ParamsFloatLike,
     max_initial_params: ParamsFloatLike,
     fixed_initial_params: ParamsBoolLike | None = ...,
@@ -603,13 +603,13 @@ def multi_start_optimize(
     return_history: Literal[False] = False,
     return_all: Literal[True],
     verbose: bool = ...,
-) -> OptimizationResult[list[PulseParams[float] | PulseFamilyParams[float]], npt.NDArray[np.float64], None]: ...
+) -> OptimizationResult[list[OptimizedParams], npt.NDArray[np.float64], None]: ...
 
 
 @overload
 def multi_start_optimize(
     gate: Optimizable,
-    pulse: PulseAnsatzLike,
+    pulse: OptimizablePulseAnsatz,
     min_initial_params: ParamsFloatLike,
     max_initial_params: ParamsFloatLike,
     fixed_initial_params: ParamsBoolLike | None = ...,
@@ -624,13 +624,13 @@ def multi_start_optimize(
     return_history: Literal[True],
     return_all: Literal[False] = False,
     verbose: bool = ...,
-) -> OptimizationResult[PulseParams[float] | PulseFamilyParams[float], float, npt.NDArray[np.float64]]: ...
+) -> OptimizationResult[OptimizedParams, float, npt.NDArray[np.float64]]: ...
 
 
 @overload
 def multi_start_optimize(
     gate: Optimizable,
-    pulse: PulseAnsatzLike,
+    pulse: OptimizablePulseAnsatz,
     min_initial_params: ParamsFloatLike,
     max_initial_params: ParamsFloatLike,
     fixed_initial_params: ParamsBoolLike | None = ...,
@@ -645,12 +645,12 @@ def multi_start_optimize(
     return_history: Literal[False] = False,
     return_all: Literal[False] = False,
     verbose: bool = ...,
-) -> OptimizationResult[PulseParams[float] | PulseFamilyParams[float], float, None]: ...
+) -> OptimizationResult[OptimizedParams, float, None]: ...
 
 
 def multi_start_optimize(
     gate: Optimizable,
-    pulse: PulseAnsatzLike,
+    pulse: OptimizablePulseAnsatz,
     min_initial_params: ParamsFloatLike,
     max_initial_params: ParamsFloatLike,
     fixed_initial_params: ParamsBoolLike | None = None,
@@ -666,7 +666,7 @@ def multi_start_optimize(
     return_all: bool = False,
     verbose: bool = False,
 ) -> OptimizationResult[
-    PulseParams[float] | PulseFamilyParams[float] | list[PulseParams[float] | PulseFamilyParams[float]],
+    OptimizedParams | list[OptimizedParams],
     float | npt.NDArray[np.float64],
     npt.NDArray[np.float64] | None,
 ]:

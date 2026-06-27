@@ -275,34 +275,3 @@ class PulseFamilyAnsatz:
         r"""Generate the pulse duration for a given gate parameter."""
         unpacked = self._unpack_params_arrays(trainable_params)
         return self.pulse_map.map_duration(self.target_phase(gate_param), unpacked)
-
-    def evaluate_pulse_functions(
-        self,
-        t: float | jax.Array,
-        params: ParamsFloatLike,
-        gate_param: float | jax.Array | None = None,
-    ) -> tuple[jax.Array, jax.Array, jax.Array, jax.Array]:
-        r"""Evaluate the detuning, phase, and rabi sweeps at the given times for a
-        gate family with a predefined target phase.
-
-        Args:
-            t: time samples at which the functions are evaluated.
-            params: family pulse parameters.
-            gate_param: parameter value corresponding to a predefined gate instance.
-
-        Returns:
-            Tuple ``(detuning_1, detuning_r, phase, rabi)``.
-
-        """
-        (
-            duration,
-            detuning_ansatz_params,
-            phase_ansatz_params,
-            rabi_ansatz_params,
-        ) = self._generate_pulse_params_arrays(params, gate_param)
-        return (
-            jnp.zeros_like(t),
-            self.detuning_ansatz(t, duration, detuning_ansatz_params),
-            self.phase_ansatz(t, duration, phase_ansatz_params),
-            self.rabi_ansatz(t, duration, rabi_ansatz_params),
-        )
