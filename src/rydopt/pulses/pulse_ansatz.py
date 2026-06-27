@@ -118,7 +118,7 @@ class PulseAnsatz:
 
         """
         duration, detuning_params, phase_params, rabi_params = self._unpack_params_arrays(trainable_params)
-        return PulseParams(float(duration), detuning_params, phase_params, rabi_params)
+        return PulseParams(duration, detuning_params, phase_params, rabi_params)
 
     def evaluate_pulse_functions(
         self,
@@ -282,7 +282,7 @@ class TwoPhotonPulseAnsatz:
 
         """
         duration, detuning_params, phase_params, rabi_params = self._unpack_params_arrays(trainable_params)
-        return PulseParams(float(duration), detuning_params, phase_params, rabi_params)
+        return PulseParams(duration, detuning_params, phase_params, rabi_params)
 
     @staticmethod
     def _split_1d(packed_params: ArrayLike, lower_count: int) -> tuple[jax.Array, jax.Array]:

@@ -95,7 +95,7 @@ templates_path = ["_templates"]
 # -- Work around Sphinx showing overloads ------------------------------------
 # https://github.com/sphinx-doc/sphinx/issues/10359
 
-from sphinx.pycode import ModuleAnalyzer # type: ignore
+from sphinx.pycode import ModuleAnalyzer # ty: ignore[unresolved-import]
 
 analyze_fn = ModuleAnalyzer.analyze
 

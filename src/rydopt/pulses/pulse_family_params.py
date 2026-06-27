@@ -1,18 +1,19 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
-from typing import Any, Generic, Literal, TypeVar, overload
+from typing import Generic, TypeVar, cast, overload
 
 import jax
 import jax.numpy as jnp
 import numpy as np
 import numpy.typing as npt
+from jax.typing import ArrayLike as JaxArrayLike
 
 ParamScalar = TypeVar("ParamScalar", float, bool)
 
 
 @jax.tree_util.register_pytree_node_class
-class PulseFamilyParams(Sequence[Any], Generic[ParamScalar]):
+class PulseFamilyParams(Sequence[jax.Array], Generic[ParamScalar]):
     r"""PulseFamily parameter container.
 
     Stores the four pulse-family parameter groups
@@ -32,15 +33,15 @@ class PulseFamilyParams(Sequence[Any], Generic[ParamScalar]):
 
     def __init__(
         self,
-        duration: npt.ArrayLike = (),
-        detuning_params: npt.ArrayLike = (),
-        phase_params: npt.ArrayLike = (),
-        rabi_params: npt.ArrayLike = (),
+        duration: JaxArrayLike | npt.ArrayLike = (),
+        detuning_params: JaxArrayLike | npt.ArrayLike = (),
+        phase_params: JaxArrayLike | npt.ArrayLike = (),
+        rabi_params: JaxArrayLike | npt.ArrayLike = (),
     ) -> None:
-        duration_arr = np.asarray(duration)
-        detuning_arr = np.asarray(detuning_params)
-        phase_arr = np.asarray(phase_params)
-        rabi_arr = np.asarray(rabi_params)
+        duration_arr = jnp.asarray(duration)
+        detuning_arr = jnp.asarray(detuning_params)
+        phase_arr = jnp.asarray(phase_params)
+        rabi_arr = jnp.asarray(rabi_params)
 
         # Store flattened arrays internally.
         self._duration_params = duration_arr.reshape(-1)
@@ -61,30 +62,25 @@ class PulseFamilyParams(Sequence[Any], Generic[ParamScalar]):
         return 4
 
     @property
-    def duration_params(self) -> npt.NDArray[Any]:
-        return np.asarray(self._duration_params).reshape(self._shapes[0])
+    def duration_params(self) -> jax.Array:
+        return jnp.asarray(self._duration_params).reshape(self._shapes[0])
 
     @property
-    def detuning_params(self) -> npt.NDArray[Any]:
-        return np.asarray(self._detuning_params).reshape(self._shapes[1])
+    def detuning_params(self) -> jax.Array:
+        return jnp.asarray(self._detuning_params).reshape(self._shapes[1])
 
     @property
-    def phase_params(self) -> npt.NDArray[Any]:
-        return np.asarray(self._phase_params).reshape(self._shapes[2])
+    def phase_params(self) -> jax.Array:
+        return jnp.asarray(self._phase_params).reshape(self._shapes[2])
 
     @property
-    def rabi_params(self) -> npt.NDArray[Any]:
-        return np.asarray(self._rabi_params).reshape(self._shapes[3])
+    def rabi_params(self) -> jax.Array:
+        return jnp.asarray(self._rabi_params).reshape(self._shapes[3])
 
     @property
     def _components(
         self,
-    ) -> tuple[
-        npt.NDArray[Any],
-        npt.NDArray[Any],
-        npt.NDArray[Any],
-        npt.NDArray[Any],
-    ]:
+    ) -> tuple[jax.Array, jax.Array, jax.Array, jax.Array]:
         return (
             self._duration_params,
             self._detuning_params,
@@ -93,18 +89,15 @@ class PulseFamilyParams(Sequence[Any], Generic[ParamScalar]):
         )
 
     @overload
-    def __getitem__(self, index: Literal[0, 1, 2, 3]) -> npt.NDArray[Any]: ...
+    def __getitem__(self, index: int) -> jax.Array: ...
 
     @overload
-    def __getitem__(self, index: int) -> npt.NDArray[Any]: ...
-
-    @overload
-    def __getitem__(self, index: slice) -> tuple[npt.NDArray[Any], ...]: ...
+    def __getitem__(self, index: slice) -> Sequence[jax.Array]: ...
 
     def __getitem__(
         self,
         index: int | slice,
-    ) -> npt.NDArray[Any] | tuple[npt.NDArray[Any], ...]:
+    ) -> jax.Array | Sequence[jax.Array]:
         """Return one parameter component or a sliced tuple of parameter components."""
         return self._components[index]
 
@@ -114,10 +107,12 @@ class PulseFamilyParams(Sequence[Any], Generic[ParamScalar]):
         copy: bool | None = None,
     ) -> npt.NDArray[np.float64] | npt.NDArray[np.bool_]:
         """Return the flattened representation used by ``np.asarray``."""
-        del dtype
         array = np.concatenate(self._components)
+        if dtype is not None:
+            array = array.astype(dtype, copy=False)
         if copy:
             return array.copy()
+
         return array
 
     def __jax_array__(self) -> jax.Array:
@@ -127,7 +122,12 @@ class PulseFamilyParams(Sequence[Any], Generic[ParamScalar]):
     # ------------------------------------------------------------------ #
     # JAX pytree protocol
     # ------------------------------------------------------------------ #
-    def tree_flatten(self) -> tuple[tuple[Any, Any, Any, Any], tuple[Any, ...]]:
+    def tree_flatten(
+        self,
+    ) -> tuple[
+        tuple[jax.Array, jax.Array, jax.Array, jax.Array],
+        tuple[tuple[int, ...], tuple[int, ...], tuple[int, ...], tuple[int, ...]],
+    ]:
         """Return (children, aux_data) for JAX tree utilities.
 
         Children are the four flattened arrays (these are traced/transformed);
@@ -140,15 +140,15 @@ class PulseFamilyParams(Sequence[Any], Generic[ParamScalar]):
     @classmethod
     def tree_unflatten(
         cls,
-        aux_data: tuple[Any, ...],
-        children: tuple[Any, Any, Any, Any],
-    ) -> PulseFamilyParams[Any]:
+        aux_data: tuple[tuple[int, ...], tuple[int, ...], tuple[int, ...], tuple[int, ...]],
+        children: tuple[jax.Array, jax.Array, jax.Array, jax.Array],
+    ) -> PulseFamilyParams[ParamScalar]:
         """Reconstruct an instance from (aux_data, children) for JAX tree utilities.
 
         Does not re-flatten or reshape: children are already the flattened
         arrays and are assigned directly.
         """
-        self = object.__new__(cls)
+        self = cast(PulseFamilyParams[ParamScalar], object.__new__(cls))
         (
             self._duration_params,
             self._detuning_params,
@@ -162,10 +162,10 @@ class PulseFamilyParams(Sequence[Any], Generic[ParamScalar]):
         """Return a multi-line string representation of the pulse family parameters."""
         string_length = 17
 
-        def fmt(name: str, arr: npt.NDArray[Any]) -> str:
+        def fmt(name: str, arr: jax.Array) -> str:
             label = f"  {name:<{string_length}} "
             return label + np.array2string(
-                arr,
+                np.asarray(arr),
                 separator=", ",
                 max_line_width=120,
                 prefix=" " * len(label),
