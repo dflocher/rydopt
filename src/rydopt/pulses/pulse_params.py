@@ -1,18 +1,19 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
-from typing import Any, Generic, Literal, TypeVar, cast, overload
+from typing import Generic, TypeVar, cast, overload
 
 import jax
 import jax.numpy as jnp
 import numpy as np
 import numpy.typing as npt
+from jax.typing import ArrayLike as JaxArrayLike
 
 ParamScalar = TypeVar("ParamScalar", float, bool)
 
 
 @jax.tree_util.register_pytree_node_class
-class PulseParams(Sequence[Any], Generic[ParamScalar]):
+class PulseParams(Sequence[jax.Array], Generic[ParamScalar]):
     r"""Pulse-parameter container.
 
     The container stores pulse parameters components
@@ -23,45 +24,40 @@ class PulseParams(Sequence[Any], Generic[ParamScalar]):
 
     def __init__(
         self,
-        duration: ParamScalar,
-        detuning_params: npt.ArrayLike = (),
-        phase_params: npt.ArrayLike = (),
-        rabi_params: npt.ArrayLike = (),
+        duration: JaxArrayLike | npt.ArrayLike,
+        detuning_params: JaxArrayLike | npt.ArrayLike = (),
+        phase_params: JaxArrayLike | npt.ArrayLike = (),
+        rabi_params: JaxArrayLike | npt.ArrayLike = (),
     ) -> None:
-        self._duration = np.asarray(duration).reshape(1)
-        self._detuning_params = np.asarray(detuning_params).reshape(-1)
-        self._phase_params = np.asarray(phase_params).reshape(-1)
-        self._rabi_params = np.asarray(rabi_params).reshape(-1)
+        self._duration = jnp.asarray(duration).reshape(1)
+        self._detuning_params = jnp.asarray(detuning_params).reshape(-1)
+        self._phase_params = jnp.asarray(phase_params).reshape(-1)
+        self._rabi_params = jnp.asarray(rabi_params).reshape(-1)
 
     def __len__(self) -> int:
         """Return the number of parameter components."""
         return 4
 
     @property
-    def duration(self) -> npt.NDArray[Any]:
-        return np.asarray(self._duration)
+    def duration(self) -> jax.Array:
+        return jnp.asarray(self._duration)
 
     @property
-    def detuning_params(self) -> npt.NDArray[Any]:
-        return np.asarray(self._detuning_params)
+    def detuning_params(self) -> jax.Array:
+        return jnp.asarray(self._detuning_params)
 
     @property
-    def phase_params(self) -> npt.NDArray[Any]:
-        return np.asarray(self._phase_params)
+    def phase_params(self) -> jax.Array:
+        return jnp.asarray(self._phase_params)
 
     @property
-    def rabi_params(self) -> npt.NDArray[Any]:
-        return np.asarray(self._rabi_params)
+    def rabi_params(self) -> jax.Array:
+        return jnp.asarray(self._rabi_params)
 
     @property
     def _components(
         self,
-    ) -> tuple[
-        Any,
-        npt.NDArray[Any],
-        npt.NDArray[Any],
-        npt.NDArray[Any],
-    ]:
+    ) -> tuple[jax.Array, jax.Array, jax.Array, jax.Array]:
         return (
             self._duration,
             self._detuning_params,
@@ -70,20 +66,14 @@ class PulseParams(Sequence[Any], Generic[ParamScalar]):
         )
 
     @overload
-    def __getitem__(self, index: Literal[0]) -> ParamScalar: ...
+    def __getitem__(self, index: int) -> jax.Array: ...
 
     @overload
-    def __getitem__(self, index: Literal[1, 2, 3]) -> npt.NDArray[Any]: ...
+    def __getitem__(self, index: slice) -> Sequence[jax.Array]: ...
 
-    @overload
-    def __getitem__(self, index: int) -> ParamScalar | npt.NDArray[Any]: ...
-
-    @overload
-    def __getitem__(self, index: slice) -> tuple[npt.NDArray[Any], ...]: ...
-
-    def __getitem__(self, index: int | slice) -> ParamScalar | npt.NDArray[Any] | tuple[npt.NDArray[Any], ...]:
+    def __getitem__(self, index: int | slice) -> jax.Array | Sequence[jax.Array]:
         """Return one parameter component or a sliced tuple of parameter components."""
-        if isinstance(index, int) and index == 0:
+        if not isinstance(index, slice) and index == 0:
             return self._duration[0]
         return self._components[index]
 
@@ -93,8 +83,9 @@ class PulseParams(Sequence[Any], Generic[ParamScalar]):
         copy: bool | None = None,
     ) -> npt.NDArray[np.float64] | npt.NDArray[np.bool_]:
         """Return the flattened representation used by ``np.asarray``."""
-        del dtype
         array = np.concatenate(self._components)
+        if dtype is not None:
+            array = array.astype(dtype, copy=False)
         if copy:
             return array.copy()
 
@@ -104,15 +95,17 @@ class PulseParams(Sequence[Any], Generic[ParamScalar]):
         """Return the flattened representation used by ``jnp.asarray``."""
         return jnp.concatenate(self._components, axis=-1)
 
-    def tree_flatten(self) -> tuple[tuple[Any, Any, Any, Any], None]:
+    def tree_flatten(self) -> tuple[tuple[jax.Array, jax.Array, jax.Array, jax.Array], None]:
         """Return a flattened representation for JAX tree utilities."""
         return self._components, None
 
     @classmethod
-    def tree_unflatten(cls, aux_data: None, children: tuple[Any, Any, Any, Any]) -> PulseParams[Any]:
+    def tree_unflatten(
+        cls, aux_data: None, children: tuple[jax.Array, jax.Array, jax.Array, jax.Array]
+    ) -> PulseParams[ParamScalar]:
         """Reconstruct a PulseParams instance from a flattened representation for JAX tree utilities."""
         del aux_data
-        self = cast(PulseParams[Any], object.__new__(cls))
+        self = cast(PulseParams[ParamScalar], object.__new__(cls))
         self._duration, self._detuning_params, self._phase_params, self._rabi_params = children
         return self
 
@@ -120,10 +113,10 @@ class PulseParams(Sequence[Any], Generic[ParamScalar]):
         """Return a multi-line string representation of the pulse parameters."""
         string_length = 17
 
-        def fmt(name: str, arr: npt.NDArray[Any]) -> str:
+        def fmt(name: str, arr: jax.Array) -> str:
             label = f"  {name:<{string_length}} "
             return label + np.array2string(
-                arr,
+                np.asarray(arr),
                 separator=", ",
                 max_line_width=120,
                 prefix=" " * len(label),

@@ -267,7 +267,7 @@ class PulseFamilyAnsatz:
         duration, detuning_params, phase_params, rabi_params = self._generate_pulse_params_arrays(
             trainable_params, gate_param
         )
-        return PulseParams(float(duration), detuning_params, phase_params, rabi_params)
+        return PulseParams(duration, detuning_params, phase_params, rabi_params)
 
     def generate_duration(
         self, trainable_params: ParamsFloatLike, gate_param: float | jax.Array | None = None

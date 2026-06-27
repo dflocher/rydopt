@@ -162,13 +162,13 @@ def test_cphase() -> None:
     r = ro.optimization.optimize(gate_family, pulse_family, initial_params, num_steps=200, tol=1e-6)
     duration, detuning, phase, rabi = r.params
 
-    assert isinstance(duration, np.ndarray)
+    assert isinstance(duration, jax.Array)
     assert duration.shape == (degrees[0] + 1,)
-    assert isinstance(phase, np.ndarray)
+    assert isinstance(phase, jax.Array)
     assert phase.shape == (n_params * (degrees[2] + 1),)
-    assert isinstance(detuning, np.ndarray)
+    assert isinstance(detuning, jax.Array)
     assert detuning.shape == (degrees[1] + 1,)
-    assert isinstance(rabi, np.ndarray)
+    assert isinstance(rabi, jax.Array)
     assert rabi.shape == (0,)
     assert 0.0 <= r.infidelity <= 1e-3
 
