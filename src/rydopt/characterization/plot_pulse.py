@@ -7,13 +7,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from rydopt.gates import GateFamily
-from rydopt.protocols import PulseAnsatzLike
+from rydopt.protocols import EvaluatablePulseAnsatz
 from rydopt.pulses import PulseFamilyAnsatz
 from rydopt.types import ParamsFloatLike
 
 
 def _evaluate_pulse(
-    pulse: PulseAnsatzLike,
+    pulse: EvaluatablePulseAnsatz,
     params: ParamsFloatLike,
     times: jnp.ndarray,
     *,
@@ -54,7 +54,7 @@ def _evaluate_pulse(
 
 
 def plot_pulse(
-    pulse: PulseAnsatzLike,
+    pulse: EvaluatablePulseAnsatz,
     params: ParamsFloatLike,
     *,
     plot_detuning: bool = True,

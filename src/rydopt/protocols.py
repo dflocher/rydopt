@@ -38,7 +38,7 @@ class Evolvable(Protocol):
         ...
 
 
-PulseAnsatzT = TypeVar("PulseAnsatzT")
+PulseAnsatzT = TypeVar("PulseAnsatzT", contravariant=True)
 
 
 @runtime_checkable
@@ -139,34 +139,32 @@ class RydbergSystem(Evolvable, Protocol):
         ...
 
 
-PulseParamsT = TypeVar("PulseParamsT")
+PulseParamsT = TypeVar("PulseParamsT", covariant=True)
 
 
-class PulseAnsatzLike(Protocol[PulseParamsT]):
-    r"""Common interface for pulse ansatz and pulse-family ansatz objects.
-
-    Objects implementing this protocol can generate pulse controls from a set of trainable
-    parameters and are accepted by simulation and optimization routines throughout RydOpt.
-    """
+class EvaluatablePulseAnsatz(Protocol):
+    r"""Interface for pulse ansatz objects that can evaluate pulse controls."""
 
     def evaluate_pulse_functions(
         self,
         t: float | jax.Array,
         params: ParamsFloatLike,
-        gate_param: float | jax.Array | None = None,
     ) -> tuple[jax.Array, jax.Array, jax.Array, jax.Array]:
         r"""Evaluate the pulse controls at the specified times.
 
         Args:
             t: Time samples at which the pulse controls are evaluated.
             params: Pulse or pulse-family parameters.
-            gate_param: Gate-family parameter used by pulse-family ansätze. Ignored otherwise.
 
         Returns:
             Tuple ``(detuning_1, detuning_r, phase, rabi)``.
 
         """
         ...
+
+
+class UnpackingPulseAnsatz(Protocol[PulseParamsT]):
+    r"""Interface for pulse ansatz objects that can unpack trainable parameters."""
 
     def unpack_params(
         self,

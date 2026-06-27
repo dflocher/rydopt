@@ -79,8 +79,10 @@ def test_evaluate_pulse_functions_real(
     params: PulseParams,
 ) -> None:
     t = jnp.linspace(0.0, 1.0, 10)
+    pulse_ansatz = pulse.pulse_ansatz
     for gate_param in simple_gate_family.parameter_values:
-        d0, detuning, phase, rabi = pulse.evaluate_pulse_functions(t, params, gate_param)
+        generated_params = pulse.generate_pulse_params(params, gate_param)
+        d0, detuning, phase, rabi = pulse_ansatz.evaluate_pulse_functions(t, generated_params)
 
         assert d0.shape == t.shape
         assert detuning.shape == t.shape
