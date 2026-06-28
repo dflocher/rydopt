@@ -15,7 +15,7 @@ rydopt.pulses
 .. autoclass:: PolynomialPulseMap
    :members:
 
-.. autoclass:: PolynomialPulseMapWithEmpirical
+.. autoclass:: PolynomialPulseMapWithEmpiricalDuration
    :members:
 
 .. autoclass:: PulseParams

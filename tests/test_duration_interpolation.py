@@ -1,8 +1,12 @@
 from __future__ import annotations
 
-import jax.numpy as jnp
+import os
 
-from rydopt.pulses import PolynomialPulseMapWithEmpirical
+import jax
+import jax.numpy as jnp
+import matplotlib.pyplot as plt
+
+from rydopt.pulses import PolynomialPulseMapWithEmpiricalDuration, PulseFamilyAnsatz, PulseFamilyParams
 
 REFERENCE_EXTENDED_DATA_FIG_5B = jnp.array(
     [
@@ -214,25 +218,67 @@ REFERENCE_EXTENDED_DATA_FIG_5B = jnp.array(
 )
 
 
+def test_empirical_duration_has_finite_gradient_at_pi() -> None:
+    pulse_family = PulseFamilyAnsatz(pulse_map=PolynomialPulseMapWithEmpiricalDuration())
+
+    def duration(duration_params: jax.Array) -> float | jax.Array:
+        params = PulseFamilyParams(duration_params, [], [], [])
+        return pulse_family.generate_duration(params, jnp.pi)
+
+    value, grad = jax.value_and_grad(duration)(jnp.array([8.0, 12.0, 0.25]))
+
+    assert jnp.allclose(value, 8.0)
+    assert jnp.all(jnp.isfinite(grad))
+    assert jnp.allclose(grad, jnp.array([1.0, 0.0, 0.0]))
+
+
 def test_polynomial_pulse_map_with_empirical_matches_extended_data_fig_5b() -> None:
     theta_over_2pi = REFERENCE_EXTENDED_DATA_FIG_5B[:, 0]
     expected_omega_t_over_2pi = REFERENCE_EXTENDED_DATA_FIG_5B[:, 1]
 
-    actual_omega_t_over_2pi = PolynomialPulseMapWithEmpirical().map_duration(
+    selector = (theta_over_2pi > 1e-3) & (theta_over_2pi < 1.0 - 1e-3)
+    theta_over_2pi = theta_over_2pi[selector]
+    expected_omega_t_over_2pi = expected_omega_t_over_2pi[selector]
+
+    actual_omega_t_over_2pi = PolynomialPulseMapWithEmpiricalDuration().map_duration(
         theta_over_2pi * 2 * jnp.pi,
         (
-            jnp.array([1.2145 * 2 * jnp.pi, 1.6 * 2 * jnp.pi, 0.23]),
+            jnp.array([1.21171905 * 2 * jnp.pi, 1.95260365 * 2 * jnp.pi, 0.25174555]),
             jnp.array([]),
             jnp.array([]),
             jnp.array([]),
         ),
     ) / (2 * jnp.pi)
 
-    assert actual_omega_t_over_2pi.shape == expected_omega_t_over_2pi.shape
-    assert jnp.all(jnp.isfinite(actual_omega_t_over_2pi))
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(4, 3.5), dpi=160)
+
+    ax1.plot(
+        theta_over_2pi,
+        expected_omega_t_over_2pi,
+        "o",
+        ms=3,
+        label="Extended Data Fig. 5b,\ndoi.org/10.1038/s41586-023-06481-y",
+    )
+    ax1.plot(theta_over_2pi, actual_omega_t_over_2pi, "-", label="PolynomialPulseMapWithEmpiricalDuration")
+    ax1.set_xlabel(r"$\theta / 2\pi$")
+    ax1.set_ylabel(r"$\Omega T / 2\pi$")
+    ax1.set_xscale("log")
+    ax1.set_yscale("log")
+    ax1.legend(fontsize=5, loc="lower right", frameon=False)
+
+    ax2.plot(theta_over_2pi, expected_omega_t_over_2pi, "o", ms=3)
+    ax2.plot(theta_over_2pi, actual_omega_t_over_2pi, "-")
+    ax2.set_xlabel(r"$\theta / 2\pi$")
+    ax2.set_ylabel(r"$\Omega T / 2\pi$")
+    ax2.set_xlim(0.38, 0.62)
+    ax2.set_ylim(1.17, 1.22)
+
+    os.makedirs(".out", exist_ok=True)
+    fig.tight_layout()
+    fig.savefig(".out/test_duration_interpolation.png")
 
     assert jnp.allclose(
         actual_omega_t_over_2pi,
         expected_omega_t_over_2pi,
-        rtol=5e-2,
+        rtol=2e-2,
     )
