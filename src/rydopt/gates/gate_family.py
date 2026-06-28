@@ -1,18 +1,14 @@
+import math
 from collections.abc import Sequence
 from typing import Literal
 
 import jax
 import jax.numpy as jnp
+from jax.scipy.special import logsumexp
 
 from rydopt.protocols import GateSystem
 from rydopt.pulses import PulseFamilyAnsatz
 from rydopt.types import ParamsFloatLike
-
-_REDUCTIONS = {"mean", "max"}
-_REDUCTION_FNS = {
-    "mean": jnp.mean,
-    "max": jnp.max,
-}
 
 
 class GateFamily:
@@ -45,7 +41,10 @@ class GateFamily:
         parameter_values: Sequence of scalar parameters (same length as `fixed_parameter_gates`)
             that controls the pulse family parametrization.
         reduction: Reduction operation applied to the per-gate infidelities.
-            One of {"mean", "max"}.
+            One of {"mean", "max"} or a float value for a softmax reduction (a value of 0.0
+            corresponds to the max, and a value of infinity corresponds to the mean;
+            finite values set the scale of per-gate infidelity differences that the
+            optimizer should care about).
 
     """
 
@@ -53,7 +52,7 @@ class GateFamily:
         self,
         fixed_parameter_gates: Sequence[GateSystem],
         parameter_values: Sequence[float] | jax.Array,
-        reduction: Literal["mean", "max"] = "mean",
+        reduction: Literal["mean", "max"] | float = "mean",
     ) -> None:
         if len(fixed_parameter_gates) != len(parameter_values):
             raise ValueError("fixed_parameter_gates and parameter_values must have the same length.")
@@ -61,10 +60,14 @@ class GateFamily:
         self.gates = list(fixed_parameter_gates)
         self.parameter_values = [float(p) for p in parameter_values]
         self._num_gates = len(fixed_parameter_gates)
-        if reduction in _REDUCTIONS:
+        if isinstance(reduction, float) and reduction >= 0.0:
             self.reduction = reduction
+        elif reduction == "mean":
+            self.reduction = float("inf")
+        elif reduction == "max":
+            self.reduction = 0.0
         else:
-            raise ValueError("Invalid reduction, must be mean or max.")
+            raise ValueError("Invalid reduction, must be 'mean', 'max', or a non-negative float.")
 
     def cost(self, pulse: PulseFamilyAnsatz, params: ParamsFloatLike, tol: float) -> jax.Array:
         """Compute reduced infidelity over all fixed-target-phase gates defined within the
@@ -86,4 +89,10 @@ class GateFamily:
                 for gate, pv in zip(self.gates, self.parameter_values)
             ]
         )
-        return _REDUCTION_FNS[self.reduction](costs)
+        if self.reduction == 0.0:
+            return jnp.max(costs)
+
+        if math.isinf(self.reduction):
+            return jnp.mean(costs)
+
+        return self.reduction * (logsumexp(costs / self.reduction) - math.log(self._num_gates))
