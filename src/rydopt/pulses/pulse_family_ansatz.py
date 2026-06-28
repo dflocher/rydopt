@@ -60,7 +60,7 @@ class PolynomialPulseMap:
         Works for 1-D ``coeffs`` of shape ``(degree + 1,)`` returning a scalar,
         and for 2-D ``coeffs`` of shape ``(n, degree + 1)`` returning shape ``(n,)``.
         """
-        powers = jnp.power(target_phase, jnp.arange(degree + 1))
+        powers = jnp.power(target_phase / (2 * jnp.pi), jnp.arange(degree + 1))
         return coeffs @ powers
 
     def map_duration(
@@ -130,39 +130,48 @@ class PolynomialPulseMap:
 
 
 @dataclass
-class PolynomialPulseMapWithEmpirical(PolynomialPulseMap):
-    r"""Polynomial map of ansatz parameters with an empirical expression for the duration.
+class PolynomialPulseMapWithEmpiricalDuration(PolynomialPulseMap):
+    r"""Polynomial map of ansatz parameters with an empirical expression for the duration of
+    controlled-phase gates.
 
     The duration parameters are ``(piduration, prefactor, exponent)``. The
     empirical expression is used for the pulse duration, while detuning, laser
     phase, and Rabi parameters use the polynomial mapping from
     :class:`PolynomialPulseMap`.
 
-    The empirical expression is based on fitting the functional form to CP-gate durations
+    The empirical expression is based on fitting the functional form to controlled-phase gate durations
     for a range of target phases. The durations were extracted from Extended Data Fig. 5b
     of `Evered et al., Nature 622, 268-272 (2023) <https://doi.org/10.1038/s41586-023-06481-y>`_.
-    The empirical expression is given by
+    The expression is given by
 
     .. math::
 
-         T(\theta) = T_\pi
-         \left[
-         x\left(d^{-2} + (1 - d^{-2})x^2\right)^{-1/2}
-         \right]^p,
+        T(\theta) =
+        T_\pi
+        \left[
+        1 - \left(1 - x^p\right)^q
+        \right],
 
     where
 
     .. math::
 
-         x = 2\min\left(\frac{\theta}{2\pi}, 1 - \frac{\theta}{2\pi}\right),
-         \qquad
-         d = \frac{1}{2}\left(\frac{A}{T_\pi}\right)^{1/p}.
+        x = 1 - \left|\frac{\theta}{\pi} - 1\right|,
+        \qquad
+        q = \frac{A}{T_\pi 2^p}.
 
     Here :math:`\theta` is the target phase in radians, :math:`T_\pi`
     is ``piduration``, :math:`A` is ``prefactor``, and :math:`p` is
     ``exponent``. The expression is symmetric under
-    :math:`\theta \mapsto 2\pi - \theta` and satisfies
-    :math:`T(\pi) = T_\pi`.
+    :math:`\theta \mapsto 2\pi - \theta`, satisfies
+    :math:`T(\pi) = T_\pi`, and has the endpoint behavior
+
+    .. math::
+
+         T(\theta) \sim A\left(\frac{\theta}{2\pi}\right)^p
+         \qquad \theta \to 0,
+
+    with the corresponding symmetric behavior near :math:`\theta \to 2\pi`.
 
     Args:
         degrees: polynomial degree for
@@ -181,15 +190,18 @@ class PolynomialPulseMapWithEmpirical(PolynomialPulseMap):
 
         if params.size != 3:
             raise ValueError(
-                "PolynomialPulseMapWithEmpirical expects three duration parameters: (piduration, prefactor, exponent)"
+                "PolynomialPulseMapWithEmpiricalDuration expects three duration parameters: "
+                "(piduration, prefactor, exponent)"
             )
 
         piduration, prefactor, exponent = params
 
-        x = 2 * jnp.minimum(phase / (2.0 * jnp.pi), 1.0 - phase / (2.0 * jnp.pi))
-        d = 0.5 * (prefactor / piduration) ** (1.0 / exponent)
-        shape = x * (d**-2 + (1.0 - d**-2) * x**2) ** -0.5
-        return piduration * shape**exponent
+        phase_over_2pi = phase / (2.0 * jnp.pi)
+        x = 2.0 * jnp.minimum(phase_over_2pi, 1.0 - phase_over_2pi)
+        q = prefactor / (piduration * 2.0**exponent)
+        safe_inner = jnp.maximum(1.0 - x**exponent, jnp.finfo(x.dtype).tiny)
+        duration = piduration * (-jnp.expm1(q * jnp.log(safe_inner)))
+        return jnp.where(x >= 1.0, piduration, duration)
 
     def map_shape(
         self,
@@ -277,14 +289,14 @@ class PulseFamilyAnsatz:
 
     @staticmethod
     def target_phase(gate_param: float | jax.Array | None) -> float | jax.Array:
-        r"""Return the gate-family parameter normalized by :math:`2\pi`.
+        r"""Return the gate-family parameter.
 
-        The normalized parameter is used as the input to ``pulse_map`` when
+        The parameter is used as the input to ``pulse_map`` when
         generating pulse-family parameters.
         """
         if gate_param is None:
             raise TypeError("Expected gate_param to be a float or jax.Array, got None.")
-        return gate_param / (2 * np.pi)
+        return gate_param
 
     def _unpack_params_arrays(
         self, trainable_params: ParamsFloatLike
