@@ -276,6 +276,7 @@ def test_polynomial_pulse_map_with_empirical_matches_extended_data_fig_5b() -> N
     os.makedirs(".out", exist_ok=True)
     fig.tight_layout()
     fig.savefig(".out/test_duration_interpolation.png")
+    plt.close(fig)
 
     assert jnp.allclose(
         actual_omega_t_over_2pi,

@@ -160,7 +160,8 @@ class PolynomialPulseMapWithEmpiricalDuration(PolynomialPulseMap):
         \qquad
         q = \frac{A}{T_\pi 2^p}.
 
-    Here :math:`\theta` is the target phase in radians, :math:`T_\pi`
+    Here :math:`\theta` is the target phase in radians clipped to
+    the range :math:`[0, 2\pi]`, :math:`T_\pi`
     is ``piduration``, :math:`A` is ``prefactor``, and :math:`p` is
     ``exponent``. The expression is symmetric under
     :math:`\theta \mapsto 2\pi - \theta`, satisfies
@@ -196,7 +197,7 @@ class PolynomialPulseMapWithEmpiricalDuration(PolynomialPulseMap):
 
         piduration, prefactor, exponent = params
 
-        phase_over_2pi = phase / (2.0 * jnp.pi)
+        phase_over_2pi = jnp.clip(phase / (2.0 * jnp.pi), 0.0, 1.0)
         x = 2.0 * jnp.minimum(phase_over_2pi, 1.0 - phase_over_2pi)
         q = prefactor / (piduration * 2.0**exponent)
         safe_inner = jnp.maximum(1.0 - x**exponent, jnp.finfo(x.dtype).tiny)

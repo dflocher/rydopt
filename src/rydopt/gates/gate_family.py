@@ -1,4 +1,5 @@
 import math
+import numbers
 from collections.abc import Sequence
 from typing import Literal
 
@@ -60,8 +61,8 @@ class GateFamily:
         self.gates = list(fixed_parameter_gates)
         self.parameter_values = [float(p) for p in parameter_values]
         self._num_gates = len(fixed_parameter_gates)
-        if isinstance(reduction, float) and reduction >= 0.0:
-            self.reduction = reduction
+        if isinstance(reduction, numbers.Real) and not isinstance(reduction, bool) and reduction >= 0.0:
+            self.reduction = float(reduction)
         elif reduction == "mean":
             self.reduction = float("inf")
         elif reduction == "max":
