@@ -6,7 +6,7 @@ import jax
 import jax.numpy as jnp
 import matplotlib.pyplot as plt
 
-from rydopt.pulses import PolynomialPulseMapWithEmpiricalDuration, PulseFamilyAnsatz, PulseFamilyParams
+from rydopt.pulses import PolynomialPulseMapWithCustomDuration, PulseFamilyAnsatz, PulseFamilyParams
 
 REFERENCE_EXTENDED_DATA_FIG_5B = jnp.array(
     [
@@ -219,7 +219,7 @@ REFERENCE_EXTENDED_DATA_FIG_5B = jnp.array(
 
 
 def test_empirical_duration_has_finite_gradient_at_pi() -> None:
-    pulse_family = PulseFamilyAnsatz(pulse_map=PolynomialPulseMapWithEmpiricalDuration())
+    pulse_family = PulseFamilyAnsatz(pulse_map=PolynomialPulseMapWithCustomDuration())
 
     def duration(duration_params: jax.Array) -> float | jax.Array:
         params = PulseFamilyParams(duration_params, [], [], [])
@@ -240,7 +240,7 @@ def test_polynomial_pulse_map_with_empirical_matches_extended_data_fig_5b() -> N
     theta_over_2pi = theta_over_2pi[selector]
     expected_omega_t_over_2pi = expected_omega_t_over_2pi[selector]
 
-    actual_omega_t_over_2pi = PolynomialPulseMapWithEmpiricalDuration().map_duration(
+    actual_omega_t_over_2pi = PolynomialPulseMapWithCustomDuration().map_duration(
         theta_over_2pi * 2 * jnp.pi,
         (
             jnp.array([1.21171905 * 2 * jnp.pi, 1.95260365 * 2 * jnp.pi, 0.25174555]),
@@ -259,7 +259,7 @@ def test_polynomial_pulse_map_with_empirical_matches_extended_data_fig_5b() -> N
         ms=3,
         label="Extended Data Fig. 5b,\ndoi.org/10.1038/s41586-023-06481-y",
     )
-    ax1.plot(theta_over_2pi, actual_omega_t_over_2pi, "-", label="PolynomialPulseMapWithEmpiricalDuration")
+    ax1.plot(theta_over_2pi, actual_omega_t_over_2pi, "-", label="PolynomialPulseMapWithCustomDuration")
     ax1.set_xlabel(r"$\theta / 2\pi$")
     ax1.set_ylabel(r"$\Omega T / 2\pi$")
     ax1.set_xscale("log")

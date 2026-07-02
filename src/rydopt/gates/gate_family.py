@@ -1,5 +1,4 @@
 import math
-import numbers
 from collections.abc import Sequence
 from typing import Literal
 
@@ -42,10 +41,11 @@ class GateFamily:
         parameter_values: Sequence of scalar parameters (same length as `fixed_parameter_gates`)
             that controls the pulse family parametrization.
         reduction: Reduction operation applied to the per-gate infidelities.
-            One of {"mean", "max"} or a float value for a softmax reduction (a value of 0.0
-            corresponds to the max, and a value of infinity corresponds to the mean;
-            finite values set the scale of per-gate infidelity differences that the
-            optimizer should care about).
+            One of {"mean", "max", "softmax"}.
+        softmax_scale: Non-negative scale parameter used only when `reduction="softmax"`.
+            A value of zero corresponds to the max, and infinity corresponds to the mean.
+            Finite values set the scale of per-gate infidelity differences that the
+            optimizer should care about.
 
     """
 
@@ -53,7 +53,8 @@ class GateFamily:
         self,
         fixed_parameter_gates: Sequence[GateSystem],
         parameter_values: Sequence[float] | jax.Array,
-        reduction: Literal["mean", "max"] | float = "mean",
+        reduction: Literal["mean", "max", "softmax"] = "mean",
+        softmax_scale: float | None = None,
     ) -> None:
         if len(fixed_parameter_gates) != len(parameter_values):
             raise ValueError("fixed_parameter_gates and parameter_values must have the same length.")
@@ -61,17 +62,24 @@ class GateFamily:
         self.gates = list(fixed_parameter_gates)
         self.parameter_values = [float(p) for p in parameter_values]
         self._num_gates = len(fixed_parameter_gates)
-        if isinstance(reduction, numbers.Real) and not isinstance(reduction, bool) and reduction >= 0.0:
-            self.reduction = float(reduction)
-        elif reduction == "mean":
+
+        if reduction == "mean":
+            if softmax_scale is not None:
+                raise ValueError("softmax_scale may only be provided when reduction='softmax'.")
             self.reduction = float("inf")
         elif reduction == "max":
+            if softmax_scale is not None:
+                raise ValueError("softmax_scale may only be provided when reduction='softmax'.")
             self.reduction = 0.0
+        elif reduction == "softmax":
+            if softmax_scale is None:
+                raise ValueError("softmax_scale must be provided when reduction='softmax'.")
+            self.reduction = softmax_scale
         else:
-            raise ValueError("Invalid reduction, must be 'mean', 'max', or a non-negative float.")
+            raise ValueError("Invalid reduction, must be 'mean', 'max', or 'softmax'.")
 
     def cost(self, pulse: PulseFamilyAnsatz, params: ParamsFloatLike, tol: float) -> jax.Array:
-        """Compute reduced infidelity over all fixed-target-phase gates defined within the
+        """Compute reduced infidelity over all fixed-target-parameter gates defined within the
         gate family.
 
         Args:

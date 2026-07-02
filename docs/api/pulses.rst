@@ -15,8 +15,10 @@ rydopt.pulses
 .. autoclass:: PolynomialPulseMap
    :members:
 
-.. autoclass:: PolynomialPulseMapWithEmpiricalDuration
+.. autoclass:: PolynomialPulseMapWithCustomDuration
    :members:
+
+.. autofunction:: empirical_cphase_duration
 
 .. autoclass:: PulseParams
 
