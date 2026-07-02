@@ -6,6 +6,7 @@ from math import isinf
 
 import jax
 import jax.numpy as jnp
+from jax.core import Tracer
 from typing_extensions import Self
 
 from rydopt.gates.subsystem_hamiltonians import (
@@ -67,10 +68,13 @@ class ThreeQubitGateIsosceles:
         decay: float = 0.0,
         fidelity_type: FidelityType = "process",
     ) -> None:
-        if (Vnn == Vnnn) and (theta != theta_prime):
-            raise ValueError("For Vnn=Vnnn, theta=theta_prime is required")
-        if (Vnnn == 0) and (theta_prime != 0.0):
-            raise ValueError("For Vnnn=0, theta_prime=0 is required")
+        # Skip validation for traced values (e.g. inside jax.jit),
+        # where the comparisons cannot be evaluated to concrete booleans.
+        if not any(isinstance(x, Tracer) for x in (theta, theta_prime, Vnn, Vnnn)):
+            if (Vnn == Vnnn) and (theta != theta_prime):
+                raise ValueError("For Vnn=Vnnn, theta=theta_prime is required")
+            if (Vnnn == 0) and (theta_prime != 0.0):
+                raise ValueError("For Vnnn=0, theta_prime=0 is required")
         self._phi = phi
         self._theta = theta
         self._theta_prime = theta_prime

@@ -7,6 +7,7 @@ from math import isinf
 
 import jax
 import jax.numpy as jnp
+from jax.core import Tracer
 from typing_extensions import Self
 
 from rydopt.gates.subsystem_hamiltonians_general import (
@@ -50,7 +51,9 @@ class TwoQubitGateAsym:
         s2: float = 1.0,
         fidelity_type: FidelityType = "process",
     ) -> None:
-        if isinf(float(V12)):
+        # Skip validation for traced values (e.g. inside jax.jit),
+        # where the comparisons cannot be evaluated to concrete booleans.
+        if not isinstance(V12, Tracer) and isinf(float(V12)):
             raise ValueError(
                 "V12 must be finite. If the setup is symmetric, use `TwoQubitGate` for infinite interaction strengths."
             )

@@ -23,8 +23,9 @@ from rydopt.pulses.ansatz_functions import (
 from rydopt.pulses.pulse_ansatz import PulseAnsatz, TwoPhotonPulseAnsatz
 from rydopt.pulses.pulse_family_ansatz import (
     PolynomialPulseMap,
-    PolynomialPulseMapWithEmpiricalDuration,
+    PolynomialPulseMapWithCustomDuration,
     PulseFamilyAnsatz,
+    empirical_cphase_duration,
 )
 from rydopt.pulses.pulse_family_params import PulseFamilyParams
 from rydopt.pulses.pulse_params import PulseParams
@@ -59,5 +60,6 @@ __all__ = [
     "SoftBoxSeventhOrderSmoothstep",
     "PulseFamilyAnsatz",
     "PolynomialPulseMap",
-    "PolynomialPulseMapWithEmpiricalDuration",
+    "PolynomialPulseMapWithCustomDuration",
+    "empirical_cphase_duration",
 ]

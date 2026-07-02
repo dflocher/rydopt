@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-import warnings
 from copy import deepcopy
 from functools import partial
 from math import isinf
 
 import jax
 import jax.numpy as jnp
+from jax.core import Tracer
 from typing_extensions import Self
 
 from rydopt.gates.subsystem_hamiltonians_general import (
@@ -94,18 +94,16 @@ class FourQubitGateAsym:
         s4: float = 1.0,
         fidelity_type: FidelityType = "process",
     ) -> None:
-        for name, val in [("V12", V12), ("V13", V13), ("V14", V14), ("V23", V23), ("V24", V24), ("V34", V34)]:
-            if isinf(float(val)):
-                raise ValueError(
-                    f"{name} must be finite. If the setup is symmetric, use `FourQubitGatePyramidal` "
-                    "for infinite interaction strengths."
-                )
-
-        warnings.warn(
-            "This gate implementation does not use any symmetries. If your setup is a pyramidal arrangement of atoms, "
-            "consider using `FourQubitGatePyramidal` for better performance.",
-            stacklevel=2,
-        )
+        # Skip validation for traced values (e.g. inside jax.jit),
+        # where the comparisons cannot be evaluated to concrete booleans.
+        if not any(isinstance(val, Tracer) for val in (V12, V13, V14, V23, V24, V34)):
+            for name, val in [("V12", V12), ("V13", V13), ("V14", V14), ("V23", V23), ("V24", V24), ("V34", V34)]:
+                if isinf(float(val)):
+                    raise ValueError(
+                        f"{name} must be finite. If the setup is symmetric, use `FourQubitGatePyramidal` "
+                        "for infinite interaction strengths. If your setup is a pyramidal arrangement of atoms, "
+                        "consider using `FourQubitGatePyramidal` for better performance.",
+                    )
 
         self._phi1 = phi1
         self._phi2 = phi2

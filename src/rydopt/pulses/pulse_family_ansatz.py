@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
 from math import prod
 from typing import Protocol, runtime_checkable
@@ -21,13 +21,13 @@ class PulseParamMap(Protocol):
 
     def map_duration(
         self,
-        target_phase: float | jax.Array,
+        target_parameter: float | jax.Array,
         packed_params: tuple[jax.Array, jax.Array, jax.Array, jax.Array],
     ) -> float | jax.Array: ...
 
     def map_full(
         self,
-        target_phase: float | jax.Array,
+        target_parameter: float | jax.Array,
         packed_params: tuple[jax.Array, jax.Array, jax.Array, jax.Array],
     ) -> tuple[jax.Array, jax.Array, jax.Array, jax.Array]: ...
 
@@ -42,8 +42,8 @@ class PolynomialPulseMap:
     r"""Polynomial map of ansatz parameters.
 
     Converts trainable pulse parameters into ansatz parameters given the
-    target phase of the gate. Each component is treated as a polynomial in the
-    target phase, with per-component degree given by ``degrees``.
+    target parameter of the gate. Each component is treated as a polynomial in the
+    target parameter, with per-component degree given by ``degrees``.
 
     Args:
         degrees: polynomial degree for
@@ -54,38 +54,38 @@ class PolynomialPulseMap:
     degrees: Sequence[int] = field(default_factory=lambda: [0, 0, 0, 0])
 
     @staticmethod
-    def _poly_eval(target_phase: jax.Array, coeffs: jax.Array, degree: int) -> jax.Array:
-        """Evaluate a polynomial in ``target_phase``.
+    def _poly_eval(target_parameter: jax.Array, coeffs: jax.Array, degree: int) -> jax.Array:
+        """Evaluate a polynomial in ``target_parameter``.
 
         Works for 1-D ``coeffs`` of shape ``(degree + 1,)`` returning a scalar,
         and for 2-D ``coeffs`` of shape ``(n, degree + 1)`` returning shape ``(n,)``.
         """
-        powers = jnp.power(target_phase / (2 * jnp.pi), jnp.arange(degree + 1))
+        powers = jnp.power(target_parameter / (2 * jnp.pi), jnp.arange(degree + 1))
         return coeffs @ powers
 
     def map_duration(
         self,
-        target_phase: float | jax.Array,
+        target_parameter: float | jax.Array,
         packed_params: tuple[jax.Array, jax.Array, jax.Array, jax.Array],
     ) -> jax.Array:
-        target_phase = jnp.asarray(target_phase)
+        target_parameter = jnp.asarray(target_parameter)
         params = jnp.ravel(jnp.asarray(packed_params[0]))
         degree = self.degrees[0]
 
         if degree > 0:
-            duration = self._poly_eval(target_phase, params, degree)
+            duration = self._poly_eval(target_parameter, params, degree)
             return jax.nn.softplus(duration)
         return params[0]
 
     def map_full(
         self,
-        target_phase: float | jax.Array,
+        target_parameter: float | jax.Array,
         packed_params: tuple[jax.Array, jax.Array, jax.Array, jax.Array],
     ) -> tuple[jax.Array, jax.Array, jax.Array, jax.Array]:
-        target_phase = jnp.asarray(target_phase)
+        target_parameter = jnp.asarray(target_parameter)
 
         # --- Duration ---
-        duration = self.map_duration(target_phase, packed_params)
+        duration = self.map_duration(target_parameter, packed_params)
 
         # --- Remaining parameters (detuning, phase, rabi) ---
         outputs = []
@@ -100,7 +100,7 @@ class PolynomialPulseMap:
                 raise ValueError(f"Cannot reshape {params.size} elements into rows of size {degree + 1}")
 
             coeffs = params.reshape(-1, degree + 1)
-            outputs.append(self._poly_eval(target_phase, coeffs, degree))
+            outputs.append(self._poly_eval(target_parameter, coeffs, degree))
 
         detuning, laser_phase, rabi = outputs
 
@@ -129,20 +129,14 @@ class PolynomialPulseMap:
         )
 
 
-@dataclass
-class PolynomialPulseMapWithEmpiricalDuration(PolynomialPulseMap):
-    r"""Polynomial map of ansatz parameters with an empirical expression for the duration of
-    controlled-phase gates.
+def empirical_cphase_duration(target_phase: jax.Array, duration_params: jax.Array) -> jax.Array:
+    r"""Empirical expression for the duration of controlled-phase gates.
 
     The duration parameters are ``(piduration, prefactor, exponent)``. The
-    empirical expression is used for the pulse duration, while detuning, laser
-    phase, and Rabi parameters use the polynomial mapping from
-    :class:`PolynomialPulseMap`.
-
-    The empirical expression is based on fitting the functional form to controlled-phase gate durations
-    for a range of target phases. The durations were extracted from Extended Data Fig. 5b
-    of `Evered et al., Nature 622, 268-272 (2023) <https://doi.org/10.1038/s41586-023-06481-y>`_.
-    The expression is given by
+    expression is based on fitting the functional form to controlled-phase
+    gate durations for a range of target phases. The durations were extracted
+    from Extended Data Fig. 5b of `Evered et al., Nature 622, 268-272 (2023)
+    <https://doi.org/10.1038/s41586-023-06481-y>`_. The expression is given by
 
     .. math::
 
@@ -175,41 +169,79 @@ class PolynomialPulseMapWithEmpiricalDuration(PolynomialPulseMap):
     with the corresponding symmetric behavior near :math:`\theta \to 2\pi`.
 
     Args:
+        target_phase: Target phase :math:`\theta` in radians.
+        duration_params: Array of the three duration parameters
+            ``(piduration, prefactor, exponent)``.
+
+    Returns:
+        The pulse duration :math:`T(\theta)`.
+
+    """
+    if duration_params.size != 3:
+        raise ValueError(
+            "empirical_cphase_duration expects three duration parameters: (piduration, prefactor, exponent)"
+        )
+
+    piduration, prefactor, exponent = duration_params
+
+    phase_over_2pi = jnp.clip(target_phase / (2.0 * jnp.pi), 0.0, 1.0)
+    x = 2.0 * jnp.minimum(phase_over_2pi, 1.0 - phase_over_2pi)
+    q = prefactor / (piduration * 2.0**exponent)
+    safe_inner = jnp.maximum(1.0 - x**exponent, jnp.finfo(x.dtype).tiny)
+    duration = piduration * (-jnp.expm1(q * jnp.log(safe_inner)))
+    return jnp.where(x >= 1.0, piduration, duration)
+
+
+@dataclass
+class PolynomialPulseMapWithCustomDuration(PolynomialPulseMap):
+    r"""Polynomial map of ansatz parameters with a custom expression for the gate duration.
+
+    The duration is computed by a user-provided callable ``duration_map`` that
+    takes the target parameter and the duration parameter array and returns the
+    pulse duration. By default, the empirical expression
+    :func:`empirical_cphase_duration` with the three duration parameters
+    ``(piduration, prefactor, exponent)`` is used. Detuning, laser
+    phase, and Rabi parameters use the polynomial mapping from
+    :class:`PolynomialPulseMap`.
+
+    Args:
         degrees: polynomial degree for
             ``(duration, detuning, phase, rabi)``. The duration degree is
-            ignored because the duration uses the empirical expression.
+            ignored because the duration uses ``duration_map``.
+        duration_map: Callable ``(target_parameter, duration_params) -> duration``
+            used to compute the pulse duration. Defaults to
+            :func:`empirical_cphase_duration`.
+        num_duration_params: Number of duration parameters expected by
+            ``duration_map``. Defaults to ``3``, matching
+            :func:`empirical_cphase_duration`.
 
     """
 
+    duration_map: Callable[[jax.Array, jax.Array], jax.Array] = empirical_cphase_duration
+    num_duration_params: int = 3
+
     def map_duration(
         self,
-        target_phase: float | jax.Array,
+        target_parameter: float | jax.Array,
         packed_params: tuple[jax.Array, jax.Array, jax.Array, jax.Array],
     ) -> jax.Array:
-        phase = jnp.asarray(target_phase)
+        target = jnp.asarray(target_parameter)
         params = jnp.ravel(jnp.asarray(packed_params[0]))
 
-        if params.size != 3:
+        if params.size != self.num_duration_params:
             raise ValueError(
-                "PolynomialPulseMapWithEmpiricalDuration expects three duration parameters: "
-                "(piduration, prefactor, exponent)"
+                f"PolynomialPulseMapWithCustomDuration expects {self.num_duration_params} "
+                f"duration parameters, got {params.size}"
             )
 
-        piduration, prefactor, exponent = params
-
-        phase_over_2pi = jnp.clip(phase / (2.0 * jnp.pi), 0.0, 1.0)
-        x = 2.0 * jnp.minimum(phase_over_2pi, 1.0 - phase_over_2pi)
-        q = prefactor / (piduration * 2.0**exponent)
-        safe_inner = jnp.maximum(1.0 - x**exponent, jnp.finfo(x.dtype).tiny)
-        duration = piduration * (-jnp.expm1(q * jnp.log(safe_inner)))
-        return jnp.where(x >= 1.0, piduration, duration)
+        return self.duration_map(target, params)
 
     def map_shape(
         self,
         params_count: tuple[int, ...],
     ) -> tuple[tuple[int, ...], tuple[int, ...], tuple[int, ...], tuple[int, ...]]:
         return (
-            (3,),
+            (self.num_duration_params,),
             self.shape(params_count[0], self.degrees[1]),
             self.shape(params_count[1], self.degrees[2]),
             self.shape(params_count[2], self.degrees[3]),
@@ -289,7 +321,7 @@ class PulseFamilyAnsatz:
         return self.pulse_map.map_shape(self.param_counts)
 
     @staticmethod
-    def target_phase(gate_param: float | jax.Array | None) -> float | jax.Array:
+    def target_parameter(gate_param: float | jax.Array | None) -> float | jax.Array:
         r"""Return the gate-family parameter.
 
         The parameter is used as the input to ``pulse_map`` when
@@ -345,7 +377,7 @@ class PulseFamilyAnsatz:
     ) -> tuple[jax.Array, jax.Array, jax.Array, jax.Array]:
         r"""Evaluate ``pulse_map`` and return generated pulse parameter arrays."""
         unpacked = self._unpack_params_arrays(trainable_params)
-        return self.pulse_map.map_full(self.target_phase(gate_param), unpacked)
+        return self.pulse_map.map_full(self.target_parameter(gate_param), unpacked)
 
     def generate_pulse_params(
         self, trainable_params: ParamsFloatLike, gate_param: float | jax.Array | None = None
@@ -361,4 +393,4 @@ class PulseFamilyAnsatz:
     ) -> float | jax.Array:
         r"""Generate the pulse duration for a given gate parameter."""
         unpacked = self._unpack_params_arrays(trainable_params)
-        return self.pulse_map.map_duration(self.target_phase(gate_param), unpacked)
+        return self.pulse_map.map_duration(self.target_parameter(gate_param), unpacked)

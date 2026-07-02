@@ -7,6 +7,7 @@ from math import isinf
 
 import jax
 import jax.numpy as jnp
+from jax.core import Tracer
 from typing_extensions import Self
 
 from rydopt.gates.subsystem_hamiltonians_general import (
@@ -65,12 +66,15 @@ class ThreeQubitGateAsym:
         s3: float = 1.0,
         fidelity_type: FidelityType = "process",
     ) -> None:
-        for name, val in [("V12", V12), ("V13", V13), ("V23", V23)]:
-            if isinf(float(val)):
-                raise ValueError(
-                    f"{name} must be finite. If the setup is symmetric, use `ThreeQubitGateIsosceles` "
-                    "for infinite interaction strengths."
-                )
+        # Skip validation for traced values (e.g. inside jax.jit),
+        # where the comparisons cannot be evaluated to concrete booleans.
+        if not any(isinstance(val, Tracer) for val in (V12, V13, V23)):
+            for name, val in [("V12", V12), ("V13", V13), ("V23", V23)]:
+                if isinf(float(val)):
+                    raise ValueError(
+                        f"{name} must be finite. If the setup is symmetric, use `ThreeQubitGateIsosceles` "
+                        "for infinite interaction strengths."
+                    )
 
         warnings.warn(
             "This gate implementation does not use any symmetries. If your setup is an isosceles triangle, "

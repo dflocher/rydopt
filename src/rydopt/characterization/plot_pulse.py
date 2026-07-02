@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import cast
 
 import jax.numpy as jnp
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -21,7 +22,7 @@ def _evaluate_pulse(
     plot_phase: bool,
     plot_rabi: bool,
     subtract_phase_offset: bool,
-) -> tuple[np.ndarray, np.ndarray, str]:
+) -> tuple[np.ndarray, list[str], str]:
     """Evaluate pulse functions and return data ready for plotting."""
     selector = [plot_detuning, plot_phase, plot_rabi]
 
@@ -38,7 +39,7 @@ def _evaluate_pulse(
             r"$\xi(t)$",
             r"$\Omega(t)$",
         ]
-    )[selector]
+    )[selector].tolist()
 
     ylabel = ", ".join(
         np.array(
@@ -119,7 +120,8 @@ def plot_pulse(
         ax.set_xlabel(r"$t \Omega_0$")
         ax.set_ylabel(ylabel)
         ax.grid(alpha=0.3)
-        ax.legend()
+        if len(labels) > 1:
+            ax.legend()
         fig.tight_layout()
 
     return fig, ax
@@ -136,7 +138,7 @@ def plot_pulse_family(
     subtract_phase_offset: bool = False,
     num_points: int = 1024,
     ax: plt.Axes | None = None,
-) -> tuple[plt.Figure, plt.Axes]:
+) -> tuple[plt.Figure, plt.Axes, mpl.colors.Colormap, mpl.colors.Normalize]:
     r"""Function that plots a set of pulses, given the pulse family ansatz, the pulse family
     parameters and the gate family.
 
@@ -152,7 +154,8 @@ def plot_pulse_family(
         ax: Optional :class:`matplotlib.axes.Axes` to draw on; if None, a new one is created.
 
     Returns:
-        A tuple of (fig, ax) where ax is the axes used for the pulse plot.
+        A tuple of (fig, ax, cmap, norm) where ax is the axes used for the pulse plot, cmap is the colormap,
+        and norm is the normalization used for the colormap.
 
     """
     owns_ax = ax is None
@@ -163,18 +166,27 @@ def plot_pulse_family(
         assert ax is not None
         fig = cast(plt.Figure, ax.figure)
 
-    colors = plt.rcParams["axes.prop_cycle"].by_key()["color"]
+    gate_params = np.asarray(gate_family.parameter_values)
+
+    cmap = plt.colormaps["turbo"]
+    norm = mpl.colors.Normalize(
+        vmin=np.min(gate_params),
+        vmax=np.max(gate_params),
+    )
+    colors = cmap(norm(gate_params))
+
     linestyles = ["-", "--", ":"]
     ylabel = ""
+    labels: list[str] = []
 
     pulse = pulse_family.pulse_ansatz
-    for i, gate_param in enumerate(gate_family.parameter_values):
+    for gate_param, color in zip(gate_params, colors):
         params = pulse_family.generate_pulse_params(family_params, gate_param)
 
         duration = params[0]
         times = jnp.linspace(0, duration, num_points)
 
-        values, _, ylabel = _evaluate_pulse(
+        values, labels, ylabel = _evaluate_pulse(
             pulse,
             params,
             times,
@@ -184,23 +196,26 @@ def plot_pulse_family(
             subtract_phase_offset=subtract_phase_offset,
         )
 
-        label = rf"${gate_param / np.pi:.2f}\,\pi$"
-
-        for count, v in enumerate(values):
+        for value, linestyle in zip(values, linestyles):
             ax.plot(
                 times,
-                v,
-                label=label if count == 0 else None,
-                color=colors[i],
-                linestyle=linestyles[count],
+                value,
+                color=color,
+                linestyle=linestyle,
             )
+
+    for label, linestyle in zip(labels, linestyles):
+        ax.plot([], [], color="k", linestyle=linestyle, label=label)
 
     if owns_ax:
         ax.set_xmargin(0)
         ax.set_xlabel(r"$t \Omega_0$")
         ax.set_ylabel(ylabel)
         ax.grid(alpha=0.3)
-        ax.legend()
+        if len(labels) > 1:
+            ax.legend()
+        sm = mpl.cm.ScalarMappable(cmap=cmap, norm=norm)
+        fig.colorbar(sm, ax=ax, label="Target parameter")
         fig.tight_layout()
 
-    return fig, ax
+    return fig, ax, cmap, norm
