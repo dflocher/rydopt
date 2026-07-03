@@ -49,7 +49,7 @@ Citing RydOpt
 
 If you find this library useful for your research, please cite:
 > David F. Locher, Josias Old, Katharina Brechtelsbauer, Jakob Holschbach, Hans Peter Büchler, Sebastian Weber, Markus Müller,
-*Multiqubit Rydberg Gates for Quantum Error Correction*, [arXiv:2512.00843](https://doi.org/10.48550/arXiv.2512.00843)
+*Multiqubit Rydberg Gates for Quantum Error Correction*, [PRX Quantum 7, 020354 (2026)](https://doi.org/10.1103/j8fm-24cf)
 
 License
 -------

@@ -3,6 +3,9 @@ rydopt.pulses
 
 .. currentmodule:: rydopt.pulses
 
+.. autoclass:: PulseAnsatzFunction
+   :members:
+
 .. autoclass:: PulseAnsatz
    :members:
 

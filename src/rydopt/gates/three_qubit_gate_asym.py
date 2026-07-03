@@ -45,6 +45,7 @@ class ThreeQubitGateAsym:
         s1: Rabi frequency scaling factor for atom 1, default is 1.
         s2: Rabi frequency scaling factor for atom 2, default is 1.
         s3: Rabi frequency scaling factor for atom 3, default is 1.
+        fidelity_type: which fidelity to use (either "process" or "average_gate")
 
     """
 

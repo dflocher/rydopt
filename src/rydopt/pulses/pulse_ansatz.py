@@ -69,6 +69,12 @@ class PulseAnsatz:
 
     @property
     def param_counts(self) -> tuple[int, int, int]:
+        r"""Returns the numbers of parameters for each of the three ansatz function making up the total pulse ansatz.
+
+        Returns:
+            Tuple ``(detuning_ansatz.num_params, phase_ansatz.num_params, rabi_ansatz.num_params)``
+
+        """
         return self.detuning_ansatz.num_params, self.phase_ansatz.num_params, self.rabi_ansatz.num_params
 
     def _unpack_params_arrays(

@@ -43,6 +43,7 @@ class TwoQubitGate:
         theta: target phase :math:`\theta` of two-qubit gate contribution.
         Vnn: interaction strength :math:`V_{\mathrm{nn}}/(\hbar\Omega_0)`.
         decay: Rydberg decay strength :math:`\gamma/\Omega_0`, default is 0.
+        fidelity_type: which fidelity to use (either "process" or "average_gate")
 
     """
 

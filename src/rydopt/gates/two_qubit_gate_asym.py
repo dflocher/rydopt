@@ -37,6 +37,7 @@ class TwoQubitGateAsym:
         decay: Rydberg decay strength :math:`\gamma/\Omega_0`, default is 0.
         s1: Rabi frequency scaling factor for atom 1, default is 1.
         s2: Rabi frequency scaling factor for atom 2, default is 1.
+        fidelity_type: which fidelity to use (either "process" or "average_gate")
 
     """
 

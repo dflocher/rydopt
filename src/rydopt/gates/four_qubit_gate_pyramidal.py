@@ -61,6 +61,7 @@ class FourQubitGatePyramidal:
         Vnn: nearest-neighbour interaction strength :math:`V_{\mathrm{nn}}/(\hbar\Omega_0)`.
         Vnnn: next-nearest-neighbour interaction strength :math:`V_{\mathrm{nnn}}/(\hbar\Omega_0)`.
         decay: Rydberg decay strength :math:`\gamma/\Omega_0`, default is 0.
+        fidelity_type: which fidelity to use (either "process" or "average_gate")
 
     """
 
