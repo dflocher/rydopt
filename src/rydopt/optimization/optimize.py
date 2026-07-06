@@ -310,14 +310,7 @@ def _adam_scan_impl(
 
     (final_params, _, final_infidelity, _, _, _), history = jax.lax.scan(
         body,
-        (
-            params_trainable,
-            params_trainable,
-            jnp.zeros_like(tol),
-            opt_state0,
-            jnp.asarray(0),
-            jnp.zeros_like(tol),
-        ),
+        (params_trainable, params_trainable, jnp.zeros_like(tol), opt_state0, jnp.asarray(0), jnp.zeros_like(tol)),
         jnp.arange(num_steps),
     )
 
@@ -354,6 +347,7 @@ def _adam_optimize(
     num_steps: int,
     min_converged_initializations: int,
     learning_rate: float,
+    update_scale: npt.NDArray[np.float64] | None,
     tol: float,
     process_idx: int,
     device_idx: int | None,
@@ -372,7 +366,14 @@ def _adam_optimize(
 
     with device_ctx:
         trainable = jnp.asarray(params_trainable)
-        optimizer = optax.adam(learning_rate)
+        if update_scale is None:
+            optimizer = optax.adam(learning_rate)
+        else:
+            scale = jnp.asarray(update_scale)
+            optimizer = optax.chain(
+                optax.adam(learning_rate),
+                optax.stateless(lambda updates, _: jax.tree.map(lambda u: u * scale, updates)),
+            )
         infidelity = _make_infidelity(
             gate,
             pulse,
@@ -535,6 +536,7 @@ def optimize(
                 num_steps,
                 1,
                 learning_rate,
+                None,
                 tol,
                 0,
                 None,
@@ -579,6 +581,7 @@ def multi_start_optimize(
     *,
     num_steps: int = ...,
     learning_rate: float = ...,
+    rescale: bool = ...,
     tol: float = ...,
     num_initializations: int = ...,
     min_converged_initializations: int | None = ...,
@@ -602,6 +605,7 @@ def multi_start_optimize(
     *,
     num_steps: int = ...,
     learning_rate: float = ...,
+    rescale: bool = ...,
     tol: float = ...,
     num_initializations: int = ...,
     min_converged_initializations: int | None = ...,
@@ -623,6 +627,7 @@ def multi_start_optimize(
     *,
     num_steps: int = ...,
     learning_rate: float = ...,
+    rescale: bool = ...,
     tol: float = ...,
     num_initializations: int = ...,
     min_converged_initializations: int | None = ...,
@@ -644,6 +649,7 @@ def multi_start_optimize(
     *,
     num_steps: int = ...,
     learning_rate: float = ...,
+    rescale: bool = ...,
     tol: float = ...,
     num_initializations: int = ...,
     min_converged_initializations: int | None = ...,
@@ -664,6 +670,7 @@ def multi_start_optimize(
     *,
     num_steps: int = 1000,
     learning_rate: float = 0.05,
+    rescale: bool = False,
     tol: float = 1e-7,
     num_initializations: int = 10,
     min_converged_initializations: int | None = None,
@@ -715,6 +722,8 @@ def multi_start_optimize(
         fixed_initial_params: which parameters shall not be optimized
         num_steps: number of optimization steps
         learning_rate: optimizer learning rate hyperparameter
+        rescale: whether to rescale each parameter's update step by the width of its
+            initialization interval ``max_initial_params - min_initial_params``
         tol: target gate infidelity, also sets the ODE solver tolerance
         num_initializations: number of runs in the search for gate pulses
         min_converged_initializations: number of runs that must reach ``tol`` for the optimization to stop
@@ -741,6 +750,11 @@ def multi_start_optimize(
                 "For fixed parameters, min_initial_params and max_initial_params must have identical values."
             )
     trainable_indices = np.nonzero(trainable_mask)[0]
+
+    update_scale: npt.NDArray[np.float64] | None = None
+    if rescale:
+        widths = flat_max[trainable_indices] - flat_min[trainable_indices]
+        update_scale = np.where(widths > 0.0, widths, 1.0)
 
     use_one_process_per_device = len(jax.devices()) > 1 or jax.devices()[0].platform != "cpu"
     if num_processes is None:
@@ -797,6 +811,7 @@ def multi_start_optimize(
                     num_steps,
                     min_converged_initializations_local,
                     learning_rate,
+                    update_scale,
                     tol,
                     0,
                     None,
@@ -833,6 +848,7 @@ def multi_start_optimize(
                         num_steps,
                         min_converged_initializations_local,
                         learning_rate,
+                        update_scale,
                         tol,
                         device_idx,
                         device_idx if use_one_process_per_device else None,
