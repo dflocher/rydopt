@@ -58,6 +58,7 @@ Pulse Maps
 
     .. autoclass:: PolynomialPulseMapWithCustomDuration
        :members:
+       :exclude-members: duration_map
 
     .. autofunction:: empirical_cphase_duration
 
