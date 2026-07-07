@@ -40,7 +40,7 @@ def process_fidelity(gate: GateSystem, pulse: PulseAnsatz, params: ParamsFloatLi
 
     Args:
         gate: RydOpt Gate object.
-        pulse: RydOpt SinglePhotonPulseAnsatz object.
+        pulse: RydOpt SinglePhotonPulseAnsatz or TwoPhotonPulseAnsatz object.
         params: Pulse parameters.
         tol: Precision of the ODE solver, default is 1e-7.
 
@@ -81,7 +81,7 @@ def average_gate_fidelity(
 
     Args:
         gate: RydOpt Gate object.
-        pulse: RydOpt SinglePhotonPulseAnsatz object.
+        pulse: RydOpt SinglePhotonPulseAnsatz or TwoPhotonPulseAnsatz object.
         params: Pulse parameters.
         tol: Precision of the ODE solver, default is 1e-7.
 
