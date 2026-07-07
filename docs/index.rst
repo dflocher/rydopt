@@ -24,15 +24,48 @@ Install the software with pip (requires Python ≥ 3.10; for enabling GPU suppor
 
    pip install rydopt
 
+
+Citing RydOpt
+------------
 If you find this library useful for your research, please cite:
 
     David F. Locher, Josias Old, Katharina Brechtelsbauer, Jakob Holschbach, Hans Peter Büchler, Sebastian Weber, Markus Müller,
     *Multiqubit Rydberg Gates for Quantum Error Correction*, `PRX Quantum 7, 020354 (2026) <https://doi.org/10.1103/j8fm-24cf>`_
 
+Contributors
+------------
+The following people have, so far, contributed to the development of RydOpt:
+
+- `David Locher <https://github.com/dflocher>`_
+- `Sebastian Weber <https://github.com/seweber>`_
+- Jakob Holschbach
+- `Javad Kazemi <https://github.com/jakazemi>`_
+
+We warmly welcome new contributions! Please refer to the :doc:`contributor guide <contribute/development>` for more information!
+
+The development of RydOpt has been supported by `Forschungszentrum Jülich <https://www.fz-juelich.de/>`_,
+`RWTH Aachen University <https://www.rwth-aachen.de/>`_, `University of Stuttgart <https://www.uni-stuttgart.de/>`_, and the
+company `ParityQC <https://parityqc.com/>`_. We acknowledge support from the Federal Ministry of Research, Technology and Space (BMFTR) through the
+grant `MUNIQC-Atoms <https://muniqc-atoms.munich-quantum-valley.de/>`_ and from the German Research Foundation (DFG) through the priority
+programme `SPP 2514 <https://www.spp2514.kit.edu/>`_.
+
+.. image:: ../_static/MUNIQC_Atoms_Logo.svg
+    :width: 300px
+    :target: https://muniqc-atoms.munich-quantum-valley.de/
+.. image:: ../_static/SPP_Logo.png
+    :width: 130px
+    :target: https://www.spp2514.kit.edu/
+.. image:: ../_static/ParityQC_Logo.svg
+    :width: 220px
+    :target: https://parityqc.com/
+
+License
+------------
 The RydOpt software is licensed under the `MIT License <https://opensource.org/licenses/MIT>`_.
 
 .. toctree::
    :maxdepth: 1
+   :hidden:
    :caption: Getting Started
 
    about
@@ -42,6 +75,7 @@ The RydOpt software is licensed under the `MIT License <https://opensource.org/l
 
 .. toctree::
    :maxdepth: 1
+   :hidden:
    :caption: API Reference
 
    api/gates
@@ -52,6 +86,7 @@ The RydOpt software is licensed under the `MIT License <https://opensource.org/l
 
 .. toctree::
    :maxdepth: 1
+   :hidden:
    :caption: Contributor Guide
 
    contribute/development
