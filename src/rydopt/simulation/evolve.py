@@ -35,7 +35,7 @@ def evolve(gate: Evolvable, pulse: PulseAnsatz, params: ParamsFloatLike, tol: fl
 
     Args:
         gate: RydOpt Gate object.
-        pulse: RydOpt SinglePhotonPulseAnsatz object.
+        pulse: RydOpt SinglePhotonPulseAnsatz or TwoPhotonPulseAnsatz object.
         params: Pulse parameters.
         tol: Precision of the ODE solver, default is 1e-7.
 

@@ -59,7 +59,7 @@ A :class:`~rydopt.gates.GateFamily` combines several gate systems into a single 
 objective. Each gate is associated with a scalar argument. A shared :class:`~rydopt.pulses.PulseFamilyAnsatz`
 is used to generate a pulse for each argument.
 
-The class implements the protocol :class:`Optimizable <rydopt.protocols.Optimizable>`
+The class implements the protocol :class:`Optimizable <rydopt.protocols.Optimizable>`.
 During optimization, the pulse-family parameters are converted into pulse parameters for each
 argument. The infidelity is evaluated independently for every gate system and then
 combined using a reduction operation (``"mean"`` or ``"max"``).

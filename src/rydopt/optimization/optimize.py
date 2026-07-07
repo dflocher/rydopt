@@ -487,7 +487,7 @@ def optimize(
 
     Args:
         gate: RydOpt Gate or GateFamily object
-        pulse: RydOpt SinglePhotonPulseAnsatz or PulseFamilyAnsatz object
+        pulse: RydOpt SinglePhotonPulseAnsatz, TwoPhotonPulseAnsatz, or PulseFamilyAnsatz object
         initial_params: initial pulse (family) parameters
         fixed_initial_params: which parameters shall not be optimized
         num_steps: number of optimization steps
@@ -702,7 +702,7 @@ def multi_start_optimize(
 
     Args:
         gate: RydOpt Gate object
-        pulse: RydOpt SinglePhotonPulseAnsatz object
+        pulse: RydOpt SinglePhotonPulseAnsatz, TwoPhotonPulseAnsatz, or PulseFamilyAnsatz object
         min_initial_params: lower bound for the random parameter initialization
         max_initial_params: upper bound for the random parameter initialization
         fixed_initial_params: which parameters shall not be optimized
