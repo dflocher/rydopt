@@ -43,11 +43,17 @@ PulseAnsatzT = TypeVar("PulseAnsatzT", contravariant=True)
 
 @runtime_checkable
 class Optimizable(Protocol[PulseAnsatzT]):
+    """Minimal interface for a system that can be optimized.
+
+    Used by :func:`rydopt.optimization.optimize`.
+
+    """
+
     def cost(self, pulse: PulseAnsatzT, params: ParamsFloatLike, tol: float) -> jax.Array:
         """Evaluate the cost function for a pulse ansatz and parameters.
 
         Args:
-            pulse: Pulse description, typically a :class:`PulseAnsatz` or :class:`PulseFamilyAnsatz`.
+            pulse: Pulse description, typically a :class:`SinglePhotonPulseAnsatz` or :class:`PulseFamilyAnsatz`.
             params: Pulse or pulse-family parameters.
             tol: Numerical tolerance used when evaluating the cost.
 
@@ -61,7 +67,7 @@ class Optimizable(Protocol[PulseAnsatzT]):
 @runtime_checkable
 class GateSystem(Evolvable, Optimizable, Protocol):
     """Interface for :ref:`gates <gates>` that can be optimized for process fidelity.
-    The interface is derived from :class:`Evolvable`. Additionally, methods are present for
+    The interface is derived from :class:`Evolvable` and :class:`Optimizable`. Additionally, methods are present for
     calculating fidelities from time-evolved basis states.
 
     Used by :func:`rydopt.simulation.process_fidelity`, :func:`rydopt.simulation.average_gate_fidelity`,
@@ -142,18 +148,21 @@ class RydbergSystem(Evolvable, Protocol):
 PulseParamsT = TypeVar("PulseParamsT", covariant=True)
 
 
-class EvaluatablePulseAnsatz(Protocol):
-    r"""Interface for pulse ansatz objects that can evaluate pulse controls."""
+class PulseAnsatz(Protocol[PulseParamsT]):
+    r"""Interface for :ref:`pulse ansatz classes <pulse_ansatz_classes>`,
+    except for :class:`rydopt.pulses.PulseFamilyAnsatz`,
+    which has no ``evaluate_pulse_functions`` method.
+    """
 
     def evaluate_pulse_functions(
         self,
         t: float | jax.Array,
         params: ParamsFloatLike,
     ) -> tuple[jax.Array, jax.Array, jax.Array, jax.Array]:
-        r"""Evaluate the pulse controls at the specified times.
+        r"""Evaluate the pulse functions at the specified times.
 
         Args:
-            t: Time samples at which the pulse controls are evaluated.
+            t: Time samples at which the pulse functions are evaluated.
             params: Pulse or pulse-family parameters.
 
         Returns:
@@ -161,10 +170,6 @@ class EvaluatablePulseAnsatz(Protocol):
 
         """
         ...
-
-
-class UnpackingPulseAnsatz(Protocol[PulseParamsT]):
-    r"""Interface for pulse ansatz objects that can unpack trainable parameters."""
 
     def unpack_params(
         self,
@@ -176,7 +181,7 @@ class UnpackingPulseAnsatz(Protocol[PulseParamsT]):
             trainable_params: Packed or unpacked pulse parameters.
 
         Returns:
-            A :class:`PulseParams` or :class:`PulseFamilyParams` instance with
+            A :class:`PulseParams` instance with
             parameters restored to their original shapes.
 
         """

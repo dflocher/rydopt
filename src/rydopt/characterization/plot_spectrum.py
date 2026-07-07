@@ -7,12 +7,12 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.signal.windows import tukey
 
-from rydopt.protocols import EvaluatablePulseAnsatz
+from rydopt.protocols import PulseAnsatz
 from rydopt.types import ParamsFloatLike
 
 
 def plot_spectrum(
-    pulse: EvaluatablePulseAnsatz,
+    pulse: PulseAnsatz,
     params: ParamsFloatLike,
     *,
     plot_detuning: bool = True,
@@ -29,7 +29,7 @@ def plot_spectrum(
 
     Example:
         >>> import rydopt as ro
-        >>> pulse = ro.pulses.PulseAnsatz(
+        >>> pulse = ro.pulses.SinglePhotonPulseAnsatz(
         ...     detuning_ansatz=ro.pulses.Const(),
         ...     phase_ansatz=ro.pulses.SinCrab(2),
         ... )

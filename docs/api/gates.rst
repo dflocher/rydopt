@@ -6,7 +6,7 @@ rydopt.gates
 A class representing a gate system specifies (i) the physical system for implementing a gate and (ii) the target gate unitary which should be
 executed. The class implements all methods from the :class:`GateSystem <rydopt.protocols.GateSystem>` protocol as defined in the Reference of
 Internal Functions. This allows RydOpt's optimizer to calculate the time evolution of the physical system for a
-given :class:`PulseAnsatz <rydopt.pulses.PulseAnsatz>` and to adapt the pulse parameters so that the infidelity with respect to the target gate is
+given :class:`SinglePhotonPulseAnsatz <rydopt.pulses.SinglePhotonPulseAnsatz>` and to adapt the pulse parameters so that the infidelity with respect to the target gate is
 minimized.
 
 Rydberg Gate Systems

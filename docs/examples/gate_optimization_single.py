@@ -13,7 +13,7 @@ if __name__ == "__main__":
 
     # Pulse ansatz: constant detuning, sweep of the laser phase according to
     # a sine CRAB ansatz
-    pulse_ansatz = ro.pulses.PulseAnsatz(
+    pulse_ansatz = ro.pulses.SinglePhotonPulseAnsatz(
         detuning_ansatz=ro.pulses.Const(), phase_ansatz=ro.pulses.SinCrab(2)
     )
 

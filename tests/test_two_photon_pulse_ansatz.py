@@ -9,12 +9,12 @@ import rydopt as ro
 
 def test_effective_controls() -> None:
     duration = 7.0
-    lower = ro.pulses.PulseAnsatz(
+    lower = ro.pulses.SinglePhotonPulseAnsatz(
         detuning_ansatz=ro.pulses.ConstCosCrab(3),
         phase_ansatz=ro.pulses.SinCrab(2),
         rabi_ansatz=ro.pulses.Const(),
     )
-    upper = ro.pulses.PulseAnsatz(
+    upper = ro.pulses.SinglePhotonPulseAnsatz(
         detuning_ansatz=ro.pulses.Const(),
         phase_ansatz=ro.pulses.Const(),
         rabi_ansatz=ro.pulses.ConstSinCrab(3),
@@ -51,12 +51,12 @@ def test_effective_controls() -> None:
 def test_two_photon_cz() -> None:
     gate = ro.gates.TwoQubitGate(phi=None, theta=np.pi, Vnn=float("inf"), decay=0)
 
-    lower = ro.pulses.PulseAnsatz(
+    lower = ro.pulses.SinglePhotonPulseAnsatz(
         detuning_ansatz=ro.pulses.Const(),
         phase_ansatz=ro.pulses.SinCrab(2),
         rabi_ansatz=ro.pulses.Const(),
     )
-    upper = ro.pulses.PulseAnsatz(
+    upper = ro.pulses.SinglePhotonPulseAnsatz(
         detuning_ansatz=ro.pulses.Const(),
         rabi_ansatz=ro.pulses.Const(),
     )
@@ -86,12 +86,12 @@ def test_average_gate_fidelity_qutip_comparison() -> None:
 
     # --- Rydopt average gate fidelity (adiabatic elimination) ---
     gate = ro.gates.TwoQubitGate(phi=None, theta=np.pi, Vnn=float("inf"), decay=0)
-    lower = ro.pulses.PulseAnsatz(
+    lower = ro.pulses.SinglePhotonPulseAnsatz(
         detuning_ansatz=ro.pulses.Const(),
         phase_ansatz=ro.pulses.SinCrab(2),
         rabi_ansatz=ro.pulses.Const(),
     )
-    upper = ro.pulses.PulseAnsatz(
+    upper = ro.pulses.SinglePhotonPulseAnsatz(
         detuning_ansatz=ro.pulses.Const(),
         rabi_ansatz=ro.pulses.Const(),
     )

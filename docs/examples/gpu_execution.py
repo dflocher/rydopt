@@ -17,7 +17,7 @@ if __name__ == "__main__":
     gate = ro.gates.TwoQubitGate(phi=None, theta=np.pi, Vnn=1.5, decay=0)
 
     # Pulse
-    pulse = ro.pulses.PulseAnsatz(
+    pulse = ro.pulses.SinglePhotonPulseAnsatz(
         detuning_ansatz=ro.pulses.Const(), phase_ansatz=ro.pulses.SinCrab(6)
     )
 

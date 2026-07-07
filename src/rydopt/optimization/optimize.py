@@ -9,7 +9,7 @@ from contextlib import nullcontext
 from dataclasses import dataclass
 from queue import SimpleQueue
 from types import TracebackType
-from typing import Generic, Literal, Protocol, TypeAlias, TypeVar, cast, overload
+from typing import Generic, Literal, Protocol, TypeVar, cast, overload
 
 import jax
 import jax.numpy as jnp
@@ -18,8 +18,8 @@ import numpy.typing as npt
 import optax
 from tqdm.auto import tqdm
 
-from rydopt.protocols import Optimizable, UnpackingPulseAnsatz
-from rydopt.pulses import PulseFamilyParams, PulseParams
+from rydopt.protocols import Optimizable, PulseAnsatz
+from rydopt.pulses import PulseFamilyAnsatz, PulseFamilyParams, PulseParams
 from rydopt.types import ParamsBoolLike, ParamsFloatLike, TimeLike
 
 tqdm.monitor_interval = 0
@@ -27,8 +27,6 @@ tqdm.monitor_interval = 0
 ParamsType = TypeVar("ParamsType", covariant=True)
 ValueType = TypeVar("ValueType", covariant=True)
 HistoryType = TypeVar("HistoryType", covariant=True)
-OptimizedParams: TypeAlias = PulseParams[float] | PulseFamilyParams[float]
-OptimizablePulseAnsatz: TypeAlias = UnpackingPulseAnsatz[OptimizedParams]
 
 
 @dataclass
@@ -189,7 +187,7 @@ class _ProgressBar:
 # -----------------------------------------------------------------------------
 def _make_infidelity(
     gate: Optimizable,
-    pulse: OptimizablePulseAnsatz,
+    pulse: PulseAnsatz | PulseFamilyAnsatz,
     params_full: npt.NDArray[np.float64],
     params_trainable_indices: npt.NDArray[np.intp],
     tol: float,
@@ -342,7 +340,7 @@ _adam_scan: Callable[..., AdamScanReturn] = cast(
 
 def _adam_optimize(
     gate: Optimizable,
-    pulse: OptimizablePulseAnsatz,
+    pulse: PulseAnsatz | PulseFamilyAnsatz,
     params_full: npt.NDArray[np.float64],
     params_trainable: npt.NDArray[np.float64],
     params_trainable_indices: npt.NDArray[np.intp],
@@ -422,7 +420,7 @@ def _adam_optimize(
 @overload
 def optimize(
     gate: Optimizable,
-    pulse: OptimizablePulseAnsatz,
+    pulse: PulseAnsatz | PulseFamilyAnsatz,
     initial_params: ParamsFloatLike,
     fixed_initial_params: ParamsBoolLike | None = ...,
     *,
@@ -431,13 +429,13 @@ def optimize(
     tol: float = ...,
     return_history: Literal[True],
     verbose: bool = ...,
-) -> OptimizationResult[OptimizedParams, float, npt.NDArray[np.float64]]: ...
+) -> OptimizationResult[PulseParams[float] | PulseFamilyParams[float], float, npt.NDArray[np.float64]]: ...
 
 
 @overload
 def optimize(
     gate: Optimizable,
-    pulse: OptimizablePulseAnsatz,
+    pulse: PulseAnsatz | PulseFamilyAnsatz,
     initial_params: ParamsFloatLike,
     fixed_initial_params: ParamsBoolLike | None = ...,
     *,
@@ -446,12 +444,12 @@ def optimize(
     tol: float = ...,
     return_history: Literal[False] = False,
     verbose: bool = ...,
-) -> OptimizationResult[OptimizedParams, float, None]: ...
+) -> OptimizationResult[PulseParams[float] | PulseFamilyParams[float], float, None]: ...
 
 
 def optimize(
     gate: Optimizable,
-    pulse: OptimizablePulseAnsatz,
+    pulse: PulseAnsatz | PulseFamilyAnsatz,
     initial_params: ParamsFloatLike,
     fixed_initial_params: ParamsBoolLike | None = None,
     *,
@@ -460,7 +458,7 @@ def optimize(
     tol: float = 1e-7,
     return_history: bool = False,
     verbose: bool = False,
-) -> OptimizationResult[OptimizedParams, float, npt.NDArray[np.float64] | None]:
+) -> OptimizationResult[PulseParams[float] | PulseFamilyParams[float], float, npt.NDArray[np.float64] | None]:
     r"""Function that optimizes an initial parameter guess in order to realize the desired gate.
 
     Example:
@@ -472,7 +470,7 @@ def optimize(
         ...     Vnn=float("inf"),
         ...     decay=0,
         ... )
-        >>> pulse = ro.pulses.PulseAnsatz(
+        >>> pulse = ro.pulses.SinglePhotonPulseAnsatz(
         ...     detuning_ansatz=ro.pulses.Const(),
         ...     phase_ansatz=ro.pulses.SinCrab(2),
         ... )
@@ -489,7 +487,7 @@ def optimize(
 
     Args:
         gate: RydOpt Gate or GateFamily object
-        pulse: RydOpt PulseAnsatz or PulseFamilyAnsatz object
+        pulse: RydOpt SinglePhotonPulseAnsatz or PulseFamilyAnsatz object
         initial_params: initial pulse (family) parameters
         fixed_initial_params: which parameters shall not be optimized
         num_steps: number of optimization steps
@@ -567,7 +565,7 @@ def optimize(
 @overload
 def multi_start_optimize(
     gate: Optimizable,
-    pulse: OptimizablePulseAnsatz,
+    pulse: PulseAnsatz | PulseFamilyAnsatz,
     min_initial_params: ParamsFloatLike,
     max_initial_params: ParamsFloatLike,
     fixed_initial_params: ParamsBoolLike | None = ...,
@@ -582,13 +580,15 @@ def multi_start_optimize(
     return_history: Literal[True],
     return_all: Literal[True],
     verbose: bool = ...,
-) -> OptimizationResult[list[OptimizedParams], npt.NDArray[np.float64], npt.NDArray[np.float64]]: ...
+) -> OptimizationResult[
+    list[PulseParams[float] | PulseFamilyParams[float]], npt.NDArray[np.float64], npt.NDArray[np.float64]
+]: ...
 
 
 @overload
 def multi_start_optimize(
     gate: Optimizable,
-    pulse: OptimizablePulseAnsatz,
+    pulse: PulseAnsatz | PulseFamilyAnsatz,
     min_initial_params: ParamsFloatLike,
     max_initial_params: ParamsFloatLike,
     fixed_initial_params: ParamsBoolLike | None = ...,
@@ -603,13 +603,13 @@ def multi_start_optimize(
     return_history: Literal[False] = False,
     return_all: Literal[True],
     verbose: bool = ...,
-) -> OptimizationResult[list[OptimizedParams], npt.NDArray[np.float64], None]: ...
+) -> OptimizationResult[list[PulseParams[float] | PulseFamilyParams[float]], npt.NDArray[np.float64], None]: ...
 
 
 @overload
 def multi_start_optimize(
     gate: Optimizable,
-    pulse: OptimizablePulseAnsatz,
+    pulse: PulseAnsatz | PulseFamilyAnsatz,
     min_initial_params: ParamsFloatLike,
     max_initial_params: ParamsFloatLike,
     fixed_initial_params: ParamsBoolLike | None = ...,
@@ -624,13 +624,13 @@ def multi_start_optimize(
     return_history: Literal[True],
     return_all: Literal[False] = False,
     verbose: bool = ...,
-) -> OptimizationResult[OptimizedParams, float, npt.NDArray[np.float64]]: ...
+) -> OptimizationResult[PulseParams[float] | PulseFamilyParams[float], float, npt.NDArray[np.float64]]: ...
 
 
 @overload
 def multi_start_optimize(
     gate: Optimizable,
-    pulse: OptimizablePulseAnsatz,
+    pulse: PulseAnsatz | PulseFamilyAnsatz,
     min_initial_params: ParamsFloatLike,
     max_initial_params: ParamsFloatLike,
     fixed_initial_params: ParamsBoolLike | None = ...,
@@ -645,12 +645,12 @@ def multi_start_optimize(
     return_history: Literal[False] = False,
     return_all: Literal[False] = False,
     verbose: bool = ...,
-) -> OptimizationResult[OptimizedParams, float, None]: ...
+) -> OptimizationResult[PulseParams[float] | PulseFamilyParams[float], float, None]: ...
 
 
 def multi_start_optimize(
     gate: Optimizable,
-    pulse: OptimizablePulseAnsatz,
+    pulse: PulseAnsatz | PulseFamilyAnsatz,
     min_initial_params: ParamsFloatLike,
     max_initial_params: ParamsFloatLike,
     fixed_initial_params: ParamsBoolLike | None = None,
@@ -666,7 +666,7 @@ def multi_start_optimize(
     return_all: bool = False,
     verbose: bool = False,
 ) -> OptimizationResult[
-    OptimizedParams | list[OptimizedParams],
+    PulseParams[float] | PulseFamilyParams[float] | list[PulseParams[float] | PulseFamilyParams[float]],
     float | npt.NDArray[np.float64],
     npt.NDArray[np.float64] | None,
 ]:
@@ -681,7 +681,7 @@ def multi_start_optimize(
         ...     Vnn=float("inf"),
         ...     decay=0,
         ... )
-        >>> pulse = ro.pulses.PulseAnsatz(
+        >>> pulse = ro.pulses.SinglePhotonPulseAnsatz(
         ...     detuning_ansatz=ro.pulses.Const(),
         ...     phase_ansatz=ro.pulses.SinCrab(2),
         ... )
@@ -702,7 +702,7 @@ def multi_start_optimize(
 
     Args:
         gate: RydOpt Gate object
-        pulse: RydOpt PulseAnsatz object
+        pulse: RydOpt SinglePhotonPulseAnsatz object
         min_initial_params: lower bound for the random parameter initialization
         max_initial_params: upper bound for the random parameter initialization
         fixed_initial_params: which parameters shall not be optimized

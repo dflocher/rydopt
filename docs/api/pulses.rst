@@ -6,7 +6,9 @@ rydopt.pulses
 .. autoclass:: PulseAnsatzFunction
    :members:
 
-.. autoclass:: PulseAnsatz
+.. _pulse_ansatz_classes:
+
+.. autoclass:: SinglePhotonPulseAnsatz
    :members:
 
 .. autoclass:: TwoPhotonPulseAnsatz
