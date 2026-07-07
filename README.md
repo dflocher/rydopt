@@ -48,8 +48,30 @@ Citing RydOpt
 -------------
 
 If you find this library useful for your research, please cite:
-> David F. Locher, Josias Old, Katharina Brechtelsbauer, Jakob Holschbach, Hans Peter Büchler, Sebastian Weber, Markus Müller,
+> D.F. Locher, J. Old, K. Brechtelsbauer, J. Holschbach, H.P. Büchler, S. Weber, M. Müller,
 *Multiqubit Rydberg Gates for Quantum Error Correction*, [PRX Quantum 7, 020354 (2026)](https://doi.org/10.1103/j8fm-24cf)
+
+Contributors
+------------
+
+The following people have, so far, contributed to the development of RydOpt:
+
+- [David Locher](https://github.com/dflocher)
+- [Sebastian Weber](https://github.com/seweber)
+- Jakob Holschbach
+- [Javad Kazemi](https://github.com/jakazemi)
+
+We warmly welcome new contributions! Please refer to the [contributor guide](https://rydopt.readthedocs.io/en/latest/contribute/development.html) for more information!
+
+The development of RydOpt has been supported by [Forschungszentrum Jülich](https://www.fz-juelich.de/),
+[RWTH Aachen University](https://www.rwth-aachen.de/), [University of Stuttgart](https://www.uni-stuttgart.de/), and the
+company [ParityQC](https://parityqc.com/). We acknowledge support from the Federal Ministry of Research, Technology and Space (BMFTR) through the
+grant [MUNIQC-Atoms](https://muniqc-atoms.munich-quantum-valley.de/) and from the German Research Foundation (DFG) through the priority
+programme [SPP 2514](https://www.spp2514.kit.edu/).
+
+[<img src="docs/_static/MUNIQC_Atoms_Logo.svg" width="300">](https://muniqc-atoms.munich-quantum-valley.de/)
+[<img src="docs/_static/SPP_Logo.png" width="130">](https://www.spp2514.kit.edu/)
+[<img src="docs/_static/ParityQC_Logo.svg" width="220">](https://parityqc.com/)
 
 License
 -------
