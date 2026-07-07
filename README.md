@@ -69,9 +69,9 @@ company [ParityQC](https://parityqc.com/). We acknowledge support from the Feder
 grant [MUNIQC-Atoms](https://muniqc-atoms.munich-quantum-valley.de/) and from the German Research Foundation (DFG) through the priority
 programme [SPP 2514](https://www.spp2514.kit.edu/).
 
-[<img src="docs/_static/MUNIQC_Atoms_Logo.svg" width="300">](https://muniqc-atoms.munich-quantum-valley.de/)
-[<img src="docs/_static/SPP_Logo.png" width="130">](https://www.spp2514.kit.edu/)
-[<img src="docs/_static/ParityQC_Logo.svg" width="220">](https://parityqc.com/)
+[<img src="docs/_static/MUNIQC_Atoms_Logo.svg" width="300" align="middle">](https://muniqc-atoms.munich-quantum-valley.de/)
+[<img src="docs/_static/SPP_Logo.png" width="130" align="middle">](https://www.spp2514.kit.edu/)
+[<img src="docs/_static/ParityQC_Logo.svg" width="220" align="middle">](https://parityqc.com/)
 
 License
 -------
