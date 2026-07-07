@@ -19,7 +19,7 @@ def test_two_qubit_gate_asym_vs_symmetric() -> None:
         warnings.simplefilter("ignore")
         gate_asym = ro.gates.TwoQubitGateAsym(phi1=None, phi2=None, theta12=np.pi, V12=V_LARGE, decay=0, s1=1.0, s2=1.0)
 
-    pulse = ro.pulses.PulseAnsatz(detuning_ansatz=ro.pulses.Const(), phase_ansatz=ro.pulses.SinCrab(2))
+    pulse = ro.pulses.SinglePhotonPulseAnsatz(detuning_ansatz=ro.pulses.Const(), phase_ansatz=ro.pulses.SinCrab(2))
 
     # Optimized parameters from test_cz.py
     params = ro.pulses.PulseParams(7.61141034, [0.07884777], [1.83253308, -0.61765787], [])
@@ -62,7 +62,7 @@ def test_three_qubit_gate_asym_vs_isosceles() -> None:
             s3=1.0,
         )
 
-    pulse = ro.pulses.PulseAnsatz(detuning_ansatz=ro.pulses.Const(), phase_ansatz=ro.pulses.SinCrab(6))
+    pulse = ro.pulses.SinglePhotonPulseAnsatz(detuning_ansatz=ro.pulses.Const(), phase_ansatz=ro.pulses.SinCrab(6))
 
     # Optimized parameters from test_ccz.py
     params = ro.pulses.PulseParams(
@@ -124,7 +124,7 @@ def test_four_qubit_gate_asym_vs_pyramidal() -> None:
             s4=1.0,
         )
 
-    pulse = ro.pulses.PulseAnsatz(detuning_ansatz=ro.pulses.Const(), phase_ansatz=ro.pulses.SinCrab(8))
+    pulse = ro.pulses.SinglePhotonPulseAnsatz(detuning_ansatz=ro.pulses.Const(), phase_ansatz=ro.pulses.SinCrab(8))
 
     # Optimized parameters from test_cccz.py
     params = ro.pulses.PulseParams(

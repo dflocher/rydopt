@@ -4,7 +4,7 @@ from rydopt.characterization.qutip_helpers.qutip_simulation import (
     process_fidelity_qutip,
     rydberg_time_qutip,
 )
-from rydopt.protocols import EvaluatablePulseAnsatz, GateSystem, RydbergSystem
+from rydopt.protocols import GateSystem, PulseAnsatz, RydbergSystem
 from rydopt.simulation.fidelity import process_fidelity
 from rydopt.simulation.rydberg_time import rydberg_time
 from rydopt.types import ParamsFloatLike
@@ -12,7 +12,7 @@ from rydopt.types import ParamsFloatLike
 
 def analyze_gate(
     gate: GateSystem,
-    pulse: EvaluatablePulseAnsatz,
+    pulse: PulseAnsatz,
     params: ParamsFloatLike,
     tol: float = 1e-15,
 ) -> tuple[float | None, float | None, float | None]:
@@ -29,7 +29,7 @@ def analyze_gate(
         ...     Vnn=float("inf"),
         ...     decay=0.0001,
         ... )
-        >>> pulse = ro.pulses.PulseAnsatz(
+        >>> pulse = ro.pulses.SinglePhotonPulseAnsatz(
         ...     detuning_ansatz=ro.pulses.Const(),
         ...     phase_ansatz=ro.pulses.SinCrab(2),
         ... )
@@ -63,7 +63,7 @@ def analyze_gate(
 
 def analyze_gate_qutip(
     gate: GateSystem,
-    pulse: EvaluatablePulseAnsatz,
+    pulse: PulseAnsatz,
     params: ParamsFloatLike,
 ) -> tuple[float | None, float | None, float | None]:
     r"""Function that analyzes the performance of a gate pulse using QuTiP.
@@ -79,7 +79,7 @@ def analyze_gate_qutip(
         ...     Vnn=float("inf"),
         ...     decay=0.0001,
         ... )
-        >>> pulse = ro.pulses.PulseAnsatz(
+        >>> pulse = ro.pulses.SinglePhotonPulseAnsatz(
         ...     detuning_ansatz=ro.pulses.Const(),
         ...     phase_ansatz=ro.pulses.SinCrab(2),
         ... )

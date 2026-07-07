@@ -40,8 +40,10 @@ autodoc_default_options = {
 
 autodoc_type_aliases = {
     "ParamsFloatLike": "ParamsFloatLike",
-    "PulseAnsatz": "PulseAnsatz",
     "ParamsBoolLike": "ParamsBoolLike",
+    "PulseAnsatz": "PulseAnsatz",
+    "SinglePhotonPulseAnsatz": "SinglePhotonPulseAnsatz",
+    "TwoPhotonPulseAnsatz": "TwoPhotonPulseAnsatz",
     "ArrayLike": "ArrayLike",
     "PulseAnsatzFunction": "PulseAnsatzFunction",
     "PulseFunction": "PulseFunction",

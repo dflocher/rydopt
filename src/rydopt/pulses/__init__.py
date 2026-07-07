@@ -20,7 +20,7 @@ from rydopt.pulses.ansatz_functions import (
     SoftBoxPlanck,
     SoftBoxSeventhOrderSmoothstep,
 )
-from rydopt.pulses.pulse_ansatz import PulseAnsatz, TwoPhotonPulseAnsatz
+from rydopt.pulses.pulse_ansatz import SinglePhotonPulseAnsatz, TwoPhotonPulseAnsatz
 from rydopt.pulses.pulse_family_ansatz import (
     PolynomialPulseMap,
     PolynomialPulseMapWithCustomDuration,
@@ -32,7 +32,7 @@ from rydopt.pulses.pulse_params import PulseParams
 from rydopt.types import ParamsBoolLike, ParamsFloatLike
 
 __all__ = [
-    "PulseAnsatz",
+    "SinglePhotonPulseAnsatz",
     "TwoPhotonPulseAnsatz",
     "PulseParams",
     "PulseFamilyParams",

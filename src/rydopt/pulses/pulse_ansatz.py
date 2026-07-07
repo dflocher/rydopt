@@ -27,7 +27,7 @@ def _is_unpacked(params: ParamsFloatLike) -> bool:
 
 
 @dataclass
-class PulseAnsatz:
+class SinglePhotonPulseAnsatz:
     r"""Data class that stores ansatz functions for the laser pulse that couples the qubit state :math:`|1\rangle` to
     the Rydberg state :math:`|r\rangle`.
 
@@ -51,7 +51,7 @@ class PulseAnsatz:
 
     Example:
         >>> import rydopt as ro
-        >>> pulse = ro.pulses.PulseAnsatz(
+        >>> pulse = ro.pulses.SinglePhotonPulseAnsatz(
         ...     detuning_ansatz=ro.pulses.Const(),
         ...     phase_ansatz=ro.pulses.SinCrab(2),
         ... )
@@ -93,7 +93,9 @@ class PulseAnsatz:
 
         expected_size = 1 + detuning_count + phase_count + rabi_count
         if int(flat_params.shape[-1]) != expected_size:
-            raise ValueError(f"PulseAnsatz expects {expected_size} packed parameters, got {int(flat_params.shape[-1])}")
+            raise ValueError(
+                f"SinglePhotonPulseAnsatz expects {expected_size} packed parameters, got {int(flat_params.shape[-1])}"
+            )
 
         duration, detuning_params, phase_params, rabi_params = jnp.split(
             flat_params,
@@ -217,11 +219,11 @@ class TwoPhotonPulseAnsatz:
 
     Example:
         >>> import rydopt as ro
-        >>> lower = ro.pulses.PulseAnsatz(
+        >>> lower = ro.pulses.SinglePhotonPulseAnsatz(
         ...     detuning_ansatz=ro.pulses.Const(),
         ...     phase_ansatz=ro.pulses.SinCrab(4),
         ... )
-        >>> upper = ro.pulses.PulseAnsatz(
+        >>> upper = ro.pulses.SinglePhotonPulseAnsatz(
         ...     detuning_ansatz=ro.pulses.Const(),
         ...     rabi_ansatz=ro.pulses.Const(),
         ... )
@@ -237,8 +239,8 @@ class TwoPhotonPulseAnsatz:
 
     """
 
-    lower_transition: PulseAnsatz
-    upper_transition: PulseAnsatz
+    lower_transition: SinglePhotonPulseAnsatz
+    upper_transition: SinglePhotonPulseAnsatz
     decay: float = 0.0
 
     @property

@@ -12,7 +12,7 @@ from rydopt.gates.subsystem_hamiltonians import (
     H_2_atoms,
     H_k_atoms_perfect_blockade,
 )
-from rydopt.protocols import EvaluatablePulseAnsatz
+from rydopt.protocols import PulseAnsatz
 from rydopt.simulation.fidelity import average_gate_fidelity, process_fidelity
 from rydopt.types import FidelityType, HamiltonianFunction, ParamsFloatLike
 
@@ -175,7 +175,7 @@ class TwoQubitGate:
 
         return jnp.abs(jnp.vdot(targeted_gate, obtained_gate)) ** 2 / len(targeted_gate) ** 2
 
-    def cost(self, pulse: EvaluatablePulseAnsatz, params: ParamsFloatLike, tol: float = 1e-7) -> jax.Array:
+    def cost(self, pulse: PulseAnsatz, params: ParamsFloatLike, tol: float = 1e-7) -> jax.Array:
         """Evaluate the cost function from the configured fidelity metric."""
         if self._fidelity_type == "process":
             return jnp.abs(1 - process_fidelity(self, pulse, params, tol))

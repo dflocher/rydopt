@@ -11,7 +11,7 @@ def test_fidelity_calculation() -> None:
     gate = ro.gates.TwoQubitGate(phi=None, theta=np.pi, Vnn=float("inf"), decay=0)
 
     # Pulse
-    pulse = ro.pulses.PulseAnsatz(
+    pulse = ro.pulses.SinglePhotonPulseAnsatz(
         detuning_ansatz=ro.pulses.Const(),
         phase_ansatz=ro.pulses.SinCrab(2),
     )
@@ -29,7 +29,7 @@ def test_evolution_performance() -> None:
     gate = ro.gates.TwoQubitGate(phi=None, theta=np.pi, Vnn=float("inf"), decay=0)
 
     # Pulse
-    pulse = ro.pulses.PulseAnsatz(
+    pulse = ro.pulses.SinglePhotonPulseAnsatz(
         detuning_ansatz=ro.pulses.Const(),
         phase_ansatz=ro.pulses.SinCrab(2),
     )

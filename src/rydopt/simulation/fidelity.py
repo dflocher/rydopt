@@ -2,14 +2,12 @@ from __future__ import annotations
 
 import jax
 
-from rydopt.protocols import EvaluatablePulseAnsatz, GateSystem
+from rydopt.protocols import GateSystem, PulseAnsatz
 from rydopt.simulation.evolve import evolve
 from rydopt.types import ParamsFloatLike
 
 
-def process_fidelity(
-    gate: GateSystem, pulse: EvaluatablePulseAnsatz, params: ParamsFloatLike, tol: float = 1e-7
-) -> jax.Array:
+def process_fidelity(gate: GateSystem, pulse: PulseAnsatz, params: ParamsFloatLike, tol: float = 1e-7) -> jax.Array:
     r"""The function provides the process fidelity of the unitary resulting from a gate pulse :math:`U(T)` w.r.t. the
     target unitary :math:`U_{\mathrm{targ}}`:
 
@@ -33,7 +31,7 @@ def process_fidelity(
         ...     Vnn=float("inf"),
         ...     decay=0,
         ... )
-        >>> pulse = ro.pulses.PulseAnsatz(
+        >>> pulse = ro.pulses.SinglePhotonPulseAnsatz(
         ...     detuning_ansatz=ro.pulses.Const(),
         ...     phase_ansatz=ro.pulses.SinCrab(2),
         ... )
@@ -42,7 +40,7 @@ def process_fidelity(
 
     Args:
         gate: RydOpt Gate object.
-        pulse: RydOpt PulseAnsatz object.
+        pulse: RydOpt SinglePhotonPulseAnsatz object.
         params: Pulse parameters.
         tol: Precision of the ODE solver, default is 1e-7.
 
@@ -55,7 +53,7 @@ def process_fidelity(
 
 
 def average_gate_fidelity(
-    gate: GateSystem, pulse: EvaluatablePulseAnsatz, params: ParamsFloatLike, tol: float = 1e-7
+    gate: GateSystem, pulse: PulseAnsatz, params: ParamsFloatLike, tol: float = 1e-7
 ) -> jax.Array:
     r"""The function provides the average gate fidelity calculated from the process fidelity:
 
@@ -74,7 +72,7 @@ def average_gate_fidelity(
         ...     Vnn=float("inf"),
         ...     decay=0,
         ... )
-        >>> pulse = ro.pulses.PulseAnsatz(
+        >>> pulse = ro.pulses.SinglePhotonPulseAnsatz(
         ...     detuning_ansatz=ro.pulses.Const(),
         ...     phase_ansatz=ro.pulses.SinCrab(2),
         ... )
@@ -83,7 +81,7 @@ def average_gate_fidelity(
 
     Args:
         gate: RydOpt Gate object.
-        pulse: RydOpt PulseAnsatz object.
+        pulse: RydOpt SinglePhotonPulseAnsatz object.
         params: Pulse parameters.
         tol: Precision of the ODE solver, default is 1e-7.
 

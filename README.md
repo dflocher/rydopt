@@ -31,7 +31,7 @@ import numpy as np
 gate = ro.gates.TwoQubitGate(phi=None, theta=np.pi, Vnn=float("inf"), decay=0.0)
 
 # Pulse ansatz: constant detuning, sweep of the laser phase according to a sine CRAB ansatz
-pulse_ansatz = ro.pulses.PulseAnsatz(detuning_ansatz=ro.pulses.Const(), phase_ansatz=ro.pulses.SinCrab(2))
+pulse_ansatz = ro.pulses.SinglePhotonPulseAnsatz(detuning_ansatz=ro.pulses.Const(), phase_ansatz=ro.pulses.SinCrab(2))
 
 # Initial pulse parameter guess
 initial_params = ro.pulses.PulseParams(duration=7.0, detuning_params=[0.0], phase_params=[0.0, 0.0])

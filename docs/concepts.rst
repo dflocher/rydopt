@@ -10,7 +10,7 @@ At a high level, every optimization consists of the same three steps.
 
 1. **Choose a** :ref:`gate system <gates>`, describing both the *physical settings* and *target unitary*. The target unitary can be configured by specifying phase angles. Phase angles can be set to ``None``, meaning 'do not care': the optimizer is allowed to realize any value for that phase and will still count the result as correct as long as the specified phase angles match.
 
-2. **Choose a** :class:`PulseAnsatz <rydopt.pulses.PulseAnsatz>`, describing a parameterized pulse that excites the atoms to the Rydberg states. RydOpt provides multiple predefined ansatz functions that can be used for parameterizing the time-dependence of the laser phase, detuning, and Rabi frequency amplitude. Alternatively, users can define their own ansatz functions.
+2. **Choose a** :class:`SinglePhotonPulseAnsatz <rydopt.pulses.SinglePhotonPulseAnsatz>`, describing a parameterized pulse that excites the atoms to the Rydberg states. RydOpt provides multiple predefined ansatz functions that can be used for parameterizing the time-dependence of the laser phase, detuning, and Rabi frequency amplitude. Alternatively, users can define their own ansatz functions.
 
 3. **Optimize** the pulse to minimize the infidelity. Two different optimization strategies are available:
 

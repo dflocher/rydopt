@@ -33,12 +33,12 @@ def test_reproducing_evered() -> None:
 
     evered_phase = EveredPhase()
 
-    lower = ro.pulses.PulseAnsatz(
+    lower = ro.pulses.SinglePhotonPulseAnsatz(
         detuning_ansatz=ro.pulses.Const(),
         phase_ansatz=evered_phase,
         rabi_ansatz=ro.pulses.Const(),
     )
-    upper = ro.pulses.PulseAnsatz(
+    upper = ro.pulses.SinglePhotonPulseAnsatz(
         detuning_ansatz=ro.pulses.Const(),
         rabi_ansatz=ro.pulses.Const(),
     )

@@ -5,13 +5,11 @@ from functools import partial
 import jax
 import jax.numpy as jnp
 
-from rydopt.protocols import EvaluatablePulseAnsatz, RydbergSystem
+from rydopt.protocols import PulseAnsatz, RydbergSystem
 from rydopt.types import HamiltonianFunction, ParamsFloatLike, TimeLike
 
 
-def rydberg_time(
-    gate: RydbergSystem, pulse: EvaluatablePulseAnsatz, params: ParamsFloatLike, tol: float = 1e-7
-) -> jax.Array:
+def rydberg_time(gate: RydbergSystem, pulse: PulseAnsatz, params: ParamsFloatLike, tol: float = 1e-7) -> jax.Array:
     r"""The function determines the total time spent in Rydberg states during a gate pulse:
 
     .. math::
@@ -28,7 +26,7 @@ def rydberg_time(
         ...     Vnn=float("inf"),
         ...     decay=0,
         ... )
-        >>> pulse = ro.pulses.PulseAnsatz(
+        >>> pulse = ro.pulses.SinglePhotonPulseAnsatz(
         ...     detuning_ansatz=ro.pulses.Const(),
         ...     phase_ansatz=ro.pulses.SinCrab(2),
         ... )
@@ -37,7 +35,7 @@ def rydberg_time(
 
     Args:
         gate: RydOpt Gate object.
-        pulse: RydOpt PulseAnsatz object.
+        pulse: RydOpt SinglePhotonPulseAnsatz object.
         params: Pulse parameters.
         tol: Precision of the ODE solver, default is 1e-7.
 

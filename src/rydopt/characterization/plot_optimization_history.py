@@ -28,7 +28,7 @@ def plot_optimization_history(
         ...     Vnn=float("inf"),
         ...     decay=0,
         ... )
-        >>> pulse = ro.pulses.PulseAnsatz(
+        >>> pulse = ro.pulses.SinglePhotonPulseAnsatz(
         ...     detuning_ansatz=ro.pulses.Const(),
         ...     phase_ansatz=ro.pulses.SinCrab(2),
         ... )

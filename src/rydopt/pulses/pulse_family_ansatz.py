@@ -9,7 +9,7 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 
-from rydopt.pulses.pulse_ansatz import PulseAnsatz, PulseAnsatzFunction, _FixedConstant, _is_unpacked
+from rydopt.pulses.pulse_ansatz import PulseAnsatzFunction, SinglePhotonPulseAnsatz, _FixedConstant, _is_unpacked
 from rydopt.pulses.pulse_family_params import PulseFamilyParams
 from rydopt.pulses.pulse_params import PulseParams
 from rydopt.types import ParamsFloatLike
@@ -302,9 +302,9 @@ class PulseFamilyAnsatz:
     pulse_map: PulseParamMap = field(default_factory=PolynomialPulseMap)
 
     @property
-    def pulse_ansatz(self) -> PulseAnsatz:
+    def pulse_ansatz(self) -> SinglePhotonPulseAnsatz:
         r"""Generate the pulse ansatz corresponding to a given gate parameter."""
-        return PulseAnsatz(
+        return SinglePhotonPulseAnsatz(
             detuning_ansatz=self.detuning_ansatz, phase_ansatz=self.phase_ansatz, rabi_ansatz=self.rabi_ansatz
         )
 
@@ -347,7 +347,8 @@ class PulseFamilyAnsatz:
 
             if int(flat_params.shape[-1]) != total_expected_size:
                 raise ValueError(
-                    f"PulseAnsatz expects {total_expected_size} packed parameters, got {int(flat_params.shape[-1])}"
+                    f"SinglePhotonPulseAnsatz expects {total_expected_size} packed parameters, "
+                    f"got {int(flat_params.shape[-1])}"
                 )
 
             splits = np.cumsum(expected_sizes[:-1])
