@@ -4,11 +4,12 @@ from typing import Literal
 
 import jax
 import jax.numpy as jnp
+import numpy as np
 from jax.scipy.special import logsumexp
 
 from rydopt.protocols import GateSystem
 from rydopt.pulses import PulseFamilyAnsatz
-from rydopt.types import ParamsFloatLike
+from rydopt.types import OneDimensionalArrayLike, ParamsFloatLike
 
 
 class GateFamily:
@@ -52,15 +53,16 @@ class GateFamily:
     def __init__(
         self,
         fixed_parameter_gates: Sequence[GateSystem],
-        parameter_values: Sequence[float] | jax.Array,
+        parameter_values: OneDimensionalArrayLike,
         reduction: Literal["mean", "max", "softmax"] = "mean",
         softmax_scale: float | None = None,
     ) -> None:
-        if len(fixed_parameter_gates) != len(parameter_values):
+        self.parameter_values = jnp.asarray(parameter_values, dtype=np.float64)
+        self.gates = list(fixed_parameter_gates)
+
+        if len(fixed_parameter_gates) != len(self.parameter_values):
             raise ValueError("fixed_parameter_gates and parameter_values must have the same length.")
 
-        self.gates = list(fixed_parameter_gates)
-        self.parameter_values = [float(p) for p in parameter_values]
         self._num_gates = len(fixed_parameter_gates)
 
         if reduction == "mean":

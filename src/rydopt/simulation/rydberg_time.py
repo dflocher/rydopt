@@ -6,7 +6,7 @@ import jax
 import jax.numpy as jnp
 
 from rydopt.protocols import PulseAnsatz, RydbergSystem
-from rydopt.types import HamiltonianFunction, ParamsFloatLike, TimeLike
+from rydopt.types import HamiltonianFunction, OneDimensionalArrayLike, ParamsFloatLike
 
 
 def rydberg_time(gate: RydbergSystem, pulse: PulseAnsatz, params: ParamsFloatLike, tol: float = 1e-7) -> jax.Array:
@@ -59,7 +59,7 @@ def rydberg_time(gate: RydbergSystem, pulse: PulseAnsatz, params: ParamsFloatLik
     # Schrödinger equation for the basis states. The Hamiltonian is chosen via lax.switch
     # based on the index of the basis state, with padding to max_dim × max_dim.
     def apply_hamiltonian(
-        t: TimeLike,
+        t: OneDimensionalArrayLike,
         params: ParamsFloatLike,
         y: tuple[jax.Array, jax.Array],
         hamiltonian: HamiltonianFunction,
@@ -86,7 +86,7 @@ def rydberg_time(gate: RydbergSystem, pulse: PulseAnsatz, params: ParamsFloatLik
     )
 
     def schroedinger_eq(
-        t: TimeLike,
+        t: OneDimensionalArrayLike,
         y: tuple[jax.Array, jax.Array],
         args: tuple[ParamsFloatLike, int],
     ) -> tuple[jax.Array, jax.Array]:

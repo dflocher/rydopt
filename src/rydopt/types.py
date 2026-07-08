@@ -29,14 +29,12 @@ else:
 
 FidelityType = Literal["process", "average_gate"]
 
-ParamsFloatLike = (
-    PulseParams[float] | PulseFamilyParams[float] | Sequence[float] | jax.Array | npt.NDArray[np.float64]
-) | tuple[jax.Array, jax.Array, jax.Array, jax.Array]
+ParamsFloatLike = PulseParams[float] | PulseFamilyParams[float] | Sequence[float] | jax.Array | npt.NDArray[np.float64]
+
 ParamsBoolLike = PulseParams[bool] | PulseFamilyParams[bool] | Sequence[bool] | jax.Array | npt.NDArray[np.bool_]
 
+OneDimensionalArrayLike = float | Sequence[float] | jax.Array | npt.NDArray[np.float64]
 
 PulseFunction = Callable[[float | jax.Array], jax.Array]
 
 HamiltonianFunction = Callable[[float | jax.Array, float | jax.Array, float | jax.Array, float | jax.Array], jax.Array]
-
-TimeLike = float | jax.Array | npt.NDArray[np.float64]

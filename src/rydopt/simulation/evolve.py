@@ -6,7 +6,7 @@ import jax
 import jax.numpy as jnp
 
 from rydopt.protocols import Evolvable, PulseAnsatz
-from rydopt.types import HamiltonianFunction, ParamsFloatLike, TimeLike
+from rydopt.types import HamiltonianFunction, OneDimensionalArrayLike, ParamsFloatLike
 
 
 def evolve(gate: Evolvable, pulse: PulseAnsatz, params: ParamsFloatLike, tol: float = 1e-7) -> tuple[jax.Array, ...]:
@@ -64,7 +64,7 @@ def evolve(gate: Evolvable, pulse: PulseAnsatz, params: ParamsFloatLike, tol: fl
     # Schrödinger equation for the basis states. The Hamiltonian is chosen via lax.switch
     # based on the index of the basis state, with padding to max_dim × max_dim.
     def apply_hamiltonian(
-        t: TimeLike,
+        t: OneDimensionalArrayLike,
         params: ParamsFloatLike,
         psi: jax.Array,
         hamiltonian: HamiltonianFunction,
@@ -79,7 +79,7 @@ def evolve(gate: Evolvable, pulse: PulseAnsatz, params: ParamsFloatLike, tol: fl
         for h, d in zip(gate.hamiltonian_functions_for_basis_states(), dims)
     )
 
-    def schroedinger_eq(t: TimeLike, psi: jax.Array, args: tuple[ParamsFloatLike, int]) -> jax.Array:
+    def schroedinger_eq(t: OneDimensionalArrayLike, psi: jax.Array, args: tuple[ParamsFloatLike, int]) -> jax.Array:
         params, idx = args
         return jax.lax.switch(idx, branches, t, params, psi)
 
@@ -124,7 +124,7 @@ def _evolve_optimized_for_gpus(
     import diffrax
 
     def schroedinger_eq(
-        t: TimeLike,
+        t: OneDimensionalArrayLike,
         psi_tuple: tuple[jax.Array, ...],
         _: object,
     ) -> tuple[jax.Array, ...]:
