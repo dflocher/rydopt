@@ -32,14 +32,14 @@ class GateFamily:
         ...     for phase in target_phases
         ... ]
         >>> parametrized_gate = ro.gates.GateFamily(
-        ...     fixed_parameter_gates=sampled_gates,
-        ...     parameter_values=target_phases,
+        ...     fixed_argument_gates=sampled_gates,
+        ...     argument_values=target_phases,
         ...     reduction="mean",
         ... )
 
     Args:
-        fixed_parameter_gates: Sequence of gate instances defining the physical systems.
-        parameter_values: Sequence of scalar parameters (same length as `fixed_parameter_gates`)
+        fixed_argument_gates: Sequence of gate instances defining the physical systems.
+        argument_values: Sequence of scalar arguments (same length as `fixed_argument_gates`)
             that controls the pulse family parametrization.
         reduction: Reduction operation applied to the per-gate infidelities.
             One of {"mean", "max", "softmax"}.
@@ -52,18 +52,18 @@ class GateFamily:
 
     def __init__(
         self,
-        fixed_parameter_gates: Sequence[GateSystem],
-        parameter_values: OneDimensionalArrayLike,
+        fixed_argument_gates: Sequence[GateSystem],
+        argument_values: OneDimensionalArrayLike,
         reduction: Literal["mean", "max", "softmax"] = "mean",
         softmax_scale: float | None = None,
     ) -> None:
-        self.parameter_values = jnp.asarray(parameter_values, dtype=np.float64)
-        self.gates = list(fixed_parameter_gates)
+        self.argument_values = jnp.asarray(argument_values, dtype=np.float64)
+        self.gates = list(fixed_argument_gates)
 
-        if len(fixed_parameter_gates) != len(self.parameter_values):
-            raise ValueError("fixed_parameter_gates and parameter_values must have the same length.")
+        if len(fixed_argument_gates) != len(self.argument_values):
+            raise ValueError("fixed_argument_gates and argument_values must have the same length.")
 
-        self._num_gates = len(fixed_parameter_gates)
+        self._num_gates = len(fixed_argument_gates)
 
         if reduction == "mean":
             if softmax_scale is not None:
@@ -81,7 +81,7 @@ class GateFamily:
             raise ValueError("Invalid reduction, must be 'mean', 'max', or 'softmax'.")
 
     def cost(self, pulse: PulseFamilyAnsatz, params: ParamsFloatLike, tol: float) -> jax.Array:
-        """Compute reduced infidelity over all fixed-target-parameter gates defined within the
+        """Compute reduced infidelity over all fixed-argument gates defined within the
         gate family.
 
         Args:
@@ -97,7 +97,7 @@ class GateFamily:
         costs = jnp.stack(
             [
                 gate.cost(pulse_ansatz, pulse.generate_pulse_params(params, pv), tol)
-                for gate, pv in zip(self.gates, self.parameter_values)
+                for gate, pv in zip(self.gates, self.argument_values)
             ]
         )
         if self.reduction == 0.0:
