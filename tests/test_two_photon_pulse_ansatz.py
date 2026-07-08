@@ -111,10 +111,10 @@ def test_average_gate_fidelity_qutip_comparison() -> None:
         xi_vals = np.array(ro.pulses.SinCrab(2)(jnp.array(t_grid), jnp.asarray(duration), phase_params_jnp))
         xi_func = interp1d(t_grid, xi_vals, kind="cubic", fill_value="extrapolate")
 
-        def coeff_m(t: float, args: None = None) -> complex:
+        def coeff_m(t: float) -> complex:
             return np.exp(-1j * xi_func(float(t)))
 
-        def coeff_p(t: float, args: None = None) -> complex:
+        def coeff_p(t: float) -> complex:
             return np.exp(1j * xi_func(float(t)))
 
         H0_s = (

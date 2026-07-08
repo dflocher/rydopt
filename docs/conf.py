@@ -3,6 +3,20 @@
 # For the full list of built-in configuration values, see the documentation:
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
 
+import os
+import shutil
+
+
+def _ensure_pandoc_on_path() -> None:
+  """Add pypandoc-binary's Pandoc directory to PATH as a fallback."""
+  import pypandoc
+
+  pandoc_dir = os.path.dirname(pypandoc.get_pandoc_path())
+  os.environ["PATH"] = pandoc_dir + os.pathsep + os.environ.get("PATH", "")
+
+if shutil.which("pandoc") is None:
+  _ensure_pandoc_on_path()
+
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
