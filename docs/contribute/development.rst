@@ -75,7 +75,7 @@ On Windows, run:
 
 .. code-block:: powershell
 
-   Push-Location docs; uv run .\make.bat livehtml; Pop-Location
+   try { Push-Location docs; uv run .\make.bat livehtml } finally { Pop-Location }
 
 The tutorials in the documentation are Jupyter notebooks. Use the following command to run a Jupyter server and edit the tutorials in the browser (turn on ``Settings > Save Widget State Automatically`` in the menu to ensure that status bars are shown in the documentation):
 
