@@ -48,6 +48,7 @@ dev = [
     "nbsphinx>=0.9.7",
     "sphinx-tabs>=3.5.0",
     "sphinx-copybutton>=0.5.2",
+    "sphinx-togglebutton>=0.4.5",
     "notebook>=7.5.0",
     "ipykernel>=7.1.0",
     "ipywidgets>=8.1.8",
