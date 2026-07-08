@@ -32,7 +32,7 @@ from rydopt.pulses.softbox_pulse_ansatz_functions import (
 
 
 class PulseAnsatzFunction(ABC):
-    """Base class for configurable pulse ansatz functions."""
+    """Abstract base class for configurable pulse ansatz functions."""
 
     def __init_subclass__(cls, **kwargs: object) -> None:
         """Wrap subclass call implementations with parameter-size validation."""

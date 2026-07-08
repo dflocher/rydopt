@@ -22,6 +22,7 @@ extensions = [
     "nbsphinx",
     "sphinx_tabs.tabs",
     "sphinx_copybutton",
+    "sphinx_togglebutton",
 ]
 
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
