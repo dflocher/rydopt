@@ -24,8 +24,8 @@ def simple_gate_family() -> GateFamily:
     ]
 
     return ro.gates.GateFamily(
-        fixed_parameter_gates=sampled_gates,
-        parameter_values=phases,
+        fixed_argument_gates=sampled_gates,
+        argument_values=phases,
         reduction="mean",
     )
 
@@ -63,7 +63,7 @@ def test_generate_pulse_params_real(
     pulse: PulseFamilyAnsatz,
     params: ParamsFloatLike,
 ) -> None:
-    gate_param = simple_gate_family.parameter_values[0]
+    gate_param = simple_gate_family.argument_values[0]
     duration, detuning, phase, rabi = pulse._generate_pulse_params_arrays(params, gate_param)
 
     assert jnp.ndim(duration) == 0
@@ -80,7 +80,7 @@ def test_evaluate_pulse_functions_real(
 ) -> None:
     t = jnp.linspace(0.0, 1.0, 10)
     pulse_ansatz = pulse.pulse_ansatz
-    for gate_param in simple_gate_family.parameter_values:
+    for gate_param in simple_gate_family.argument_values:
         generated_params = pulse.generate_pulse_params(params, gate_param)
         d0, detuning, phase, rabi = pulse_ansatz.evaluate_pulse_functions(t, generated_params)
 
@@ -108,8 +108,8 @@ def test_gate_family_real(pulse: PulseFamilyAnsatz, params: PulseParams) -> None
     ]
 
     gate_family = ro.gates.GateFamily(
-        fixed_parameter_gates=sampled_gates,
-        parameter_values=phases,
+        fixed_argument_gates=sampled_gates,
+        argument_values=phases,
         reduction="mean",
     )
 
@@ -140,8 +140,8 @@ def test_cphase() -> None:
     ]
 
     gate_family = ro.gates.GateFamily(
-        fixed_parameter_gates=sampled_gates,
-        parameter_values=phases,
+        fixed_argument_gates=sampled_gates,
+        argument_values=phases,
         reduction="mean",
     )
 
@@ -175,7 +175,7 @@ def test_cphase() -> None:
     assert 0.0 <= r.infidelity <= 1e-3
 
     pulse = pulse_family.pulse_ansatz
-    for gate, value in zip(gate_family.gates, gate_family.parameter_values):
+    for gate, value in zip(gate_family.gates, gate_family.argument_values):
         params = pulse_family.generate_pulse_params(r.params, value)
         infidelity, infidelity_nodecay, ryd_time = ro.characterization.analyze_gate(
             gate,

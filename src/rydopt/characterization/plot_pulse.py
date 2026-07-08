@@ -166,7 +166,7 @@ def plot_pulse_family(
         assert ax is not None
         fig = cast(plt.Figure, ax.figure)
 
-    gate_params = np.asarray(gate_family.parameter_values)
+    gate_params = np.asarray(gate_family.argument_values)
 
     cmap = plt.colormaps["turbo"]
     norm = mpl.colors.Normalize(
