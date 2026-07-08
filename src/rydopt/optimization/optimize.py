@@ -20,7 +20,7 @@ from tqdm.auto import tqdm
 
 from rydopt.protocols import Optimizable, PulseAnsatz
 from rydopt.pulses import PulseFamilyAnsatz, PulseFamilyParams, PulseParams
-from rydopt.types import ParamsBoolLike, ParamsFloatLike, TimeLike
+from rydopt.types import OneDimensionalArrayLike, ParamsBoolLike, ParamsFloatLike
 
 tqdm.monitor_interval = 0
 
@@ -48,7 +48,7 @@ class OptimizationResult(Generic[ParamsType, ValueType, HistoryType]):
 
     params: ParamsType
     infidelity: ValueType
-    duration: TimeLike
+    duration: OneDimensionalArrayLike
     infidelity_history: HistoryType
     duration_history: HistoryType
     grad_norm_history: HistoryType
@@ -239,7 +239,7 @@ def _adam_scan_impl(
 ) -> AdamScanReturn:
     opt_state0 = optimizer.init(params_trainable)
 
-    def body(carry: AdamScanCarry, step: jax.Array) -> tuple[AdamScanCarry, object | None]:
+    def body(carry: AdamScanCarry, step: jax.Array) -> tuple[AdamScanCarry, History | None]:
         _, _, _, _, prev_converged_initializations, _ = carry
 
         # Do an gradient descent step if the optimization was not yet done. Note that 'params' and
@@ -310,7 +310,14 @@ def _adam_scan_impl(
 
     (final_params, _, final_infidelity, _, _, _), history = jax.lax.scan(
         body,
-        (params_trainable, params_trainable, jnp.zeros_like(tol), opt_state0, 0, jnp.zeros_like(tol)),
+        (
+            params_trainable,
+            params_trainable,
+            jnp.zeros_like(tol),
+            opt_state0,
+            jnp.asarray(0),
+            jnp.zeros_like(tol),
+        ),
         jnp.arange(num_steps),
     )
 

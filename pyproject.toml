@@ -5,10 +5,10 @@ description = "Multiqubit Rydberg Gate Optimizer"
 readme = "README.md"
 authors = [ {name = "David F. Locher"}, {name = "Sebastian Weber"}, {name = "Jakob Holschbach"}, {name = "Javad Kazemi"} ]
 maintainers = [ {name = "Sebastian Weber", email = "seweber@posteo.de"}, {name = "David F. Locher", email = "david.locher@rwth-aachen.de"} ]
-license = { file = "LICENSE" }
+license = "MIT"
+license-files = ["LICENSE"]
 classifiers = [
   "Intended Audience :: Science/Research",
-  "License :: OSI Approved :: MIT License",
   "Operating System :: MacOS",
   "Operating System :: Microsoft :: Windows",
   "Operating System :: POSIX :: Linux",
@@ -46,7 +46,7 @@ dev = [
     "sphinx-autobuild>=2024.10.3",
     "sphinxcontrib-napoleon>=0.7",
     "nbsphinx>=0.9.7",
-    "sphinx-tabs @ git+https://github.com/executablebooks/sphinx-tabs.git@143083f922aab49e26638611dce4754d43b29310", # FIXME: install from pypi once https://github.com/executablebooks/sphinx-tabs/pull/207 is included
+    "sphinx-tabs>=3.5.0",
     "sphinx-copybutton>=0.5.2",
     "notebook>=7.5.0",
     "ipykernel>=7.1.0",
@@ -60,7 +60,7 @@ cuda12 = [
 ]
 
 [build-system]
-requires = ["uv_build>=0.9.13,<0.10.0"]
+requires = ["uv_build>=0.11.28,<0.12"]
 build-backend = "uv_build"
 
 [tool.ruff]
