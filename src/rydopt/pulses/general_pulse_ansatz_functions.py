@@ -2,6 +2,66 @@ import jax
 import jax.numpy as jnp
 
 
+def sin_series(t: float | jax.Array, duration: float | jax.Array, ansatz_params: jax.Array) -> jax.Array:
+    r"""Sine-series pulse ansatz with fixed integer harmonics.
+
+    .. math::
+
+       f(t)
+       = \sum_{n=1}^N \alpha_n
+         \sin\!\left(
+           \frac{2\pi n}{T} t
+         \right)
+
+    Args:
+        t: Time samples at which :math:`f(t)` is evaluated.
+        duration: Pulse duration :math:`T`.
+        ansatz_params: Array with :math:`N` entries
+            :math:`(\alpha_1, \dots, \alpha_N)`, where :math:`\alpha_n`
+            is the amplitude of the :math:`n`-th harmonic.
+
+    Returns:
+        Values of :math:`f(t)`.
+
+    """
+    t = jnp.asarray(t)
+
+    n = jnp.arange(1, len(ansatz_params) + 1)
+    phase = 2 * jnp.pi * t[..., None] * n / duration
+
+    return jnp.sum(ansatz_params * jnp.sin(phase), axis=-1)
+
+
+def cos_series(t: float | jax.Array, duration: float | jax.Array, ansatz_params: jax.Array) -> jax.Array:
+    r"""Cosine-series pulse ansatz with fixed odd half-integer harmonics.
+
+    .. math::
+
+       f(t)
+       = \sum_{n=1}^N \beta_n
+         \cos\!\left(
+           \frac{(2n - 1)\pi}{T} t
+         \right)
+
+    Args:
+        t: Time samples at which :math:`f(t)` is evaluated.
+        duration: Pulse duration :math:`T`.
+        ansatz_params: Array with :math:`N` entries
+            :math:`(\beta_1, \dots, \beta_N)`, where :math:`\beta_n`
+            is the amplitude of the :math:`n`-th odd half-integer cosine mode.
+
+    Returns:
+        Values of :math:`f(t)`.
+
+    """
+    t = jnp.asarray(t)
+
+    n = jnp.arange(1, len(ansatz_params) + 1)
+    phase = jnp.pi * t[..., None] * (2 * n - 1) / duration
+
+    return jnp.sum(ansatz_params * jnp.cos(phase), axis=-1)
+
+
 def sin_crab(t: float | jax.Array, duration: float | jax.Array, ansatz_params: jax.Array) -> jax.Array:
     r"""Sine-only CRAB pulse ansatz.
 
