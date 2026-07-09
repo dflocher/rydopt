@@ -13,6 +13,7 @@ from rydopt.pulses.general_pulse_ansatz_functions import (
     const_sin_cos_crab as _const_sin_cos_crab,
     const_sin_crab as _const_sin_crab,
     cos_crab as _cos_crab,
+    cos_series as _cos_series,
     cos_sin_crab as _cos_sin_crab,
     lin_cos_crab as _lin_cos_crab,
     lin_cos_sin_crab as _lin_cos_sin_crab,
@@ -20,6 +21,7 @@ from rydopt.pulses.general_pulse_ansatz_functions import (
     lin_sin_crab as _lin_sin_crab,
     sin_cos_crab as _sin_cos_crab,
     sin_crab as _sin_crab,
+    sin_series as _sin_series,
 )
 from rydopt.pulses.softbox_pulse_ansatz_functions import (
     softbox_blackman as _softbox_blackman,
@@ -78,6 +80,26 @@ class Const(PulseAnsatzFunction):
 
     def __call__(self, t: float | jax.Array, duration: float | jax.Array, ansatz_params: jax.Array) -> jax.Array:
         return _const(t, duration, ansatz_params)
+
+
+class SinSeries(PulseAnsatzFunction):
+    def __init__(self, num_params: int) -> None:
+        if num_params < 1:
+            raise ValueError("SinSeries requires a number of parameters >= 1")
+        super().__init__(num_params)
+
+    def __call__(self, t: float | jax.Array, duration: float | jax.Array, ansatz_params: jax.Array) -> jax.Array:
+        return _sin_series(t, duration, ansatz_params)
+
+
+class CosSeries(PulseAnsatzFunction):
+    def __init__(self, num_params: int) -> None:
+        if num_params < 1:
+            raise ValueError("CosSeries requires a number of parameters >= 1")
+        super().__init__(num_params)
+
+    def __call__(self, t: float | jax.Array, duration: float | jax.Array, ansatz_params: jax.Array) -> jax.Array:
+        return _cos_series(t, duration, ansatz_params)
 
 
 class SinCrab(PulseAnsatzFunction):
