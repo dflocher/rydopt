@@ -49,13 +49,17 @@ Pulse Family Ansatz
 .. autoclass:: PulseFamilyAnsatz
    :members:
 
-.. autoclass:: PolynomialPulseMap
-   :members:
+Pulse Maps
+~~~~~~~~~~
+.. container:: toggle, toggle-hidden
 
-.. autoclass:: PolynomialPulseMapWithCustomDuration
-   :members:
+    .. autoclass:: PolynomialPulseMap
+       :members:
 
-.. autofunction:: empirical_cphase_duration
+    .. autoclass:: PolynomialPulseMapWithCustomDuration
+       :members:
+
+    .. autofunction:: empirical_cphase_duration
 
 Pulse Parameters
 ----------------
