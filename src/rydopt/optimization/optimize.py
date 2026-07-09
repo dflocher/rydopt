@@ -753,7 +753,7 @@ def multi_start_optimize(
 
     update_scale: npt.NDArray[np.float64] | None = None
     if rescale:
-        widths = flat_max[trainable_indices] - flat_min[trainable_indices]
+        widths = np.abs(flat_max[trainable_indices] - flat_min[trainable_indices])
         update_scale = np.where(widths > 0.0, widths, 1.0)
 
     use_one_process_per_device = len(jax.devices()) > 1 or jax.devices()[0].platform != "cpu"
