@@ -55,7 +55,9 @@ def test_multi_start_adam() -> None:
     gate = ro.gates.TwoQubitGate(phi=None, theta=np.pi, Vnn=2.0, decay=0)
 
     # Pulse
-    pulse = ro.pulses.SinglePhotonPulseAnsatz(detuning_ansatz=ro.pulses.ConstCosCrab(3))
+    pulse = ro.pulses.SinglePhotonPulseAnsatz(
+        detuning_ansatz=ro.pulses.Sum(ro.pulses.Const(), ro.pulses.CosCrab(2)),
+    )
 
     # Parameter bounds for choosing random initial parameters
     min_initial_params = ro.pulses.PulseParams(6, [-2, -2, -2], [], [])
@@ -96,7 +98,9 @@ def test_multi_start_adam_decay() -> None:
     gate = ro.gates.TwoQubitGate(phi=None, theta=np.pi, Vnn=2.0, decay=0.0005)
 
     # Pulse
-    pulse = ro.pulses.SinglePhotonPulseAnsatz(detuning_ansatz=ro.pulses.ConstCosCrab(3))
+    pulse = ro.pulses.SinglePhotonPulseAnsatz(
+        detuning_ansatz=ro.pulses.Sum(ro.pulses.Const(), ro.pulses.CosCrab(2)),
+    )
 
     # Parameter bounds for choosing random initial parameters
     min_initial_params = ro.pulses.PulseParams(6, [-2, -2, -2], [], [])

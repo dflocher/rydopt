@@ -26,6 +26,30 @@ Soft-Box Pulse Ansatz Functions
     .. automodule:: rydopt.pulses.softbox_pulse_ansatz_functions
         :members:
 
+.. currentmodule:: rydopt.pulses.ansatz_functions
+
+Composite Pulse Ansatz Functions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. container:: toggle, toggle-hidden
+
+    Composite pulse ansatz functions construct new pulse ansatz functions
+    from existing ones by applying transformations or combining multiple
+    pulse ansatzes.
+
+    .. autoclass:: Symmetric
+       :members:
+
+    .. autoclass:: AntiSymmetric
+       :members:
+
+    .. autoclass:: Shifted
+       :members:
+
+    .. autoclass:: Sum
+       :members:
+
+    .. autoclass:: Product
+       :members:
 
 .. currentmodule:: rydopt.pulses
 

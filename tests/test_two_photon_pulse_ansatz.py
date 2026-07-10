@@ -10,14 +10,14 @@ import rydopt as ro
 def test_effective_controls() -> None:
     duration = 7.0
     lower = ro.pulses.SinglePhotonPulseAnsatz(
-        detuning_ansatz=ro.pulses.ConstCosCrab(3),
+        detuning_ansatz=ro.pulses.Sum(ro.pulses.Const(), ro.pulses.CosCrab(2)),
         phase_ansatz=ro.pulses.SinCrab(2),
         rabi_ansatz=ro.pulses.Const(),
     )
     upper = ro.pulses.SinglePhotonPulseAnsatz(
         detuning_ansatz=ro.pulses.Const(),
         phase_ansatz=ro.pulses.Const(),
-        rabi_ansatz=ro.pulses.ConstSinCrab(3),
+        rabi_ansatz=ro.pulses.Sum(ro.pulses.Const(), ro.pulses.SinCrab(2)),
     )
 
     lower_params = ro.pulses.PulseParams(duration, [-1.6, 0.4, -0.2], [0.7, -0.3], [2.2])
