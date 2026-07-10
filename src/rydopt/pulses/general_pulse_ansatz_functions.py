@@ -234,257 +234,232 @@ def const(t: float | jax.Array, _duration: float | jax.Array, ansatz_params: jax
     return c0 + jnp.zeros_like(t)
 
 
-def const_sin_crab(t: float | jax.Array, duration: float | jax.Array, ansatz_params: jax.Array) -> jax.Array:
-    r"""Constant offset plus sine CRAB pulse ansatz.
+def polynomial(
+    t: float | jax.Array,
+    duration: float | jax.Array,
+    ansatz_params: jax.Array,
+) -> jax.Array:
+    r"""Polynomial pulse ansatz.
 
     .. math::
 
        f(t)
-       = c_0
-       + \sum_{n=1}^N \alpha_n
-         \sin\!\left(
-           \frac{2\pi}{T}\,
-           n\left(1 + \tfrac{1}{2}\tanh(A_n)\right)
-           (t - T/2)
-         \right)
+       = \sum_{n=0}^{N}
+         c_n
+         \left(
+             \frac{2t}{T}-1
+         \right)^n,
+
+    where :math:`c_n` denotes the coefficient of the :math:`n`-th monomial.
 
     Args:
         t: Time samples at which :math:`f(t)` is evaluated.
         duration: Pulse duration :math:`T`.
-        ansatz_params: Array with :math:`2N+1` entries
-            :math:`(c_0, A_1, \alpha_1, \dots, A_N, \alpha_N)`.
+        ansatz_params: Array with :math:`N+1` entries
+            :math:`(c_0,\dots,c_N)`, where :math:`c_n`
+            is the coefficient of the :math:`n`-th polynomial term.
 
     Returns:
         Values of :math:`f(t)`.
 
     """
-    c0 = ansatz_params[0]
-    return c0 + sin_crab(t, duration, ansatz_params[1:])
+    x = 2.0 * t / duration - 1.0
+
+    pulse = jnp.zeros_like(x)
+    power = jnp.ones_like(x)
+
+    for coeff in ansatz_params:
+        pulse += coeff * power
+        power *= x
+
+    return pulse
 
 
-def const_cos_crab(t: float | jax.Array, duration: float | jax.Array, ansatz_params: jax.Array) -> jax.Array:
-    r"""Constant offset plus cosine CRAB pulse ansatz.
+def chebyshev(
+    t: float | jax.Array,
+    duration: float | jax.Array,
+    ansatz_params: jax.Array,
+) -> jax.Array:
+    r"""Chebyshev polynomial pulse ansatz.
 
     .. math::
 
        f(t)
-       = c_0
-       + \sum_{n=1}^N \beta_n
-         \cos\!\left(
-           \frac{2\pi}{T}\,
-           n\left(1 + \tfrac{1}{2}\tanh(B_n)\right)
-           (t - T/2)
-         \right)
+       = \sum_{n=0}^{N}
+         c_n\,
+         T_n\!\left(
+           \frac{2t}{T}-1
+         \right),
+
+    where :math:`T_n(x)` denotes the Chebyshev polynomial of the first kind.
 
     Args:
         t: Time samples at which :math:`f(t)` is evaluated.
         duration: Pulse duration :math:`T`.
-        ansatz_params: Array with :math:`2N+1` entries
-            :math:`(c_0, B_1, \beta_1, \dots, B_N, \beta_N)`.
+        ansatz_params: Array with :math:`N+1` entries
+            :math:`(c_0,\dots,c_N)`, where :math:`c_n`
+            is the coefficient of the :math:`n`-th Chebyshev polynomial.
 
     Returns:
         Values of :math:`f(t)`.
 
     """
-    c0 = ansatz_params[0]
-    return c0 + cos_crab(t, duration, ansatz_params[1:])
+    x = 2.0 * t / duration - 1.0
+
+    pulse = ansatz_params[0]
+    if ansatz_params.size == 1:
+        return pulse
+
+    Tm2 = jnp.ones_like(x)
+    Tm1 = x
+
+    pulse = pulse + ansatz_params[1] * Tm1
+
+    for n in range(2, ansatz_params.size):
+        Tn = 2.0 * x * Tm1 - Tm2
+        pulse = pulse + ansatz_params[n] * Tn
+        Tm2 = Tm1
+        Tm1 = Tn
+
+    return pulse
 
 
-def const_sin_cos_crab(t: float | jax.Array, duration: float | jax.Array, ansatz_params: jax.Array) -> jax.Array:
-    r"""Constant offset plus combined sine and cosine CRAB pulse ansatz.
+def legendre(
+    t: float | jax.Array,
+    duration: float | jax.Array,
+    ansatz_params: jax.Array,
+) -> jax.Array:
+    r"""Legendre polynomial pulse ansatz.
 
     .. math::
 
        f(t)
-       = c_0
-       + \sum_{n=1}^N \alpha_n
-         \sin\!\left(
-           \frac{2\pi}{T}\,
-           n\left(1 + \tfrac{1}{2}\tanh(A_n)\right)
-           (t - T/2)
-         \right)
-       \\
-       \quad
-       + \sum_{n=1}^N \beta_n
-         \cos\!\left(
-           \frac{2\pi}{T}\,
-           n\left(1 + \tfrac{1}{2}\tanh(B_n)\right)
-           (t - T/2)
-         \right)
+       = \sum_{n=0}^{N}
+         c_n\,
+         P_n\!\left(
+           \frac{2t}{T}-1
+         \right),
+
+    where :math:`P_n(x)` denotes the Legendre polynomial of degree
+    :math:`n`.
 
     Args:
         t: Time samples at which :math:`f(t)` is evaluated.
         duration: Pulse duration :math:`T`.
-        ansatz_params: Array with :math:`4N+1` entries
-            :math:`(c_0, A_1, \alpha_1, B_1, \beta_1, \dots, A_N, \alpha_N, B_N, \beta_N)`.
+        ansatz_params: Array with :math:`N+1` entries
+            :math:`(c_0,\dots,c_N)`, where :math:`c_n`
+            is the coefficient of the :math:`n`-th Legendre polynomial.
 
     Returns:
         Values of :math:`f(t)`.
 
     """
-    c0 = ansatz_params[0]
-    return c0 + sin_cos_crab(t, duration, ansatz_params[1:])
+    x = 2.0 * t / duration - 1.0
+
+    pulse = ansatz_params[0]
+    if ansatz_params.size == 1:
+        return pulse
+
+    Pm2 = jnp.ones_like(x)
+    Pm1 = x
+
+    pulse = pulse + ansatz_params[1] * Pm1
+
+    for n in range(2, ansatz_params.size):
+        Pn = ((2 * n - 1) * x * Pm1 - (n - 1) * Pm2) / n
+        pulse = pulse + ansatz_params[n] * Pn
+        Pm2 = Pm1
+        Pm1 = Pn
+
+    return pulse
 
 
-def const_cos_sin_crab(t: float | jax.Array, duration: float | jax.Array, ansatz_params: jax.Array) -> jax.Array:
-    r"""Constant offset plus combined cosine and sine CRAB pulse ansatz.
+def bspline(
+    t: float | jax.Array,
+    duration: float | jax.Array,
+    ansatz_params: jax.Array,
+) -> jax.Array:
+    r"""Uniform cubic B-spline pulse ansatz.
 
     .. math::
 
        f(t)
-       = c_0
-       + \sum_{n=1}^N \beta_n
-         \cos\!\left(
-           \frac{2\pi}{T}\,
-           n\left(1 + \tfrac{1}{2}\tanh(B_n)\right)
-           (t - T/2)
-         \right)
-       \\
-       \quad
-       + \sum_{n=1}^N \alpha_n
-         \sin\!\left(
-           \frac{2\pi}{T}\,
-           n\left(1 + \tfrac{1}{2}\tanh(A_n)\right)
-           (t - T/2)
-         \right)
+       = \sum_{i=0}^{N-1}
+         c_i\,
+         B_i^{(3)}
+         \!\left(
+           \frac{N-3}{T}t
+         \right),
+
+    where :math:`B_i^{(3)}` denotes the :math:`i`-th cubic B-spline basis
+    function and :math:`c_i` are the corresponding control point values.
 
     Args:
         t: Time samples at which :math:`f(t)` is evaluated.
         duration: Pulse duration :math:`T`.
-        ansatz_params: Array with :math:`4N+1` entries
-            :math:`(c_0, B_1, \beta_1, A_1, \alpha_1, \dots, B_N, \beta_N, A_N, \alpha_N)`.
+        ansatz_params: Array with :math:`N` entries
+            :math:`(c_0,\dots,c_{N-1})`, where :math:`c_i`
+            is the value of the :math:`i`-th spline control point.
 
     Returns:
         Values of :math:`f(t)`.
 
     """
-    c0 = ansatz_params[0]
-    return c0 + cos_sin_crab(t, duration, ansatz_params[1:])
+    p = ansatz_params
+    n = p.size
+
+    if n < 4:
+        raise ValueError("Need at least four control points.")
+
+    x = t / duration * (n - 3)
+
+    i = jnp.floor(x).astype(int)
+    i = jnp.clip(i, 0, n - 4)
+
+    u = x - i
+
+    B0 = (1 - u) ** 3 / 6
+    B1 = (3 * u**3 - 6 * u**2 + 4) / 6
+    B2 = (-3 * u**3 + 3 * u**2 + 3 * u + 1) / 6
+    B3 = u**3 / 6
+
+    return B0 * p[i] + B1 * p[i + 1] + B2 * p[i + 2] + B3 * p[i + 3]
 
 
-def lin_sin_crab(t: float | jax.Array, duration: float | jax.Array, ansatz_params: jax.Array) -> jax.Array:
-    r"""Straight line plus sine CRAB pulse ansatz.
+def piecewise_constant(
+    t: float | jax.Array,
+    duration: float | jax.Array,
+    ansatz_params: jax.Array,
+) -> jax.Array:
+    r"""Piecewise constant pulse ansatz.
 
     .. math::
 
        f(t)
-       = c_1 (t - T/2)
-       + \sum_{n=1}^N \alpha_n
-         \sin\!\left(
-           \frac{2\pi}{T}\,
-           n\left(1 + \tfrac{1}{2}\tanh(A_n)\right)
-           (t - T/2)
-         \right)
+       = c_i,
+       \qquad
+       t \in
+       \left[
+       \frac{iT}{N},
+       \frac{(i+1)T}{N}
+       \right),
+
+    where :math:`N` is the number of pulse segments.
 
     Args:
         t: Time samples at which :math:`f(t)` is evaluated.
         duration: Pulse duration :math:`T`.
-        ansatz_params: Array with :math:`2N+1` entries
-            :math:`(c_1, A_1, \alpha_1, \dots, A_N, \alpha_N)`.
+        ansatz_params: Array with :math:`N` entries
+            :math:`(c_0,\dots,c_{N-1})`, where :math:`c_i`
+            is the amplitude of the :math:`i`-th segment.
 
     Returns:
         Values of :math:`f(t)`.
 
     """
-    c1 = ansatz_params[0]
-    return c1 * (t - duration / 2.0) + sin_crab(t, duration, ansatz_params[1:])
+    n = ansatz_params.size
 
+    idx = jnp.floor(t / duration * n).astype(int)
+    idx = jnp.clip(idx, 0, n - 1)
 
-def lin_cos_crab(t: float | jax.Array, duration: float | jax.Array, ansatz_params: jax.Array) -> jax.Array:
-    r"""Straight line plus cosine CRAB pulse ansatz.
-
-    .. math::
-
-       f(t)
-       = c_1 (t - T/2)
-       + \sum_{n=1}^N \beta_n
-         \cos\!\left(
-           \frac{2\pi}{T}\,
-           n\left(1 + \tfrac{1}{2}\tanh(B_n)\right)
-           (t - T/2)
-         \right)
-
-    Args:
-        t: Time samples at which :math:`f(t)` is evaluated.
-        duration: Pulse duration :math:`T`.
-        ansatz_params: Array with :math:`2N+1` entries
-            :math:`(c_1, B_1, \beta_1, \dots, B_N, \beta_N)`.
-
-    Returns:
-        Values of :math:`f(t)`.
-
-    """
-    c1 = ansatz_params[0]
-    return c1 * (t - duration / 2.0) + cos_crab(t, duration, ansatz_params[1:])
-
-
-def lin_sin_cos_crab(t: float | jax.Array, duration: float | jax.Array, ansatz_params: jax.Array) -> jax.Array:
-    r"""Straight line plus combined sine and cosine CRAB pulse ansatz.
-
-    .. math::
-
-       f(t)
-       = c_1 (t - T/2)
-       + \sum_{n=1}^N \alpha_n
-         \sin\!\left(
-           \frac{2\pi}{T}\,
-           n\left(1 + \tfrac{1}{2}\tanh(A_n)\right)
-           (t - T/2)
-         \right)
-       \\
-       \quad
-       + \sum_{n=1}^N \beta_n
-         \cos\!\left(
-           \frac{2\pi}{T}\,
-           n\left(1 + \tfrac{1}{2}\tanh(B_n)\right)
-           (t - T/2)
-         \right)
-
-    Args:
-        t: Time samples at which :math:`f(t)` is evaluated.
-        duration: Pulse duration :math:`T`.
-        ansatz_params: Array with :math:`4N+1` entries
-            :math:`(c_1, A_1, \alpha_1, B_1, \beta_1, \dots, A_N, \alpha_N, B_N, \beta_N)`.
-
-    Returns:
-        Values of :math:`f(t)`.
-
-    """
-    c1 = ansatz_params[0]
-    return c1 * (t - duration / 2.0) + sin_cos_crab(t, duration, ansatz_params[1:])
-
-
-def lin_cos_sin_crab(t: float | jax.Array, duration: float | jax.Array, ansatz_params: jax.Array) -> jax.Array:
-    r"""Straight line plus combined cosine and sine CRAB pulse ansatz.
-
-    .. math::
-
-       f(t)
-       = c_1 (t - T/2)
-       + \sum_{n=1}^N \beta_n
-         \cos\!\left(
-           \frac{2\pi}{T}\,
-           n\left(1 + \tfrac{1}{2}\tanh(B_n)\right)
-           (t - T/2)
-         \right)
-       \\
-       \quad
-       + \sum_{n=1}^N \alpha_n
-         \sin\!\left(
-           \frac{2\pi}{T}\,
-           n\left(1 + \tfrac{1}{2}\tanh(A_n)\right)
-           (t - T/2)
-         \right)
-
-    Args:
-        t: Time samples at which :math:`f(t)` is evaluated.
-        duration: Pulse duration :math:`T`.
-        ansatz_params: Array with :math:`4N+1` entries
-            :math:`(c_1, B_1, \beta_1, A_1, \alpha_1, \dots, B_N, \beta_N, A_N, \alpha_N)`.
-
-    Returns:
-        Values of :math:`f(t)`.
-
-    """
-    c1 = ansatz_params[0]
-    return c1 * (t - duration / 2.0) + cos_sin_crab(t, duration, ansatz_params[1:])
+    return ansatz_params[idx]

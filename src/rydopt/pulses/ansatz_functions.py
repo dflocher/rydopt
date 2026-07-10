@@ -7,18 +7,15 @@ import jax
 import jax.numpy as jnp
 
 from rydopt.pulses.general_pulse_ansatz_functions import (
+    bspline as _bspline,
+    chebyshev as _chebyshev,
     const as _const,
-    const_cos_crab as _const_cos_crab,
-    const_cos_sin_crab as _const_cos_sin_crab,
-    const_sin_cos_crab as _const_sin_cos_crab,
-    const_sin_crab as _const_sin_crab,
     cos_crab as _cos_crab,
     cos_series as _cos_series,
     cos_sin_crab as _cos_sin_crab,
-    lin_cos_crab as _lin_cos_crab,
-    lin_cos_sin_crab as _lin_cos_sin_crab,
-    lin_sin_cos_crab as _lin_sin_cos_crab,
-    lin_sin_crab as _lin_sin_crab,
+    legendre as _legendre,
+    piecewise_constant as _piecewise_constant,
+    polynomial as _polynomial,
     sin_cos_crab as _sin_cos_crab,
     sin_crab as _sin_crab,
     sin_series as _sin_series,
@@ -82,6 +79,16 @@ class Const(PulseAnsatzFunction):
         return _const(t, duration, ansatz_params)
 
 
+class Polynomial(PulseAnsatzFunction):
+    def __init__(self, num_params: int = 1) -> None:
+        if num_params < 1:
+            raise ValueError("Polynomial requires a number of parameters >= 1")
+        super().__init__(num_params)
+
+    def __call__(self, t: float | jax.Array, duration: float | jax.Array, ansatz_params: jax.Array) -> jax.Array:
+        return _polynomial(t, duration, ansatz_params)
+
+
 class SinSeries(PulseAnsatzFunction):
     def __init__(self, num_params: int) -> None:
         if num_params < 1:
@@ -142,84 +149,64 @@ class CosSinCrab(PulseAnsatzFunction):
         return _cos_sin_crab(t, duration, ansatz_params)
 
 
-class ConstSinCrab(PulseAnsatzFunction):
+class Chebyshev(PulseAnsatzFunction):
     def __init__(self, num_params: int) -> None:
-        if num_params < 3 or num_params % 2 == 0:
-            raise ValueError("ConstSinCrab requires an odd number of parameters >= 3")
+        if num_params < 1:
+            raise ValueError("ChebyshevPulse requires at least one parameter")
         super().__init__(num_params)
 
-    def __call__(self, t: float | jax.Array, duration: float | jax.Array, ansatz_params: jax.Array) -> jax.Array:
-        return _const_sin_crab(t, duration, ansatz_params)
+    def __call__(
+        self,
+        t: float | jax.Array,
+        duration: float | jax.Array,
+        ansatz_params: jax.Array,
+    ) -> jax.Array:
+        return _chebyshev(t, duration, ansatz_params)
 
 
-class ConstCosCrab(PulseAnsatzFunction):
+class Legendre(PulseAnsatzFunction):
     def __init__(self, num_params: int) -> None:
-        if num_params < 3 or num_params % 2 == 0:
-            raise ValueError("ConstCosCrab requires an odd number of parameters >= 3")
+        if num_params < 1:
+            raise ValueError("LegendrePulse requires at least one parameter")
         super().__init__(num_params)
 
-    def __call__(self, t: float | jax.Array, duration: float | jax.Array, ansatz_params: jax.Array) -> jax.Array:
-        return _const_cos_crab(t, duration, ansatz_params)
+    def __call__(
+        self,
+        t: float | jax.Array,
+        duration: float | jax.Array,
+        ansatz_params: jax.Array,
+    ) -> jax.Array:
+        return _legendre(t, duration, ansatz_params)
 
 
-class ConstSinCosCrab(PulseAnsatzFunction):
+class BSpline(PulseAnsatzFunction):
     def __init__(self, num_params: int) -> None:
-        if num_params < 5 or (num_params - 1) % 4 != 0:
-            raise ValueError("ConstSinCosCrab requires a parameter count of 4n+1 with n >= 1")
+        if num_params < 4:
+            raise ValueError("BSplinePulse requires at least four parameters")
         super().__init__(num_params)
 
-    def __call__(self, t: float | jax.Array, duration: float | jax.Array, ansatz_params: jax.Array) -> jax.Array:
-        return _const_sin_cos_crab(t, duration, ansatz_params)
+    def __call__(
+        self,
+        t: float | jax.Array,
+        duration: float | jax.Array,
+        ansatz_params: jax.Array,
+    ) -> jax.Array:
+        return _bspline(t, duration, ansatz_params)
 
 
-class ConstCosSinCrab(PulseAnsatzFunction):
+class PiecewiseConstant(PulseAnsatzFunction):
     def __init__(self, num_params: int) -> None:
-        if num_params < 5 or (num_params - 1) % 4 != 0:
-            raise ValueError("ConstCosSinCrab requires a parameter count of 4n+1 with n >= 1")
+        if num_params < 1:
+            raise ValueError("PiecewiseConstant requires at least one parameter")
         super().__init__(num_params)
 
-    def __call__(self, t: float | jax.Array, duration: float | jax.Array, ansatz_params: jax.Array) -> jax.Array:
-        return _const_cos_sin_crab(t, duration, ansatz_params)
-
-
-class LinSinCrab(PulseAnsatzFunction):
-    def __init__(self, num_params: int) -> None:
-        if num_params < 3 or num_params % 2 == 0:
-            raise ValueError("LinSinCrab requires an odd number of parameters >= 3")
-        super().__init__(num_params)
-
-    def __call__(self, t: float | jax.Array, duration: float | jax.Array, ansatz_params: jax.Array) -> jax.Array:
-        return _lin_sin_crab(t, duration, ansatz_params)
-
-
-class LinCosCrab(PulseAnsatzFunction):
-    def __init__(self, num_params: int) -> None:
-        if num_params < 3 or num_params % 2 == 0:
-            raise ValueError("LinCosCrab requires an odd number of parameters >= 3")
-        super().__init__(num_params)
-
-    def __call__(self, t: float | jax.Array, duration: float | jax.Array, ansatz_params: jax.Array) -> jax.Array:
-        return _lin_cos_crab(t, duration, ansatz_params)
-
-
-class LinSinCosCrab(PulseAnsatzFunction):
-    def __init__(self, num_params: int) -> None:
-        if num_params < 5 or (num_params - 1) % 4 != 0:
-            raise ValueError("LinSinCosCrab requires a parameter count of 4n+1 with n >= 1")
-        super().__init__(num_params)
-
-    def __call__(self, t: float | jax.Array, duration: float | jax.Array, ansatz_params: jax.Array) -> jax.Array:
-        return _lin_sin_cos_crab(t, duration, ansatz_params)
-
-
-class LinCosSinCrab(PulseAnsatzFunction):
-    def __init__(self, num_params: int) -> None:
-        if num_params < 5 or (num_params - 1) % 4 != 0:
-            raise ValueError("LinCosSinCrab requires a parameter count of 4n+1 with n >= 1")
-        super().__init__(num_params)
-
-    def __call__(self, t: float | jax.Array, duration: float | jax.Array, ansatz_params: jax.Array) -> jax.Array:
-        return _lin_cos_sin_crab(t, duration, ansatz_params)
+    def __call__(
+        self,
+        t: float | jax.Array,
+        duration: float | jax.Array,
+        ansatz_params: jax.Array,
+    ) -> jax.Array:
+        return _piecewise_constant(t, duration, ansatz_params)
 
 
 class SoftBoxHann(PulseAnsatzFunction):
@@ -280,3 +267,213 @@ class SoftBoxSeventhOrderSmoothstep(PulseAnsatzFunction):
 
     def __call__(self, t: float | jax.Array, duration: float | jax.Array, ansatz_params: jax.Array) -> jax.Array:
         return _softbox_seventh_order_smoothstep(t, duration, ansatz_params)
+
+
+class Symmetric(PulseAnsatzFunction):
+    r"""Time-symmetric pulse ansatz.
+
+    Constructs a symmetric pulse from a base pulse ansatz :math:`g(t)` by
+    reflecting it about the midpoint of the pulse duration,
+
+    .. math::
+
+       f(t)
+       =
+       \frac{1}{2}
+       \left[
+           g(t)
+           +
+           g(T-t)
+       \right].
+
+    The resulting pulse satisfies
+
+    .. math::
+
+       f(t)=f(T-t).
+
+    Args:
+        base_ansatz: Pulse ansatz to be symmetrized.
+
+    """
+
+    def __init__(self, base_ansatz: PulseAnsatzFunction) -> None:
+        super().__init__(base_ansatz.num_params)
+        self._base_ansatz = base_ansatz
+
+    def __call__(
+        self,
+        t: float | jax.Array,
+        duration: float | jax.Array,
+        ansatz_params: jax.Array,
+    ) -> jax.Array:
+        pulse = self._base_ansatz(t, duration, ansatz_params)
+        mirrored = self._base_ansatz(duration - t, duration, ansatz_params)
+        return 0.5 * (pulse + mirrored)
+
+
+class AntiSymmetric(PulseAnsatzFunction):
+    r"""Time-antisymmetric pulse ansatz.
+
+    Constructs an antisymmetric pulse from a base pulse ansatz :math:`g(t)` by
+    reflecting it about the midpoint of the pulse duration,
+
+    .. math::
+
+       f(t)
+       =
+       \frac{1}{2}
+       \left[
+           g(t)
+           -
+           g(T-t)
+       \right].
+
+    The resulting pulse satisfies
+
+    .. math::
+
+       f(t)=-f(T-t).
+
+    Args:
+        base_ansatz: Pulse ansatz to be antisymmetrized.
+
+    """
+
+    def __init__(self, base_ansatz: PulseAnsatzFunction) -> None:
+        super().__init__(base_ansatz.num_params)
+        self._base_ansatz = base_ansatz
+
+    def __call__(
+        self,
+        t: float | jax.Array,
+        duration: float | jax.Array,
+        ansatz_params: jax.Array,
+    ) -> jax.Array:
+        pulse = self._base_ansatz(t, duration, ansatz_params)
+        mirrored = self._base_ansatz(duration - t, duration, ansatz_params)
+        return 0.5 * (pulse - mirrored)
+
+
+class Shifted(PulseAnsatzFunction):
+    r"""Vertically shifted pulse ansatz.
+
+    Constructs a pulse from a base pulse ansatz :math:`g(t)` by adding a
+    constant offset,
+
+    .. math::
+
+       f(t)
+       =
+       g(t)
+       +
+       c.
+
+    Args:
+        base_ansatz: Pulse ansatz to be shifted.
+
+    """
+
+    def __init__(self, base_ansatz: PulseAnsatzFunction) -> None:
+        super().__init__(base_ansatz.num_params + 1)
+        self._base_ansatz = base_ansatz
+
+    def __call__(
+        self,
+        t: float | jax.Array,
+        duration: float | jax.Array,
+        ansatz_params: jax.Array,
+    ) -> jax.Array:
+        offset = ansatz_params[0]
+        pulse = self._base_ansatz(t, duration, ansatz_params[1:])
+        return offset + pulse
+
+
+class Product(PulseAnsatzFunction):
+    r"""Product of two pulse ansatz functions.
+
+    Constructs a pulse from two pulse ansatz functions :math:`g_1(t)` and
+    :math:`g_2(t)`,
+
+    .. math::
+
+       f(t)
+       =
+       g_1(t)
+       g_2(t).
+
+    This wrapper is particularly useful for constructing envelope-modulated
+    pulses, where one pulse ansatz represents an envelope and the other a
+    carrier.
+
+    Args:
+        pulse1: First pulse ansatz.
+        pulse2: Second pulse ansatz.
+
+    """
+
+    def __init__(
+        self,
+        pulse1: PulseAnsatzFunction,
+        pulse2: PulseAnsatzFunction,
+    ) -> None:
+        super().__init__(pulse1.num_params + pulse2.num_params)
+        self._pulse1 = pulse1
+        self._pulse2 = pulse2
+
+    def __call__(
+        self,
+        t: float | jax.Array,
+        duration: float | jax.Array,
+        ansatz_params: jax.Array,
+    ) -> jax.Array:
+
+        n = self._pulse1.num_params
+        pulse1 = self._pulse1(t, duration, ansatz_params[:n])
+        pulse2 = self._pulse2(t, duration, ansatz_params[n:])
+
+        return pulse1 * pulse2
+
+
+class Sum(PulseAnsatzFunction):
+    r"""Sum of two pulse ansatz functions.
+
+    Constructs a pulse from two pulse ansatz functions :math:`g_1(t)` and
+    :math:`g_2(t)`,
+
+    .. math::
+
+       f(t)
+       =
+       g_1(t)
+       +
+       g_2(t).
+
+    Args:
+        pulse1: First pulse ansatz.
+        pulse2: Second pulse ansatz.
+
+    """
+
+    def __init__(
+        self,
+        pulse1: PulseAnsatzFunction,
+        pulse2: PulseAnsatzFunction,
+    ) -> None:
+        super().__init__(pulse1.num_params + pulse2.num_params)
+        self._pulse1 = pulse1
+        self._pulse2 = pulse2
+
+    def __call__(
+        self,
+        t: float | jax.Array,
+        duration: float | jax.Array,
+        ansatz_params: jax.Array,
+    ) -> jax.Array:
+
+        n = self._pulse1.num_params
+
+        pulse1 = self._pulse1(t, duration, ansatz_params[:n])
+        pulse2 = self._pulse2(t, duration, ansatz_params[n:])
+
+        return pulse1 + pulse2
