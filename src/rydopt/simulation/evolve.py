@@ -102,6 +102,9 @@ def evolve(gate: Evolvable, pulse: PulseAnsatz, params: ParamsFloatLike, tol: fl
             stepsize_controller=stepsize_controller,
             saveat=saveat,
             max_steps=1_000_000,
+            # Do not raise on solver failure (e.g., if max_steps is exceeded, the result is nan/inf instead).
+            # Raising would require a host callback, which prevents jax from caching the compiled program.
+            throw=False,
         )
         return sol.ys[0]
 
@@ -149,6 +152,9 @@ def _evolve_optimized_for_gpus(
         stepsize_controller=stepsize_controller,
         saveat=saveat,
         max_steps=1_000_000,
+        # Do not raise on solver failure (e.g., if max_steps is exceeded, the result is nan/inf instead).
+        # Raising would require a host callback, which prevents jax from caching the compiled program.
+        throw=False,
     )
 
     return tuple(psi_t1[0] for psi_t1 in sol.ys)

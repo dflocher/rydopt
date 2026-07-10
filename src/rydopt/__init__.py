@@ -14,6 +14,16 @@ if "TF_CPP_MIN_LOG_LEVEL" not in os.environ:
 
 import warnings
 
+import jax
+
+# Cache compiled XLA programs on disk so repeated runs (e.g., new processes optimizing
+# the same gate/pulse combination) skip the expensive JIT compilation.
+if "JAX_COMPILATION_CACHE_DIR" not in os.environ:
+    _cache_home = os.environ.get("XDG_CACHE_HOME", os.path.join(os.path.expanduser("~"), ".cache"))
+    jax.config.update("jax_compilation_cache_dir", os.path.join(_cache_home, "rydopt", "jax_cache"))
+if "JAX_PERSISTENT_CACHE_MIN_COMPILE_TIME_SECS" not in os.environ:
+    jax.config.update("jax_persistent_cache_min_compile_time_secs", 1.0)
+
 import rydopt.characterization as characterization
 import rydopt.gates as gates
 import rydopt.optimization as optimization

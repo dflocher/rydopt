@@ -217,29 +217,38 @@ def _print_summary(method_name: str, runtime: float, tol: float, num_converged: 
     print(f"Gates with infidelity below tol={tol:.1e}: {num_converged}")
 
 
+def _stack_history(chunks: list[jax.Array], num_steps: int) -> npt.NDArray[np.float64]:
+    history = np.concatenate([np.asarray(chunk) for chunk in chunks], axis=0)
+    if history.shape[0] < num_steps:
+        pad_widths = [(0, num_steps - history.shape[0])] + [(0, 0)] * (history.ndim - 1)
+        history = np.pad(history, pad_widths, mode="edge")
+    return history
+
+
 # -----------------------------------------------------------------------------
 # Internal jax.jit-ed Adam optimization scan loop
 # -----------------------------------------------------------------------------
 
 History = tuple[jax.Array, jax.Array, jax.Array]
-AdamScanReturn = tuple[jax.Array, jax.Array, History | None]
 AdamScanCarry = tuple[jax.Array, jax.Array, jax.Array, optax.OptState, jax.Array, jax.Array]
+AdamScanReturn = tuple[AdamScanCarry, History | None]
+
+# Number of optimization steps executed per jitted scan call. Between chunks, we report progress
+# from ordinary Python and stop early if enough initializations have converged. Keeping logging
+# outside the jitted program avoids host callbacks, so jax can cache the compiled program on disk.
+_ADAM_CHUNK_SIZE = 20
 
 
 def _adam_scan_impl(
     infidelity_and_grad: Callable[[jax.Array], tuple[jax.Array, jax.Array]],
     optimizer: optax.GradientTransformation,
-    params_trainable: jax.Array,
-    num_steps: int,
+    carry: AdamScanCarry,
+    chunk_size: int,
     min_converged_initializations: int,
-    process_idx: int,
     tol: float | jax.Array,
-    progress_hook: ProgressHook,
     return_history: bool,
 ) -> AdamScanReturn:
-    opt_state0 = optimizer.init(params_trainable)
-
-    def body(carry: AdamScanCarry, step: jax.Array) -> tuple[AdamScanCarry, History | None]:
+    def body(carry: AdamScanCarry, _xs: None) -> tuple[AdamScanCarry, History | None]:
         _, _, _, _, prev_converged_initializations, _ = carry
 
         # Do an gradient descent step if the optimization was not yet done. Note that 'params' and
@@ -268,53 +277,12 @@ def _adam_scan_impl(
         was_not_done = prev_converged_initializations < min_converged_initializations
         carry = jax.lax.cond(was_not_done, do_step, lambda carry: carry, operand=carry)
 
-        params, _, infidelity, _, converged_initializations, grad_norm = carry
-
-        # Log intermediate results at distinct steps
-        is_done_now = converged_initializations >= min_converged_initializations
-        is_distinct = (step % 20 == 0) | (step == num_steps - 1)
-        should_log = was_not_done & (is_done_now | is_distinct)
-
-        if progress_hook is not None:
-            jax.lax.cond(
-                should_log,
-                lambda args: jax.debug.callback(progress_hook, args),
-                lambda _: None,
-                operand=(process_idx, step, jnp.min(infidelity), converged_initializations),
-            )
-        else:
-            jax.lax.cond(
-                should_log,
-                lambda args: jax.debug.print(
-                    "Step {step} [proc{process_idx}]: infidelity = {min_infidelity}, "
-                    "converged = {converged} / {min_converged_initializations}",
-                    step=args[0],
-                    process_idx=args[1],
-                    min_infidelity=args[2],
-                    converged=args[3],
-                    min_converged_initializations=args[4],
-                ),
-                lambda _: None,
-                operand=(
-                    step,
-                    process_idx,
-                    jnp.min(infidelity),
-                    converged_initializations,
-                    min_converged_initializations,
-                ),
-            )
-
         if return_history:
+            params, _, infidelity, _, _, grad_norm = carry
             return carry, (infidelity, params[..., 0], grad_norm)
         return carry, None
 
-    (final_params, _, final_infidelity, _, _, _), history = jax.lax.scan(
-        body,
-        (params_trainable, params_trainable, jnp.zeros_like(tol), opt_state0, jnp.asarray(0), jnp.zeros_like(tol)),
-        jnp.arange(num_steps),
-    )
-
-    return final_params, final_infidelity, history
+    return jax.lax.scan(body, carry, None, length=chunk_size)
 
 
 _adam_scan: Callable[..., AdamScanReturn] = cast(
@@ -324,12 +292,11 @@ _adam_scan: Callable[..., AdamScanReturn] = cast(
         static_argnames=[
             "infidelity_and_grad",
             "optimizer",
-            "num_steps",
+            "chunk_size",
             "min_converged_initializations",
-            "progress_hook",
             "return_history",
         ],
-        donate_argnames=["params_trainable"],
+        donate_argnames=["carry"],
     ),
 )
 
@@ -389,23 +356,55 @@ def _adam_optimize(
             infidelity_and_grad = jax.vmap(jax.value_and_grad(infidelity))
             tol_arg = jnp.full((trainable.shape[0],), tol)
 
-        final_params, final_infidelities, history = _adam_scan(
-            infidelity_and_grad=infidelity_and_grad,
-            optimizer=optimizer,
-            params_trainable=trainable,
-            num_steps=num_steps,
-            min_converged_initializations=min_converged_initializations,
-            process_idx=process_idx,
-            tol=tol_arg,
-            progress_hook=progress_hook,
-            return_history=return_history,
+        # Run the optimization in chunks, reporting progress and checking for early stopping between
+        # chunks from ordinary Python. Keeping logging out of the jitted program avoids host
+        # callbacks, so jax can cache the compiled program on disk across processes and runs.
+        carry: AdamScanCarry = (
+            trainable,
+            jnp.copy(trainable),  # copy so that each donated buffer in the carry is distinct
+            jnp.zeros_like(tol_arg),
+            optimizer.init(trainable),
+            jnp.asarray(0),
+            jnp.zeros_like(tol_arg),
         )
+        histories: list[History] = []
+        steps_done = 0
+        while steps_done < num_steps:
+            chunk_size = min(_ADAM_CHUNK_SIZE, num_steps - steps_done)
+            carry, history = _adam_scan(
+                infidelity_and_grad=infidelity_and_grad,
+                optimizer=optimizer,
+                carry=carry,
+                chunk_size=chunk_size,
+                min_converged_initializations=min_converged_initializations,
+                tol=tol_arg,
+                return_history=return_history,
+            )
+            steps_done += chunk_size
+            if return_history:
+                assert history is not None
+                histories.append(history)
+
+            converged_initializations = int(carry[4])
+            min_infidelity = float(jnp.min(carry[2]))
+            if progress_hook is not None:
+                progress_hook((process_idx, steps_done - 1, min_infidelity, converged_initializations))
+            else:
+                print(
+                    f"Step {steps_done - 1} [proc{process_idx}]: infidelity = {min_infidelity}, "
+                    f"converged = {converged_initializations} / {min_converged_initializations}"
+                )
+            if converged_initializations >= min_converged_initializations:
+                break
+
+        final_params, _, final_infidelities, _, _, _ = carry
 
         if return_history:
-            assert history is not None
-            infidelity_history = np.array(history[0])
-            duration_history = np.array(history[1])
-            grad_norm_history = np.array(history[2])
+            # If the optimization stopped early, pad the history with the last value so that it
+            # always has length num_steps.
+            infidelity_history = _stack_history([h[0] for h in histories], num_steps)
+            duration_history = _stack_history([h[1] for h in histories], num_steps)
+            grad_norm_history = _stack_history([h[2] for h in histories], num_steps)
         else:
             infidelity_history = None
             duration_history = None
