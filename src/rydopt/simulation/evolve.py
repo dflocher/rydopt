@@ -1,12 +1,31 @@
 from __future__ import annotations
 
+from collections.abc import Iterator
+from contextlib import contextmanager
+from contextvars import ContextVar
 from functools import partial
+from numbers import Real
 
 import jax
 import jax.numpy as jnp
 
 from rydopt.protocols import Evolvable, PulseAnsatz
 from rydopt.types import HamiltonianFunction, OneDimensionalArrayLike, ParamsFloatLike
+
+# This flag is read while JAX traces ``evolve``; it is not consulted by an
+# already-compiled executable. The gradient callable is a static argument of
+# the optimization scan, so forward and reverse modes receive separate traces.
+_forward_mode_enabled: ContextVar[bool] = ContextVar("_forward_mode_enabled", default=False)
+
+
+@contextmanager
+def _use_forward_mode() -> Iterator[None]:
+    """Use Diffrax forward sensitivities while tracing an optimization cost."""
+    token = _forward_mode_enabled.set(True)
+    try:
+        yield
+    finally:
+        _forward_mode_enabled.reset(token)
 
 
 def evolve(gate: Evolvable, pulse: PulseAnsatz, params: ParamsFloatLike, tol: float = 1e-7) -> tuple[jax.Array, ...]:
@@ -85,7 +104,9 @@ def evolve(gate: Evolvable, pulse: PulseAnsatz, params: ParamsFloatLike, tol: fl
 
     # Propagator
     term = diffrax.ODETerm(schroedinger_eq)
-    solver = diffrax.Tsit5()
+    # Higher-order Dopri8 needs fewer steps at the strict tolerances used by the
+    # optimizer. Tsit5 remains faster for deliberately coarse simulations.
+    solver = diffrax.Tsit5() if isinstance(tol, Real) and tol > 1e-5 else diffrax.Dopri8()
     stepsize_controller = diffrax.PIDController(rtol=0.1 * tol, atol=0.1 * tol)
     saveat = diffrax.SaveAt(t1=True)
 
@@ -102,7 +123,9 @@ def evolve(gate: Evolvable, pulse: PulseAnsatz, params: ParamsFloatLike, tol: fl
             stepsize_controller=stepsize_controller,
             saveat=saveat,
             max_steps=1_000_000,
+            adjoint=(diffrax.ForwardMode() if _forward_mode_enabled.get() else diffrax.RecursiveCheckpointAdjoint()),
         )
+        assert sol.ys is not None
         return sol.ys[0]
 
     # Run the propagator for each basis state
@@ -149,6 +172,8 @@ def _evolve_optimized_for_gpus(
         stepsize_controller=stepsize_controller,
         saveat=saveat,
         max_steps=1_000_000,
+        adjoint=(diffrax.ForwardMode() if _forward_mode_enabled.get() else diffrax.RecursiveCheckpointAdjoint()),
     )
 
+    assert sol.ys is not None
     return tuple(psi_t1[0] for psi_t1 in sol.ys)

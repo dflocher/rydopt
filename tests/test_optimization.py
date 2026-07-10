@@ -1,8 +1,67 @@
+import jax
+import jax.numpy as jnp
 import numpy as np
 import pytest
 
 import rydopt as ro
+from rydopt.optimization.optimize import _make_infidelity, _make_value_and_grad, _resolve_gradient_mode
+from rydopt.protocols import PulseAnsatz
 from rydopt.pulses import PulseParams
+from rydopt.types import ParamsFloatLike
+
+
+def test_gradient_mode_selection() -> None:
+    assert _resolve_gradient_mode("auto", 32) == "forward"
+    assert _resolve_gradient_mode("auto", 33) == "reverse"
+    assert _resolve_gradient_mode("forward", 100) == "forward"
+    assert _resolve_gradient_mode("reverse", 1) == "reverse"
+
+    with pytest.raises(ValueError, match="gradient_mode"):
+        _resolve_gradient_mode("invalid", 1)
+
+
+@pytest.mark.optimization
+def test_forward_and_reverse_gradients_match() -> None:
+    gate = ro.gates.TwoQubitGate(phi=None, theta=np.pi, Vnn=float("inf"), decay=0)
+    pulse = ro.pulses.SinglePhotonPulseAnsatz(detuning_ansatz=ro.pulses.Const(), phase_ansatz=ro.pulses.SinCrab(2))
+    params = np.asarray(ro.pulses.PulseParams(7.6, [0.1], [1.8, -0.6], []), dtype=np.float64)
+    infidelity = _make_infidelity(gate, pulse, params, np.arange(params.size), tol=1e-7)
+
+    # Compile reverse mode first to verify that the later forward-mode trace
+    # selects its own Diffrax sensitivity method rather than reusing this one.
+    reverse_value_and_grad = jax.jit(_make_value_and_grad(infidelity, "reverse"))
+    forward_value_and_grad = jax.jit(_make_value_and_grad(infidelity, "forward"))
+    reverse_value, reverse_grad = reverse_value_and_grad(params)
+    forward_value, forward_grad = forward_value_and_grad(params)
+
+    assert np.allclose(forward_value, reverse_value, rtol=1e-10, atol=1e-12)
+    assert np.allclose(forward_grad, reverse_grad, rtol=1e-10, atol=1e-12)
+
+
+@pytest.mark.optimization
+def test_auto_gradient_mode_falls_back_to_reverse() -> None:
+    @jax.custom_vjp
+    def custom_cost(params: jax.Array) -> jax.Array:
+        return jnp.sum(params**2)
+
+    def custom_cost_fwd(params: jax.Array) -> tuple[jax.Array, jax.Array]:
+        return jnp.sum(params**2), params
+
+    def custom_cost_bwd(params: jax.Array, cotangent: jax.Array) -> tuple[jax.Array]:
+        return (2 * params * cotangent,)
+
+    custom_cost.defvjp(custom_cost_fwd, custom_cost_bwd)
+
+    class CustomGate:
+        def cost(self, pulse: PulseAnsatz, params: ParamsFloatLike, tol: float) -> jax.Array:
+            del pulse, tol
+            return custom_cost(jnp.asarray(params))
+
+    pulse = ro.pulses.SinglePhotonPulseAnsatz(detuning_ansatz=ro.pulses.Const())
+    params = ro.pulses.PulseParams(1.0, [0.2], [], [])
+    result = ro.optimization.optimize(CustomGate(), pulse, params, num_steps=1, verbose=True)
+
+    assert np.isclose(result.infidelity, 1.04)
 
 
 @pytest.mark.optimization

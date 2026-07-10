@@ -18,6 +18,8 @@ At a high level, every optimization consists of the same three steps.
 
    * :func:`rydopt.optimization.multi_start_optimize`: Multiple random initial pulse parameter guesses are used as starting points for *multiple runs*. The user must specify minimal and maximal values for the initial pulse parameters.
 
+   Both optimizers use ``gradient_mode="auto"`` by default. Forward-mode sensitivities are used for up to 32 trainable parameters, substantially reducing ODE-gradient compilation and evaluation time for typical pulse ansatzes. Larger parameter sets use reverse-mode sensitivities to limit memory and runtime growth. If a custom cost does not support forward differentiation, automatic mode retries with reverse differentiation. Set ``gradient_mode="forward"`` or ``gradient_mode="reverse"`` to override this choice for a particular workload.
+
    Pulse parameters are typically represented with :class:`PulseParams <rydopt.pulses.PulseParams>` as ``PulseParams(duration, detuning_params, phase_params, rabi_params)``, where the arguments are:
 
    * ``duration``: the gate duration

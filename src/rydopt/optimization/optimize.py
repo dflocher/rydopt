@@ -20,6 +20,7 @@ from tqdm.auto import tqdm
 
 from rydopt.protocols import Optimizable, PulseAnsatz
 from rydopt.pulses import PulseFamilyAnsatz, PulseFamilyParams, PulseParams
+from rydopt.simulation.evolve import _use_forward_mode
 from rydopt.types import OneDimensionalArrayLike, ParamsBoolLike, ParamsFloatLike
 
 tqdm.monitor_interval = 0
@@ -27,6 +28,9 @@ tqdm.monitor_interval = 0
 ParamsType = TypeVar("ParamsType", covariant=True)
 ValueType = TypeVar("ValueType", covariant=True)
 HistoryType = TypeVar("HistoryType", covariant=True)
+GradientMode = Literal["auto", "forward", "reverse"]
+_ResolvedGradientMode = Literal["forward", "reverse"]
+_MAX_AUTO_FORWARD_PARAMS = 32
 
 
 @dataclass
@@ -202,6 +206,37 @@ def _make_infidelity(
     return infidelity
 
 
+def _resolve_gradient_mode(gradient_mode: str, num_trainable_params: int) -> _ResolvedGradientMode:
+    if gradient_mode == "auto":
+        return "forward" if num_trainable_params <= _MAX_AUTO_FORWARD_PARAMS else "reverse"
+    if gradient_mode in ("forward", "reverse"):
+        return cast(_ResolvedGradientMode, gradient_mode)
+    raise ValueError("gradient_mode must be 'auto', 'forward', or 'reverse'.")
+
+
+def _make_value_and_grad(
+    infidelity: Callable[[jax.Array], jax.Array], gradient_mode: _ResolvedGradientMode
+) -> Callable[[jax.Array], tuple[jax.Array, jax.Array]]:
+    if gradient_mode == "reverse":
+        return jax.value_and_grad(infidelity)
+
+    def infidelity_with_aux(params: jax.Array) -> tuple[jax.Array, jax.Array]:
+        # Diffrax's ForwardMode adjoint avoids tracing and checkpointing a
+        # reverse solve. Returning the value as auxiliary data computes the
+        # objective and its forward Jacobian in one pass.
+        with _use_forward_mode():
+            value = infidelity(params)
+        return value, value
+
+    jacobian_and_value = jax.jacfwd(infidelity_with_aux, has_aux=True)
+
+    def value_and_grad(params: jax.Array) -> tuple[jax.Array, jax.Array]:
+        grads, value = jacobian_and_value(params)
+        return value, grads
+
+    return value_and_grad
+
+
 def _print_gate(title: str, params: ParamsFloatLike, infidelity: float, tol: float) -> None:
     print(f"\n{title}")
     if abs(float(infidelity)) < tol:
@@ -276,9 +311,10 @@ def _adam_scan_impl(
         should_log = was_not_done & (is_done_now | is_distinct)
 
         if progress_hook is not None:
+            callback = progress_hook
             jax.lax.cond(
                 should_log,
-                lambda args: jax.debug.callback(progress_hook, args),
+                lambda args: jax.debug.callback(callback, args),
                 lambda _: None,
                 operand=(process_idx, step, jnp.min(infidelity), converged_initializations),
             )
@@ -348,6 +384,7 @@ def _adam_optimize(
     min_converged_initializations: int,
     learning_rate: float,
     update_scale: npt.NDArray[np.float64] | None,
+    gradient_mode: GradientMode,
     tol: float,
     process_idx: int,
     device_idx: int | None,
@@ -382,24 +419,38 @@ def _adam_optimize(
             tol,
         )
 
-        if trainable.ndim == 1:
-            infidelity_and_grad = jax.value_and_grad(infidelity)
-            tol_arg: float | jax.Array = tol
-        else:
-            infidelity_and_grad = jax.vmap(jax.value_and_grad(infidelity))
-            tol_arg = jnp.full((trainable.shape[0],), tol)
+        resolved_gradient_mode = _resolve_gradient_mode(gradient_mode, trainable.shape[-1])
 
-        final_params, final_infidelities, history = _adam_scan(
-            infidelity_and_grad=infidelity_and_grad,
-            optimizer=optimizer,
-            params_trainable=trainable,
-            num_steps=num_steps,
-            min_converged_initializations=min_converged_initializations,
-            process_idx=process_idx,
-            tol=tol_arg,
-            progress_hook=progress_hook,
-            return_history=return_history,
-        )
+        def run(mode: _ResolvedGradientMode, trainable: jax.Array) -> AdamScanReturn:
+            value_and_grad = _make_value_and_grad(infidelity, mode)
+            if trainable.ndim == 1:
+                infidelity_and_grad = value_and_grad
+                tol_arg: float | jax.Array = tol
+            else:
+                infidelity_and_grad = jax.vmap(value_and_grad)
+                tol_arg = jnp.full((trainable.shape[0],), tol)
+
+            return _adam_scan(
+                infidelity_and_grad=infidelity_and_grad,
+                optimizer=optimizer,
+                params_trainable=trainable,
+                num_steps=num_steps,
+                min_converged_initializations=min_converged_initializations,
+                process_idx=process_idx,
+                tol=tol_arg,
+                progress_hook=progress_hook,
+                return_history=return_history,
+            )
+
+        try:
+            final_params, final_infidelities, history = run(resolved_gradient_mode, trainable)
+        except (TypeError, NotImplementedError):
+            if gradient_mode != "auto" or resolved_gradient_mode != "forward":
+                raise
+            # Custom JAX primitives may define only a reverse-mode rule. Keep
+            # automatic mode backward compatible by retrying with that rule.
+            trainable = jnp.asarray(params_trainable)
+            final_params, final_infidelities, history = run("reverse", trainable)
 
         if return_history:
             assert history is not None
@@ -434,6 +485,7 @@ def optimize(
     *,
     num_steps: int = ...,
     learning_rate: float = ...,
+    gradient_mode: GradientMode = ...,
     tol: float = ...,
     return_history: Literal[True],
     verbose: bool = ...,
@@ -449,6 +501,7 @@ def optimize(
     *,
     num_steps: int = ...,
     learning_rate: float = ...,
+    gradient_mode: GradientMode = ...,
     tol: float = ...,
     return_history: Literal[False] = False,
     verbose: bool = ...,
@@ -463,6 +516,7 @@ def optimize(
     *,
     num_steps: int = 1000,
     learning_rate: float = 0.05,
+    gradient_mode: GradientMode = "auto",
     tol: float = 1e-7,
     return_history: bool = False,
     verbose: bool = False,
@@ -500,6 +554,8 @@ def optimize(
         fixed_initial_params: which parameters shall not be optimized
         num_steps: number of optimization steps
         learning_rate: optimizer learning rate hyperparameter
+        gradient_mode: automatic differentiation mode. ``"auto"`` uses fast forward-mode gradients for up to
+            32 trainable parameters and reverse-mode gradients for larger parameter sets
         tol: target gate infidelity, also sets the ODE solver tolerance
         return_history: whether or not to return the cost history of the optimization
         verbose: whether detail information is printed or only a progress bar is shown
@@ -517,6 +573,7 @@ def optimize(
     trainable_indices = np.nonzero(trainable_mask)[0]
 
     params_trainable = params_full[trainable_indices]
+    _resolve_gradient_mode(gradient_mode, trainable_indices.size)
 
     # --- Optimize parameters ---
 
@@ -537,6 +594,7 @@ def optimize(
                 1,
                 learning_rate,
                 None,
+                gradient_mode,
                 tol,
                 0,
                 None,
@@ -582,6 +640,7 @@ def multi_start_optimize(
     num_steps: int = ...,
     learning_rate: float = ...,
     rescale: bool = ...,
+    gradient_mode: GradientMode = ...,
     tol: float = ...,
     num_initializations: int = ...,
     min_converged_initializations: int | None = ...,
@@ -606,6 +665,7 @@ def multi_start_optimize(
     num_steps: int = ...,
     learning_rate: float = ...,
     rescale: bool = ...,
+    gradient_mode: GradientMode = ...,
     tol: float = ...,
     num_initializations: int = ...,
     min_converged_initializations: int | None = ...,
@@ -628,6 +688,7 @@ def multi_start_optimize(
     num_steps: int = ...,
     learning_rate: float = ...,
     rescale: bool = ...,
+    gradient_mode: GradientMode = ...,
     tol: float = ...,
     num_initializations: int = ...,
     min_converged_initializations: int | None = ...,
@@ -650,6 +711,7 @@ def multi_start_optimize(
     num_steps: int = ...,
     learning_rate: float = ...,
     rescale: bool = ...,
+    gradient_mode: GradientMode = ...,
     tol: float = ...,
     num_initializations: int = ...,
     min_converged_initializations: int | None = ...,
@@ -671,6 +733,7 @@ def multi_start_optimize(
     num_steps: int = 1000,
     learning_rate: float = 0.05,
     rescale: bool = False,
+    gradient_mode: GradientMode = "auto",
     tol: float = 1e-7,
     num_initializations: int = 10,
     min_converged_initializations: int | None = None,
@@ -724,6 +787,8 @@ def multi_start_optimize(
         learning_rate: optimizer learning rate hyperparameter
         rescale: whether to rescale each parameter's update step by the width of its
             initialization interval ``max_initial_params - min_initial_params``
+        gradient_mode: automatic differentiation mode. ``"auto"`` uses fast forward-mode gradients for up to
+            32 trainable parameters and reverse-mode gradients for larger parameter sets
         tol: target gate infidelity, also sets the ODE solver tolerance
         num_initializations: number of runs in the search for gate pulses
         min_converged_initializations: number of runs that must reach ``tol`` for the optimization to stop
@@ -750,6 +815,7 @@ def multi_start_optimize(
                 "For fixed parameters, min_initial_params and max_initial_params must have identical values."
             )
     trainable_indices = np.nonzero(trainable_mask)[0]
+    _resolve_gradient_mode(gradient_mode, trainable_indices.size)
 
     update_scale: npt.NDArray[np.float64] | None = None
     if rescale:
@@ -812,6 +878,7 @@ def multi_start_optimize(
                     min_converged_initializations_local,
                     learning_rate,
                     update_scale,
+                    gradient_mode,
                     tol,
                     0,
                     None,
@@ -849,6 +916,7 @@ def multi_start_optimize(
                         min_converged_initializations_local,
                         learning_rate,
                         update_scale,
+                        gradient_mode,
                         tol,
                         device_idx,
                         device_idx if use_one_process_per_device else None,
